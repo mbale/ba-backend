@@ -11,7 +11,7 @@
   "scripts": {
     "start": "NODE_ENV=production node dist/app.js",
     "dev": "NODE_ENV=development nodemon src/index.js --exec babel-node",
-    "test": "lab -T node_modules/lab-babel/ -v -S -I __core-js_shared__, rootPath",
+    "test": "lab -T node_modules/lab-babel/ -v -S -I __core-js_shared__,rootPath",
     "build": "webpack -d",
     "build:api": "aglio -i src/api.apib -o dist/api.html"
   },
