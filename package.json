@@ -9,36 +9,36 @@
   "author": "Balazs Mocsai <me@bael.me>",
   "license": "ISC",
   "scripts": {
-    "dev": "webpack --watch & nodemon --watch dist dist/app.js",
-    "test": "lab -T node_modules/lab-babel/ -v -S -I __core-js_shared__,rootPath",
-    "build": "webpack | aglio -i src/api.apib -o dist/api.html"
+    "start": "NODE_ENV=production node dist/app.js",
+    "dev": "NODE_ENV=development nodemon src/index.js --exec babel-node",
+    "test": "lab -T node_modules/lab-babel/ -v -S -I __core-js_shared__, rootPath",
+    "build": "webpack -d",
+    "build:api": "aglio -i src/api.apib -o dist/api.html"
   },
   "bugs": {
     "url": "https://trello.com/b/cvCaCTeu/esportsinsight-com-backend"
   },
   "homepage": "https://mbale@github.com/MainBase/esportsinsight-backend#readme",
   "devDependencies": {
-    "babel-cli": "^6.14.0",
+    "babel-cli": "^6.24.0",
     "babel-eslint": "^7.2.1",
-    "babel-loader": "^6.2.5",
+    "babel-loader": "^6.4.1",
+    "babel-plugin-root-import": "^5.1.0",
     "babel-preset-env": "^1.2.2",
-    "babel-root-import": "^4.1.0",
     "code": "^4.0.0",
     "eslint": "^3.18.0",
     "eslint-config-airbnb": "^14.1.0",
     "eslint-plugin-babel": "^4.1.1",
     "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.3",
+    "webpack": "^2.3.2",
     "lab": "^13.0.1",
-    "lab-babel": "^1.1.1",
-    "webpack": "^1.13.2"
+    "lab-babel": "^1.1.1"
   },
   "dependencies": {
     "aglio": "^2.3.0",
     "axios": "^0.15.3",
     "blipp": "^2.3.0",
-    "bluebird": "^3.4.7",
+    "bluebird": "^3.5.0",
     "chokidar": "^1.6.1",
     "global": "^4.3.1",
     "good": "^7.0.1",
@@ -51,7 +51,6 @@
     "joi": "^10.3.1",
     "lodash": "^4.15.0"
   },
-  "description": "",
   "directories": {
     "test": "test"
   }
