@@ -9,30 +9,30 @@
   "author": "Balazs Mocsai <me@bael.me>",
   "license": "ISC",
   "scripts": {
-    "dev": "webpack --watch & nodemon --watch dist dist/app.js"
+    "start": "NODE_ENV=production node dist/app.js",
+    "build": "webpack -d",
+    "dev": "NODE_ENV=development nodemon src/index.js --exec babel-node"
   },
   "bugs": {
     "url": "https://trello.com/b/cvCaCTeu/esportsinsight-com-backend"
   },
   "homepage": "https://mbale@github.com/MainBase/esportsinsight-backend#readme",
   "devDependencies": {
-    "babel-cli": "^6.14.0",
+    "babel-cli": "^6.24.0",
     "babel-eslint": "^7.2.1",
-    "babel-loader": "^6.2.5",
+    "babel-loader": "^6.4.1",
+    "babel-plugin-root-import": "^5.1.0",
     "babel-preset-env": "^1.2.2",
-    "babel-root-import": "^4.1.0",
     "eslint": "^3.18.0",
     "eslint-config-airbnb": "^14.1.0",
     "eslint-plugin-babel": "^4.1.1",
     "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.3",
-    "webpack": "^1.13.2"
+    "webpack": "^2.3.2"
   },
   "dependencies": {
     "axios": "^0.15.3",
     "blipp": "^2.3.0",
-    "bluebird": "^3.4.7",
+    "bluebird": "^3.5.0",
     "chokidar": "^1.6.1",
     "global": "^4.3.1",
     "good": "^7.0.1",
