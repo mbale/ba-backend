@@ -1,4 +1,4 @@
-import UserController from '~/controllers/UserController';
+import UserController from '~/controllers/userController';
 import joi from 'joi';
 
 const UserRoutes = [
@@ -8,10 +8,6 @@ const UserRoutes = [
     handler: UserController.login,
     config: {
       validate: {
-        payload: joi.object().keys({
-          email: joi.string().email().required(),
-          password: joi.string().required(),
-        }),
       },
     },
   },
