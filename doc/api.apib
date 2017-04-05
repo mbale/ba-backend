@@ -1,0 +1,243 @@
+FORMAT: 1A
+
+# Esportsinsight - API Documentation
+
+## Group DB Schemas
+
+This section inherently shows what kind of scheme in we store each entity. Data validation between frontend & backend may vary and described in **API** section. 
+
+Based on Joi's validation. [API reference](https://github.com/hapijs/joi/blob/v10.4.1/API.md) 
+
+## User
+
+```json
+{
+  "_id": Joi.objectId().required(),
+  "username": Joi.string().min(5).required(),
+  "email": Joi.string().email().optional(),
+  "password": Joi.string().min(5).required(),
+  "accessToken": Joi.objectId(),
+  "recoveryHash": Joi.string().length(25),
+  "socialProviders": Joi.array().optional()
+}
+```
+
+```json
+{
+  "socialProviders": [{
+    "provider": "Steam",
+    "data": {
+      "steamId": ""
+    },
+  }]
+}
+```
+
+## Accesstoken
+
+```json
+{
+  "_id": Joi.objectId().required(),
+  "userId": Joi.objectId.required(),
+  "issuedAt": Joi.date().required(),
+  "expiresAt": Joi.date().required(),
+  "rawToken": Joi.string().required()
+}
+```
+
+## Group Authentication
+
+## Basic [POST /v1/auth/basic]
+
+* `username` (required)
+* `password` (required)
+
++ Request (application/json)
+
+  + Body
+
+            {
+              "username": "bali",
+              "password": "1234",
+            }
+
++ Response 200
+
+  + Body
+
+            {
+              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ",
+            }
+
++ Response 400
+
+  Request's in bad format. (missing key or value - ex: username)
+
+  + Body
+
+            {
+              "statusCode": 400,
+              "error": "Bad Request",
+              "message": "child \"username\" fails because [\"username\" must be a valid email]",
+              "validation": {
+                  "source": "payload",
+                  "keys": [
+                      "username"
+                  ]
+              }
+            }
+
++ Response 401
+
+  Request's in good format yet they're bad credentials.
+
+  + Body
+
+            {
+              "payload": {
+                "statusCode": 401,
+                "error": "Unauthorized",
+                "message": "invalid credentials"
+              },
+              "headers" {}
+            }
+
+## Steam [POST /v1/auth/steam]
+
++ Request
+  - `steamId` (required)
+  - `username` (optional) - backend generates if empty
+  - `email` (optional)
+  - `password` (optional)
+
+  + Body
+
+            {
+              "steamId": "",
+            }
+
++ Response 200
+
+  + Body
+  
+            {
+              "accessToken": "",
+            }
+
++ Response 400
+
+  Submitted data's invalid.
+
+  + Body
+
+            {
+              "statusCode": 400,
+              "error": "Bad Request",
+              "message": "child \"steamId\" fails because [\"steamId\" must be a valid steamId]",
+              "validation": {
+                  "source": "payload",
+                  "keys": [
+                      "steamId"
+                  ]
+              }
+            }
+
++ Response 409
+
+  `username`, `email` or `steamId` is/are already taken.
+
+  + Body
+
+            {
+              "statusCode": 409,
+              "error": "Conflict",
+              "message": "there was a conflict",
+              "data": {
+                "keys": ['username', 'email']
+              }
+            }
+
++ Response 401
+
+  `steamId` is invalid.
+
+  + Body
+
+            {
+              "payload": {
+                "statusCode": 401,
+                "error": "Unauthorized",
+                "message": "invalid steamid"
+            },
+            "headers" {}
+            }
+
+## Group API
+  
+# User [/user]
+## Get info [GET]
++ Request (application/json)
+
+  + Headers
+
+            Authorization: Bearer 'token'
+
+  + Body
+
+            {
+
+            }
+
++ Response 200
+  
+  + Body
+      
+            {
+
+            }
+
+## Change username [PUT /user/name]
+
+## Change email [PUT /user/email]
+
+## Change password [PUT /user/password]
+
+## Recover account [POST /user/recover_account]
+
+# Users [/users]
+## Find [GET /users?{name}]
++ Parameters
+  + name: `bali` (string, optional) - Username.
+        + Default: `*`
+
++ Response 200
+> If not found comes with empty array without user object
+  + Body
+
+              [{
+              "name": ""
+              }]
+
+## Create new [POST]
++ Request (application/json)
+
+  - `username` (required)
+  - `password` (required)
+  - `email` (optional)
+
+  + Body
+
+            {
+              "username": "",
+              "password": "",
+              "email": "",
+            }
+
++ Response 200
+
+  + Body
+
+            {
+            }
+
+# Reviews [/reviews]
