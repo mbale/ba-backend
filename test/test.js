@@ -1,5 +1,6 @@
 const Code = require('code');
 const Lab = require('lab');
+const server = require('./src/index.js');
 
 const lab = Lab.script();
 
