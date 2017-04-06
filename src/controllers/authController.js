@@ -1,5 +1,11 @@
+import mongorito from 'mongorito';
+// import userModel from '~/models/userModel.js';
+
 export default {
-  login(request, reply) {
-    reply('ok');
+  basic(request, reply) {
+    const {
+      username,
+      password,
+    } = request.payload;   
   },
 };

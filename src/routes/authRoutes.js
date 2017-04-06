@@ -5,11 +5,11 @@ const AuthRoutes = [
   {
     path: '/v1/auth',
     method: 'POST',
-    handler: AuthController.login,
+    handler: AuthController.basic,
     config: {
       validate: {
         payload: joi.object().keys({
-          username: joi.string().email().required(),
+          username: joi.string().required(),
           password: joi.string().required(),
         }),
       },

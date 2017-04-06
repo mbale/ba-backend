@@ -8,6 +8,7 @@ import Path from 'path';
 import Blipp from 'blipp';
 import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
+import Mongorito from 'mongorito';
 import _ from 'lodash';
 import Config from '~/config.js';
 import Routes from '~/routes';
@@ -80,7 +81,21 @@ const goodReporterOptions = {
   },
 };
 
-//
+server.ext('onPreStart', (server, next) => {
+  Mongorito
+    .connect(server.app.settings.db.mongoURI)
+    .then((f) => {
+      console.log(f);
+      console.log('heey')
+      return next();
+    })
+    .catch((r) => {
+      console.log(r)
+      return next();
+    });
+});
+
+// hapi boom ext
 server.ext('onPreResponse', (request, reply) => {
   const response = request.response;
   // give flow back if reply isn't coming from boom
