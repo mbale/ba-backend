@@ -1,7 +1,6 @@
 import {
   Model,
 } from 'mongorito';
-import Joi from 'joi';
 
 class AccessToken extends Model {
   collection() {
@@ -9,13 +8,7 @@ class AccessToken extends Model {
   }
 
   configure() {
-    // sch
-    this.schema = Joi.object().keys({
-
-    });
-
-    this.before('create', 'schemaValidation');
-    this.before('create', 'cleanUnusedTokens')
+    this.before('create', 'cleanUnusedTokens');
   }
 
   schemaValidation(next) {
@@ -27,8 +20,7 @@ class AccessToken extends Model {
       .remove({
         userId: this.get('userId'),
       })
-      .then((arr) => console.log(arr))
-      .catch((er) => console.log(er));
+      .then(() => next);
   }
 }
 
