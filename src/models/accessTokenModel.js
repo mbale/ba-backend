@@ -18,7 +18,7 @@ class AccessToken extends Model {
   }
 
   schemaValidation(next) {
-    
+    return next;
   }
 }
 
