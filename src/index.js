@@ -83,14 +83,16 @@ const goodReporterOptions = {
 
 server.ext('onPreStart', (server, next) => {
   Mongorito
-    .connect(server.app.settings.db.mongoURI)
-    .then((f) => {
-      console.log(f);
-      console.log('heey')
+    .connect(server.settings.app.db.mongoURI)
+    .then((db) => {
+      server.log(['info', 'database'], `DB's connected to ${db.databaseName} at ${db.serverConfig.host}:${db.serverConfig.port}`);
       return next();
     })
-    .catch((r) => {
-      console.log(r)
+    .catch((error) => {
+      server.log(['error', 'database'], {
+        message: 'Cannot connect to DB',
+        data: error,
+      });
       return next();
     });
 });
@@ -184,3 +186,5 @@ server.start((error) => {
   server.log(['info'], `Server has started at: ${server.info.uri}`);
   server.log(['info'], `Environment: '${process.env.NODE_ENV}'`);
 });
+
+export default server;
