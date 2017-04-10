@@ -15,10 +15,20 @@ class AccessToken extends Model {
     });
 
     this.before('create', 'schemaValidation');
+    this.before('create', 'cleanUnusedTokens')
   }
 
   schemaValidation(next) {
     return next;
+  }
+
+  cleanUnusedTokens(next) {
+    return AccessToken
+      .remove({
+        userId: this.get('userId'),
+      })
+      .then((arr) => console.log(arr))
+      .catch((er) => console.log(er));
   }
 }
 
