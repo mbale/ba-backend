@@ -1,10 +1,9 @@
+import userMigration from '~/models/migration/userMigration.js';
 import {
   Model,
 } from 'mongorito';
-import server from '~/index.js';
 import bcrypt from 'bcrypt';
 import Promise from 'bluebird';
-import Joi from 'joi';
 
 class User extends Model {
   collection() {
@@ -14,40 +13,29 @@ class User extends Model {
   configure() {
     this.before('create', 'checkIfExists');
     this.before('create', 'hashPassword');
-    this.before('create', 'setDefSchemaVersion');
+    this.before('create', 'initDefaultSchema');
     this.before('update', 'upgradeSchema');
 
-    // this.schema = Joi.object().keys({
-    //   username: Joi.string().min(5).optional(),
-    //   email: Joi.string().email()
-    // });
-
+    // actual schema
+    // increment when migration added
     this.schemaVersion = 0;
-    // set version of actual newest schema
-    this.migrationGuide = {
-      1() {
-        server.log(['database'], `upgrading user's schema version: ${this.get('_version')} to 1.`);
-      },
-      2() {
-        server.log(['database'], `upgrading user's schema version: ${this.get('_version')} to 2.`);
-      },
-      3() {
-        server.log(['database'], `upgrading user's schema version: ${this.get('_version')} to 3.`);
-      },
-    };
   }
 
+  // automatically hashing password field when adding new item to collection
+  // (e.g: creating new user)
   hashPassword(next) {
     bcrypt.hash(this.get('password'), 10, (err, hash) => {
       this.set('password', hash);
       this.save();
+
       return next;
     });
   }
 
-  // we set actual schemaversin for every new data
-  setDefSchemaVersion(next) {
+  // we initiate default (actual) schema
+  initDefaultSchema(next) {
     this.set('_version', this.schemaVersion);
+    userMigration.default.apply(this);
 
     return next;
   }
@@ -58,7 +46,7 @@ class User extends Model {
       while (this.get('_version') !== this.schemaVersion) {
         const ver = (this.get('_version') + 1).toString();
 
-        this.migrationGuide[ver].apply(this);
+        userMigration[ver].apply(this);
         this.set('_version', this.get('_version') + 1);
       }
     }
@@ -66,6 +54,7 @@ class User extends Model {
     return next;
   }
 
+  // check if there's already registered user with such email/username
   checkIfExists(next) {
     const duplicateHandler = (user) => {
       if (user) {
@@ -88,13 +77,14 @@ class User extends Model {
       .then(duplicateHandler);
   }
 
-  static hashPassword(password) {
-    console.log(password);
-  }
+  // TODO: implement hashing instead of in middleware
+  // static hashPassword(password) {
+  //   console.log(password);
+  // }
 
-  static comparePassword(frompw, topw) {
-
-  }
+  // static comparePassword(frompw, topw) {
+  //   return bcrypt.compare(frompw, topw);
+  // }
 }
 
 export default User;
