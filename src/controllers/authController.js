@@ -21,8 +21,7 @@ export default {
         });
       }
 
-      return Promise
-        .all([UserModel.comparePassword(password, user.get('password')), user]);
+      return Promise.all([UserModel.comparePassword(password, user.get('password')), user]);
     };
 
     const checkIsMatch = ([ismatch, user]) => {
@@ -66,6 +65,17 @@ export default {
           accessToken: token.get('rawToken'),
         });
       })
-      .catch(error => reply.badImplementation(error));
+      .catch((error) => {
+        switch (error.code) {
+        case 0:
+          reply.unauthorized('invalid password or username');
+          break;
+        case 1:
+          reply.unauthorized('invalid password or username');
+          break;
+        default:
+          reply.badImplementation(error);
+        }
+      });
   },
 };
