@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "axios": "^0.15.3",
+    "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
     "bluebird": "^3.5.0",
     "chokidar": "^1.6.1",
