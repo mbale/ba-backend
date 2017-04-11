@@ -60,9 +60,13 @@ class User extends Model {
       if (user) {
         // duplicate -> find which field
         if (user.get('email') === this.get('email')) {
-          return Promise.reject(user.get('email'));
+          return Promise.reject({
+            email: user.get('email'),
+          });
         }
-        return Promise.reject(user.get('username'));
+        return Promise.reject({
+          username: user.get('username'),
+        });
       }
       return next;
     };
@@ -82,9 +86,9 @@ class User extends Model {
   //   console.log(password);
   // }
 
-  // static comparePassword(frompw, topw) {
-  //   return bcrypt.compare(frompw, topw);
-  // }
+  static comparePassword(frompw, topw) {
+    return bcrypt.compare(frompw, topw);
+  }
 }
 
 export default User;

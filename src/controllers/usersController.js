@@ -16,23 +16,27 @@ export default {
     // trimming whitespaces & convert lowercase
     const username = _(_username).toLower().trim();
 
-    // saving
-    const newUser = new UserModel({
+    const userObj = {
       username,
       password,
-      email,
-    });
+    };
+
+    // optional email
+    if (email) {
+      userObj.email = email;
+    }
+
+    // saving
+    const newUser = new UserModel(userObj);
 
     newUser
       .save()
-      .then((user) => {
-        reply(user);
-      })
+      .then(() => reply())
       .catch((error) => {
         if (error instanceof Error) {
           return reply.badImplementation(error);
         }
-        return reply.conflict(error);
+        return reply.conflict(null, error);
       });
   },
 };

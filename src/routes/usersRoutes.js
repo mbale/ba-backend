@@ -8,6 +8,11 @@ const UsersRoutes = [
     handler: UsersController.create,
     config: {
       validate: {
+        payload: joi.object().keys({
+          username: joi.string().required(),
+          password: joi.string().required(),
+          email: joi.string().email().optional(),
+        }),
       },
     },
   },
