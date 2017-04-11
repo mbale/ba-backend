@@ -11,7 +11,7 @@ export default {
       exp,
     } = request.auth.credentials;
 
-    // user it's connected to,
+    // token, user it's connected to
     // token issued at
     // token exp in unix timestamp
     reply({
@@ -19,6 +19,15 @@ export default {
       iat,
       exp,
     });
+  },
+
+  revoke(request, reply) {
+    const userId = request.auth.credentials.userId;
+
+    AccessTokenModel
+      .revokeToken(userId)
+      .then(() => reply())
+      .catch((error) => reply.badImplementation(error));
   },
 
   basic(request, reply) {

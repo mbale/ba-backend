@@ -1,5 +1,6 @@
 import {
   Model,
+  ObjectId,
 } from 'mongorito';
 
 class AccessToken extends Model {
@@ -11,16 +12,20 @@ class AccessToken extends Model {
     this.before('create', 'cleanUnusedTokens');
   }
 
-  schemaValidation(next) {
-    return next;
-  }
-
+  // used to clean old tokens when creating new for same user
   cleanUnusedTokens(next) {
     return AccessToken
-      .remove({
-        userId: this.get('userId'),
-      })
+      .revokeToken(this.get('userId'))
       .then(() => next);
+  }
+
+  // remove token from collection
+  static revokeToken(userId) {
+    return AccessToken
+      .remove({
+        userId: new ObjectId(userId),
+      });
+      // TODO remove from user.get('accessToken') too
   }
 }
 

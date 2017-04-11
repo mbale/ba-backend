@@ -8,6 +8,11 @@ const AuthRoutes = [
     handler: AuthController.test,
   },
   {
+    path: '/v1/auth',
+    method: 'DELETE',
+    handler: AuthController.revoke,
+  },
+  {
     path: '/v1/auth/basic',
     method: 'POST',
     handler: AuthController.basic,
