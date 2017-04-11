@@ -68,14 +68,18 @@ export default {
       .catch((error) => {
         switch (error.code) {
         case 0:
-          reply.unauthorized('invalid password or username');
+          reply.unauthorized();
           break;
         case 1:
-          reply.unauthorized('invalid password or username');
+          reply.unauthorized();
           break;
         default:
           reply.badImplementation(error);
         }
       });
+  },
+
+  steam(request, reply) {
+
   },
 };
