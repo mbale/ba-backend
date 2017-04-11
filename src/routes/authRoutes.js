@@ -15,19 +15,18 @@ const AuthRoutes = [
       },
     },
   },
-  // {
-  //   path: '/v1/auth',
-  //   method: 'POST',
-  //   handler: AuthController.steam,
-  //   config: {
-  //     validate: {
-  //       payload: joi.object().keys({
-  //         steamId: 
-  //         passw
-  //       });
-  //     },
-  //   },
-  // },
+  {
+    path: '/v1/auth',
+    method: 'POST',
+    handler: AuthController.steam,
+    config: {
+      validate: {
+        payload: joi.object().keys({
+          steamId: joi.string().length(17),
+        }),
+      },
+    },
+  },
 ];
 
 export default AuthRoutes;
