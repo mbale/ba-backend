@@ -16,7 +16,7 @@ const AuthRoutes = [
     },
   },
   {
-    path: '/v1/auth',
+    path: '/v1/auth/steam',
     method: 'POST',
     handler: AuthController.steam,
     config: {
