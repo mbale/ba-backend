@@ -14,7 +14,7 @@ export default {
     } = request.payload;
 
     // trimming whitespaces & convert lowercase
-    const username = _(_username).lowerCase().trim();
+    const username = _(_username).toLower().trim();
 
     // saving
     const newUser = new UserModel({
