@@ -49,6 +49,7 @@
     "good-file": "^6.0.1",
     "good-squeeze": "^5.0.2",
     "hapi": "^16.1.0",
+    "hapi-auth-jwt2": "^7.2.4",
     "hapi-boom-decorators": "^2.2.2",
     "inert": "^4.0.3",
     "joi": "^10.3.1",

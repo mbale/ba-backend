@@ -11,6 +11,9 @@ const Config = {
       options: {
         expiresIn: '14 days',
       },
+      verifyOptions: {
+        algorithms: ['HS256'],
+      },
     },
   },
   mixed: {

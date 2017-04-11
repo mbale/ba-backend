@@ -10,8 +10,11 @@ import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
 import Mongorito from 'mongorito';
 import _ from 'lodash';
+import authJwt from 'hapi-auth-jwt2';
 import Config from '~/config.js';
 import Routes from '~/routes';
+import UserModel from '~/models/UserModel.js';
+import AccessTokenModel from '~/models/AccessTokenModel.js';
 
 let config;
 
@@ -152,6 +155,39 @@ server.register(Inert, (error) => {
     throw error;
   }
 });
+
+// auth strategy
+
+// register plugin
+server.register(authJwt, (error) => {
+  if (error) {
+    throw error;
+  }
+});
+
+// declare accesstoken validation logic for routes
+server.auth.strategy('accessToken', 'jwt', {
+  key: server.settings.app.jwt.key,
+  validateFunc(decoded, request, callback) {
+    const encodedToken = request.auth.token;
+
+    return AccessTokenModel
+      .findOne({
+        rawToken: encodedToken,
+      })
+      .then((token) => {
+        // valid token
+        if (token) {
+          return callback(null, true);
+        }
+        return callback(false);
+      });
+  },
+  verifyOptions: server.settings.app.jwt.verifyOptions,
+});
+
+// set always needed
+server.auth.default('accessToken');
 
 /*
   Registering routes

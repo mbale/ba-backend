@@ -4,6 +4,10 @@ import jwt from 'jsonwebtoken';
 import Promise from 'bluebird';
 
 export default {
+  test(request, reply) {
+    reply('ok');
+  },
+
   basic(request, reply) {
     const {
       username,
