@@ -5,7 +5,20 @@ import Promise from 'bluebird';
 
 export default {
   test(request, reply) {
-    reply('ok');
+    const {
+      userId,
+      iat,
+      exp,
+    } = request.auth.credentials;
+
+    // user it's connected to,
+    // token issued at
+    // token exp in unix timestamp
+    reply({
+      userId,
+      iat,
+      exp,
+    });
   },
 
   basic(request, reply) {
