@@ -3,10 +3,16 @@ import joi from 'joi';
 
 const AuthRoutes = [
   {
+    path: '/v1/auth',
+    method: 'GET',
+    handler: AuthController.test,
+  },
+  {
     path: '/v1/auth/basic',
     method: 'POST',
     handler: AuthController.basic,
     config: {
+      auth: false,
       validate: {
         payload: joi.object().keys({
           username: joi.string().required(),
@@ -20,6 +26,11 @@ const AuthRoutes = [
     method: 'POST',
     handler: AuthController.steam,
     config: {
+      // user could attach social login
+      auth: {
+        mode: 'optional',
+        strategy: 'accessToken',
+      },
       validate: {
         payload: joi.object().keys({
           steamId: joi.string().length(17),
