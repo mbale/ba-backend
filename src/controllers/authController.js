@@ -1,5 +1,8 @@
 import UserModel from '~/models/userModel.js';
 import AccessTokenModel from '~/models/accessTokenModel.js';
+import SocialProviderModel from '~/models/socialProviderModel.js';
+import Chance from 'chance';
+import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import Promise from 'bluebird';
 
@@ -27,7 +30,7 @@ export default {
     AccessTokenModel
       .revokeToken(userId)
       .then(() => reply())
-      .catch((error) => reply.badImplementation(error));
+      .catch(error => reply.badImplementation(error));
   },
 
   basic(request, reply) {
@@ -106,6 +109,75 @@ export default {
   },
 
   steam(request, reply) {
+    const steamAPIKey = request.server.settings.app.steam.key;
+    const isLoggedIn = request.auth.isAuthenticated;
+    const auth = request.auth;
 
+    const {
+      steamId, // required
+      username, // only when user submits otherwise generate
+      password, // optional
+      email, // optional
+    } = request.payload;
+
+    const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
+
+    // get user based on tokenid
+    const authenticateUser = ({ data: { response: { players: steamData } } }) => {
+      const promises = [steamData[0]];
+
+      if (isLoggedIn) {
+        // request user data when it's authenticated
+        promises.push(UserModel.findById(auth.credentials.userId));
+      } else {
+        const userObj = {
+          username: '',
+          password,
+          email,
+        };
+
+        const chance = new Chance();
+
+        if (!username) {
+          userObj.username = `${steamData[0].personaname}#${chance.natural()}`;
+        }
+        // signup new one
+        const user = new UserModel(userObj);
+
+        promises.push(user.save());
+      }
+      return Promise.all(promises);
+    };
+
+    const saveSocialProvider = ([steamData, user]) => {
+      const socialProvider = new SocialProviderModel({
+        userId: user.get('_id'),
+        type: 'steam',
+        data: steamData,
+      });
+
+      return Promise.all([socialProvider.save(), user]);
+    };
+
+    const saveOnUser = ([socialprovider, user]) => {
+      const socialProviders = user.get('socialProviders');
+
+      socialProviders.push(socialprovider.get('_id'));
+      user.set('socialProviders', socialProviders);
+
+      return user.save();
+    };
+
+    const generateToken = (user) => {
+      return reply('user');
+    };
+
+    return axios
+      .get(steamUserAPIUrl)
+      .then(authenticateUser)
+      .then(saveSocialProvider)
+      .then(saveOnUser)
+      .then(generateToken)
+      .catch((er) => reply(er));
   },
 };

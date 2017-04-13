@@ -38,7 +38,10 @@ const AuthRoutes = [
       },
       validate: {
         payload: joi.object().keys({
-          steamId: joi.string().length(17),
+          steamId: joi.string().length(17).required(),
+          username: joi.string().optional().allow(''),
+          email: joi.string().email().optional(),
+          password: joi.string().optional().allow(''),
         }),
       },
     },

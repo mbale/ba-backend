@@ -42,6 +42,7 @@
     "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
     "bluebird": "^3.5.0",
+    "chance": "^1.0.6",
     "chokidar": "^1.6.1",
     "global": "^4.3.1",
     "good": "^7.0.1",
