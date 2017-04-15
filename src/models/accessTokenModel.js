@@ -2,6 +2,7 @@ import {
   Model,
   ObjectId,
 } from 'mongorito';
+import UserModel from '~/models/userModel.js';
 
 class AccessToken extends Model {
   collection() {
@@ -10,6 +11,17 @@ class AccessToken extends Model {
 
   configure() {
     this.before('create', 'cleanUnusedTokens');
+    this.after('create', 'connectUser');
+  }
+
+  connectUser(next) {
+    return UserModel
+      .findById(this.get('userId'))
+      .then((user) => {
+        user.set('accessToken', this.get('_id'));
+        return user.save();
+      })
+      .then(() => next);
   }
 
   // used to clean old tokens when creating new for same user

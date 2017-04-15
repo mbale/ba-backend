@@ -72,13 +72,7 @@ export default {
         rawToken,
       });
 
-      return Promise.all([user, token.save()]);
-    };
-
-    const saveToken = ([user, token]) => {
-      user.set('accessToken', token.get('_id'));
-
-      return Promise.all([user.save(), token]);
+      return token.save();
     };
 
     return UserModel
@@ -88,8 +82,7 @@ export default {
       .then(compareHash)
       .then(checkIsMatch)
       .then(generateAndSaveToken)
-      .then(saveToken)
-      .then(([user, token]) => {
+      .then((token) => {
         reply({
           accessToken: token.get('rawToken'),
         });
