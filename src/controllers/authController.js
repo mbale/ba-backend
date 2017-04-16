@@ -1,6 +1,8 @@
 import UserModel from '~/models/userModel.js';
 import AccessTokenModel from '~/models/accessTokenModel.js';
-import SocialProviderModel from '~/models/socialProviderModel.js';
+import {
+  ObjectId, 
+} from 'mongorito';
 import Chance from 'chance';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
@@ -16,7 +18,7 @@ export default {
 
     // token, user it's connected to
     // token issued at
-    // token exp in unix timestamp
+    // token exp fin unix timestamp
     reply({
       userId,
       iat,
@@ -102,9 +104,18 @@ export default {
   },
 
   steam(request, reply) {
+    // steamapi access
     const steamAPIKey = request.server.settings.app.steam.key;
+    // isLoggedIn === true & auth != null => authenticate user
     const isLoggedIn = request.auth.isAuthenticated;
     const auth = request.auth;
+    // keysigning options
+    const {
+      jwt: jwtConfig,
+    } = request.server.settings.app;
+
+    // for username generation
+    const chance = new Chance();
 
     const {
       steamId, // required
@@ -115,62 +126,92 @@ export default {
 
     const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
 
-    // get user based on tokenid
-    const authenticateUser = ({ data: { response: { players: steamData } } }) => {
-      const promises = [steamData[0]];
+    // check for user data in db
+    const checkUser = (response) => {
+      // requested steam data with steamid
+      const steamData = response.data.response.players[0];
+      const query = [{
+        'steamProvider.steamid': steamData.steamid,
+      }];
 
+      // if it's authenticated then get user based on token information
+      // refresh steamProvider data when it's already steamprovided
       if (isLoggedIn) {
-        // request user data when it's authenticated
-        promises.push(UserModel.findById(auth.credentials.userId));
-      } else {
-        const userObj = {
-          username: '',
-          password,
-          email,
-        };
-
-        const chance = new Chance();
-
-        if (!username) {
-          userObj.username = `${steamData[0].personaname}#${chance.natural()}`;
-        }
-        // signup new one
-        const user = new UserModel(userObj);
-
-        promises.push(user.save());
+        query.push({
+          _id: new ObjectId(auth.credentials.userId),
+        });
       }
-      return Promise.all(promises);
+      // find possible duplicate data
+      return UserModel
+        .or(query)
+        .findOne()
+        .then((user) => {
+          if (user) {
+            user.set('steamProvider', steamData);
+            return Promise.reject(user.save());
+          }
+          return steamData;
+        });
     };
 
-    const saveSocialProvider = ([steamData, user]) => {
-      const socialProvider = new SocialProviderModel({
+    // get user based on tokenid
+    const addNewUser = (steamdata) => {
+      // it's not submitted with token => signup user
+      const userObj = {
+        username: '',
+        password,
+        email,
+        steamProvider: steamdata,
+      };
+
+      if (!username) {
+        userObj.username = `${steamdata.personaname}#${chance.natural({
+          max: 99999,
+        })}`;
+      }
+
+      // creating new user
+      const newUser = new UserModel(userObj);
+
+      return newUser.save();
+    };
+
+    // called from checkuser
+    // we jump after addnewuser
+    const alreadyInTheSystem = user => Promise.resolve(user);
+
+    // generate and sign token with userid
+    const generateToken = (user) => {
+      const rawToken = jwt.sign({
         userId: user.get('_id'),
-        type: 'steam',
-        data: steamData,
+      }, jwtConfig.key, jwtConfig.options);
+
+      const token = new AccessTokenModel({
+        userId: user.get('_id'),
+        rawToken,
       });
 
-      return Promise.all([socialProvider.save(), user]);
+      return token.save();
     };
 
-    const saveOnUser = ([socialprovider, user]) => {
-      const socialProviders = user.get('socialProviders');
+    // send out accesstoken
+    const successHandler = token => reply({
+      accessToken: token.get('rawToken'),
+    });
 
-      socialProviders.push(socialprovider.get('_id'));
-      user.set('socialProviders', socialProviders);
-
-      return user.save();
-    };
-
-    const generateToken = (user) => {
-      return reply('user');
+    const errorHandler = (error) => {
+      switch (error.code) {
+      default:
+        return reply.badImplementation(error);
+      }
     };
 
     return axios
       .get(steamUserAPIUrl)
-      .then(authenticateUser)
-      .then(saveSocialProvider)
-      .then(saveOnUser)
+      .then(checkUser)
+      .then(addNewUser, alreadyInTheSystem)
       .then(generateToken)
-      .catch((er) => reply(er));
+      .then(successHandler)
+      .catch(errorHandler);
   },
 };
