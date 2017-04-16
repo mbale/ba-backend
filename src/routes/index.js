@@ -1,7 +1,7 @@
-import UserRoutes from '~/routes/userRoutes.js';
 import AuthRoutes from '~/routes/authRoutes.js';
+import UsersRoutes from '~/routes/usersRoutes.js';
 
 export default {
-  UserRoutes,
   AuthRoutes,
+  UsersRoutes,
 };
