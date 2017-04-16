@@ -17,7 +17,6 @@ const UserMigration = {
     server.log(['database'], `Initiating user's schema with version: ${this.get('_version')}`);
     this.set('accessToken', '');
     this.set('recoveryHash', '');
-    this.set('socialProviders', []);
   },
   1() {
     server.log(['database'], `Upgrading user's schema version: ${this.get('_version')} to 1.`);
