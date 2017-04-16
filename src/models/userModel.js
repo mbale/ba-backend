@@ -56,11 +56,32 @@ class User extends Model {
 
   // check if there's already registered user with such email/username
   checkIfExists(next) {
+    const query = [];
+
+    if (this.get('email') && this.get('email') !== '') {
+      query.push({
+        email: this.get('email'),
+      });
+    }
+
+    if (this.get('username') && this.get('username') !== '') {
+      query.push({
+        username: this.get('username'),
+      });
+    }
+
+    if (this.get('steamProvider') && this.get('steamProvider').length !== 0) {
+      query.push({
+        'steamProvider.steamid': this.get('steamProvider.steamid'),
+      });
+    }
+
     const duplicateHandler = (user) => {
       if (user) {
         // duplicate -> find which field
         if (user.get('email') === this.get('email')) {
           return Promise.reject({
+            code: 0,
             email: user.get('email'),
           });
         }
@@ -72,11 +93,7 @@ class User extends Model {
     };
 
     return User
-      .or({
-        email: this.get('email'),
-      }, {
-        username: this.get('username'),
-      })
+      .or(query)
       .findOne()
       .then(duplicateHandler);
   }

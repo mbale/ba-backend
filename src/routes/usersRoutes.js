@@ -7,6 +7,7 @@ const UsersRoutes = [
     method: 'POST',
     handler: UsersController.create,
     config: {
+      auth: false,
       validate: {
         payload: joi.object().keys({
           username: joi.string().required(),
