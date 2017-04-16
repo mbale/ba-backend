@@ -11,10 +11,12 @@ class AccessToken extends Model {
 
   configure() {
     this.before('create', 'cleanUnusedTokens');
-    this.after('create', 'connectUser');
+    this.after('create', 'connectWithUser');
   }
 
-  connectUser(next) {
+  // when creating new accesstoken
+  // we automatically add it to correct user
+  connectWithUser(next) {
     return UserModel
       .findById(this.get('userId'))
       .then((user) => {
