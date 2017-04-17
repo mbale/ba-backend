@@ -54,6 +54,7 @@
     "hapi-boom-decorators": "^2.2.2",
     "inert": "^4.0.3",
     "joi": "^10.3.1",
+    "joi-objectid": "^2.0.0",
     "jsonwebtoken": "^7.3.0",
     "lodash": "^4.15.0",
     "mongorito": "^2.2.0"
