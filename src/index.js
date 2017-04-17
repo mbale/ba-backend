@@ -100,19 +100,19 @@ server.ext('onPreStart', (server, next) => {
     });
 });
 
-// hapi boom ext
-server.ext('onPreResponse', (request, reply) => {
-  const response = request.response;
-  // give flow back if reply isn't coming from boom
-  if (!response.isBoom) {
-    return reply.continue();
-  }
-  if (response.data) {
-    // attach boom additional data object to response
-    response.output.payload.data = response.data;
-  }
-  return reply(response);
-});
+// // hapi boom ext
+// server.ext('onPreResponse', (request, reply) => {
+//   const response = request.response;
+//   // give flow back if reply isn't coming from boom
+//   if (!response.isBoom) {
+//     return reply.continue();
+//   }
+//   if (response.data) {
+//     // attach boom additional data object to response
+//     response.output.payload.data = response.data;
+//   }
+//   return reply(response);
+// });
 
 // log incoming request's payload
 server.on('tail', (request) => {
