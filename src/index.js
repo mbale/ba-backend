@@ -13,7 +13,6 @@ import _ from 'lodash';
 import authJwt from 'hapi-auth-jwt2';
 import Config from '~/config.js';
 import Routes from '~/routes';
-import UserModel from '~/models/UserModel.js';
 import AccessTokenModel from '~/models/AccessTokenModel.js';
 
 let config;
@@ -67,15 +66,23 @@ server.connection({
 // logger options
 const goodReporterOptions = {
   ops: {
-    interval: 1000, // bind refresh sequence
+    interval: 15000, // ops refresh sequence
   },
   reporters: {
-    // dev & prod
+    sentry: [{
+      module: 'good-squeeze',
+      name: 'Squeeze',
+      args: [{
+        log: '*', ops: '*', response: '*', error: '*', request: '*' }],
+    }, {
+      module: 'good-sentry',
+      args: [server.settings.app.sentry],
+    }],
     console: [{
       module: 'good-squeeze',
       name: 'Squeeze',
       args: [{
-        log: '*', response: '*', error: '*',
+        log: '*', response: '*', error: '*', request: '*',
       }],
     }, {
       module: 'good-console',
@@ -113,11 +120,6 @@ server.ext('onPreStart', (server, next) => {
 //   }
 //   return reply(response);
 // });
-
-// log incoming request's payload
-server.on('tail', (request) => {
-  server.log(['request'], request.payload);
-});
 
 /*
   Plugin registration

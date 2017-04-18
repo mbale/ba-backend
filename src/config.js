@@ -1,5 +1,12 @@
 const Config = {
   development: {
+    sentry: {
+      dsn: 'https://52176ecdf2dc41a1aed320396913dd60:3dec3fe8a14f4d8a880ce382b31b9de3@sentry.io/159228',
+      config: {
+        environment: process.env.NODE_ENV,
+      },
+      captureUncaught: true,
+    },
     http: {
       port: '1337',
     },

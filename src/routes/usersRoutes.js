@@ -12,7 +12,7 @@ const UsersRoutes = [
         payload: joi.object().keys({
           username: joi.string().required(),
           password: joi.string().required(),
-          email: joi.string().email().optional(),
+          email: joi.string().email().optional().allow(''),
         }),
       },
     },
