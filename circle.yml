@@ -3,3 +3,12 @@ general:
     only:
       - develop
       - master
+deployment:
+  production:
+    branch: master
+    commands:
+      - ./deploy_prod.sh
+  staging:
+    branch: develop
+    commands:
+      - sudo scp -i ~/.ssh/id_146.185.169.74 -v -r esportsinsight-backend/dist admin@146.185.169.74:/home/admin
