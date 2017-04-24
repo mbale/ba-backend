@@ -8,9 +8,49 @@ This section inherently shows what kind of scheme in we store each entity. Data 
 
 Based on Joi's validation. [API reference](https://github.com/hapijs/joi/blob/v10.4.1/API.md) 
 
+## User
+
+```json
+{
+  "_id": Joi.objectId().required(),
+  "username": Joi.string().min(5).required(),
+  "email": Joi.string().email().optional(),
+  "password": Joi.string().min(5).required(),
+  "accessToken": Joi.objectId(),
+  "recoveryHash": Joi.string().length(25),
+  "socialProviders": Joi.array().optional()
+}
+```
+
+```json
+{
+  "socialProviders": [{
+    "provider": "Steam",
+    "data": {
+      "steamId": ""
+    },
+  }]
+}
+```
+
+## Accesstoken
+
+```json
+{
+  "_id": Joi.objectId().required(),
+  "userId": Joi.objectId.required(),
+  "issuedAt": Joi.date().required(),
+  "expiresAt": Joi.date().required(),
+  "rawToken": Joi.string().required()
+}
+```
+
 ## Group Authentication
 
 ## Basic [POST /v1/auth/basic]
+
+* `username` (required)
+* `password` (required)
 
 + Request (application/json)
 
@@ -28,16 +68,10 @@ Based on Joi's validation. [API reference](https://github.com/hapijs/joi/blob/v1
             {
               "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ",
             }
-            
-+ Request with missing field (application/json)
-
-    + Body
-
-            {
-                "password": "dev"
-            }
 
 + Response 400
+
+  Request's in bad format. (missing key or value - ex: username)
 
   + Body
 
@@ -53,358 +87,157 @@ Based on Joi's validation. [API reference](https://github.com/hapijs/joi/blob/v1
               }
             }
 
-+ Request with wrong credentials (application/json)
++ Response 401
 
-    + Body
+  Request's in good format yet they're bad credentials.
+
+  + Body
 
             {
-                "username": "wrongusername",
-                "password: "wrongpw"
+              "payload": {
+                "statusCode": 401,
+                "error": "Unauthorized",
+                "message": "invalid credentials"
+              },
+              "headers" {}
+            }
+
+## Steam [POST /v1/auth/steam]
+
++ Request
+  - `steamId` (required)
+  - `username` (optional) - backend generates if empty
+  - `email` (optional)
+  - `password` (optional)
+
+  + Body
+
+            {
+              "steamId": "",
+            }
+
++ Response 200
+
+  + Body
+  
+            {
+              "accessToken": "",
+            }
+
++ Response 400
+
+  Submitted data's invalid.
+
+  + Body
+
+            {
+              "statusCode": 400,
+              "error": "Bad Request",
+              "message": "child \"steamId\" fails because [\"steamId\" must be a valid steamId]",
+              "validation": {
+                  "source": "payload",
+                  "keys": [
+                      "steamId"
+                  ]
+              }
+            }
+
++ Response 409
+
+  `username`, `email` or `steamId` is/are already taken.
+
+  + Body
+
+            {
+              "statusCode": 409,
+              "error": "Conflict",
+              "message": "there was a conflict",
+              "data": {
+                "keys": ['username', 'email']
+              }
             }
 
 + Response 401
 
+  `steamId` is invalid.
+
   + Body
 
             {
+              "payload": {
                 "statusCode": 401,
-                "error": "Unauthorized"
-            }
-
-## Steam [POST /v1/auth/steam]
-    
-+ Request (application/json)
-Connect steam account with an already registered user. (logged in)
- 
-    + Headers
-    
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTIzNTU3NDUsImV4cCI6MTQ5MzU2NTM0NX0.JGUt4X0j7I52iz_j3ZXNllTYjoujJXpqjCGIjvm6378
-            
-    + Attributes
-        + steamId: 76561198075666081 (string, required) - steamId gathered from steam login
-        
-    + Body
-
-            { 
-                "steamId: "76561198075666081"
-            }
-        
-+ Response 200
-
-    + Body
-    
-            {
-                "accessToken": ".eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTIzNTU3NDUsImV4cCI6MTQ5MzU2NTM0NX0.JGUt4X0j7I52iz_j3ZXNllTYjoujJXpqjCGIjvm6378"
-            }
-        
-+ Request (application/json)
-Signup new user based on submitted steam account, only if there isn't an accesstoken already associated in system.
-
-    + Attributes
-        + steamId: 76561198075666081 (string, required)
-        + username: user (string, optional) - Chosen username. If empty, backend generates it from steam username like: bali#50000
-        + password: 1234 (string, optional) - User choosen password for his user (local) account.
-        + email: dev@dev.com (string, optional) - Email address of his user account.
-
-    + Body
-
-            { 
-                "steamId: "76561198075666081",
-                "username": ""
-            }
-        
-+ Response 200
-
-    + Body
-    
-            {
-                "accessToken": ".eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTIzNTU3NDUsImV4cCI6MTQ5MzU2NTM0NX0.JGUt4X0j7I52iz_j3ZXNllTYjoujJXpqjCGIjvm6378"
+                "error": "Unauthorized",
+                "message": "invalid steamid"
+            },
+            "headers" {}
             }
 
 ## Group API
-
-Every auth-protected endpoint replies with the same message when there's an error with authentication.
-
-### Missing authorization header
-
-```json
-{
-    "statusCode":401,
-    "error":"Unauthorized",
-    "message":"Invalid credentials",
-    "attributes":{
-        "error":"Invalid credentials"
-    }
-}
-```
-    
-### Mailformed authorization header
-
-```json
-{
-    "statusCode":401,
-    "error":"Unauthorized",
-    "message":"Invalid token",
-    "attributes":{
-        "error":"Invalid token"
-    }
-}
-```
-
-### Invalid token (expired or revoked)
-
-```json
-{
-    "statusCode":401,
-    "error":"Unauthorized",
-    "message":"Invalid credentials",
-    "attributes":{
-        "error":"Invalid credentials"
-    }
-}
-```
-
-# Auth [/auth]
-
-Validate & destroy token.
-
-## Validate [GET]
-
-+ Request
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjQ3NDEsImV4cCI6MTQ5MzYzNDM0MX0.ln1Li5DVHOrqD-HWIS0_EbO73D-4qW00Pdo1ugrCy1U
-
-+ Response 200 (application/json)
-
-    + Body
-
-            {
-                "userId":"58f38a6a79a49c2600b689c1",
-                "iat":1492424741,
-                "exp":1493634341
-            }
-
-## Revoke access [DELETE]
-
-+ Request
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjQ3NDEsImV4cCI6MTQ5MzYzNDM0MX0.ln1Li5DVHOrqD-HWIS0_EbO73D-4qW00Pdo1ugrCy1U
-
-+ Response 200
-
   
-# User [/v1/user]
-
-Usermanagement endpoint, therefore authorization's required on every route.
-
-## Get basic info [GET]
-
+# User [/user]
+## Get info [GET]
 + Request (application/json)
 
-    + Headers
+  + Headers
 
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-+ Response 200 (application/json)
-
-    + Body
-
-            {
-                "username":"bali",
-                "email":"me@bael.me"
-            }
-            
-## Steam info [GET /v1/user/steam]
-
-+ Request
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-+ Response 200 (application/json)
-
-    + Body
-
-            {"personaName":"bali","profileurl":"http://steamcommunity.com/id/mbali/"}
-            
-+ Response 404 (application/json)
-
-    + Body
-            
-            {
-                "statusCode": 404,
-                "error": "Not Found",
-                "message": "user's not authenticated with steam"
-            }
-
-## Edit profile [PUT /v1/user]
-
-## Change password [PUT /v1/user/password]
-
-## Recover account [POST /v1/user/recover_account]
-
-## Get reviews [GET /v1/user/reviews]
-
-+ Request
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-+ Response 200 (application/json)
-
-    + Headers
-
-            Accept-Ranges: bytes
-            Cache-Control: no-cache
-            Vary: origin,accept-encoding
-
-    + Body
-
-            [{"_id":"58f3f5bd7be1a7187bbd0a8a","score":5,"sportsbookId":"58f3dc46b5749e0de84e465c","userId":"58f38a6a79a49c2600b689c1","text":"review","created_at":"2017-04-16T22:52:45.092Z","updated_at":"2017-04-16T22:52:45.092Z"},{"_id":"58f3f5d97be1a7187bbd0a8b","score":4,"sportsbookId":"58f3dc6edf30210dfaaa12c3","userId":"58f38a6a79a49c2600b689c1","text":"review","created_at":"2017-04-16T22:53:13.791Z","updated_at":"2017-04-16T22:53:13.791Z"},{"_id":"58f3f75f87e83819d012c0c1","score":2,"sportsbookId":"58f3dc3bb5749e0de84e465b","userId":"58f38a6a79a49c2600b689c1","text":"review","created_at":"2017-04-16T22:59:43.588Z","updated_at":"2017-04-16T22:59:43.588Z"},{"_id":"58f3f76587e83819d012c0c2","score":5,"sportsbookId":"58f3dc6adf30210dfaaa12c2","userId":"58f38a6a79a49c2600b689c1","text":"review","created_at":"2017-04-16T22:59:49.891Z","updated_at":"2017-04-16T22:59:49.891Z"}]
-
-## Add review [POST /v1/user/reviews]
-
-+ Request (application/json)
-
-    + Attributes
-        + sportsbookId: 58f3dc3bb5749e0de84e465b (string, required) - sportsbook that he user would rate
-        + score: 3  (number, required) - 1-10 point
-        + text: text (string, optional) - review text
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-    + Body
-
-            {
-                "sportsbookId": "58f3dc3bb5749e0de84e465b",
-                "score": "3",
-                "text": "review"
-            }
-
-+ Response 200 (application/json)
-
-+ Request with sportsbook he already rated (application/json; charset=utf-8)
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-    + Body
-
-            {
-                "sportsbookId": "58f3dc46b5749e0de84e465c",
-                "score": "0",
-                "text": "review"
-            }
-
-+ Response 409 (application/json)
-
-    + Body
-
-            {"statusCode":409,"error":"Conflict","message":"you've already rated"}
-            
-+ Request with missing sportsbookId (application/json)
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-    + Body
-
-            {
-                "score": "7",
-                "text": "review"
-            }
-
-+ Response 400 (application/json)
-
-    + Body
-
-            {"statusCode":400,"error":"Bad Request","message":"child \"sportsbookId\" fails because [\"sportsbookId\" is required]","validation":{"source":"payload","keys":["sportsbookId"]}}
-
-+ Request with invalid sportsbookId (application/json)
-
-    + Headers
-
-            Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1OGYzOGE2YTc5YTQ5YzI2MDBiNjg5YzEiLCJpYXQiOjE0OTI0MjYxNzQsImV4cCI6MTQ5MzYzNTc3NH0.cYqkLMp4dVOxriegLQbW6LIwUIdIUuMREj1TjqifuQ8
-
-    + Body
-
-            {
-                "sportsbookId": "58f3f5bd7be1a7187bbd0a8a",
-                "score": "2",
-                "text": "review"
-            }
-
-+ Response 400 (application/json)
-
-    + Body
-
-            {"statusCode":400,"error":"Bad Request","message":"invalid sportsbookid"}
-
-# Users [/users]
-
-## Create [POST]
-
-+ Attributes
-    + username: Lena (string, required)
-    + password: dev (string, required) 
-    + email: dev@dev.com (string, optional)
-
-+ Request (application/json)
+            Authorization: Bearer 'token'
 
   + Body
 
             {
-                "username": "Lena",
-                "password": "dev",
-                "email": "kuzi@niwlapfo.net"
+
             }
 
++ Response 200
+  
+  + Body
+      
+            {
+
+            }
+
+## Change username [PUT /user/name]
+
+## Change email [PUT /user/email]
+
+## Change password [PUT /user/password]
+
+## Recover account [POST /user/recover_account]
+
+# Users [/users]
+## Find [GET /users?name={name}]
++ Parameters
+  + name: `bali` (string, optional) - Username.
+        + Default: `*`
 
 + Response 200
+> If not found comes with empty array without user object
+  + Body
 
-# Sportsbooks [/sportsbooks]
+              [{
+              "name": ""
+              }]
 
-## List [GET]
-
-+ Response 200 (application/json)
-
-    + Body
-
-            [{"_id":"58f3dc3bb5749e0de84e465b","name":"janula sportsbook","description":"Ic wolibtar mihfe mopra sucur bel zan utigagha ga bupu gepdicfu beovuedu sa. Usdi zolfupson siuj zeri hejahmit fuzorel jenow musi jatu koj sodkobuki hefjeh lakogov. Rewtamni nud haov hiwbes ba elazip jo tod muedji kiwwis nanlefod seznoje feer kiri begjubvoc map.","created_at":"2017-04-16T21:03:55.740Z","updated_at":"2017-04-16T21:03:55.740Z"},{"_id":"58f3dc46b5749e0de84e465c","name":"tevrej sportsbook","description":"Rohivsu lemdo na hu ashasuw zofod vikamu cejnapvaf pumzitza dez dizso ni po. Torcor awu lidma puwira tikanenu failewew wug jaguv huzu wocimha bav lasbuk lamokfe pekamfa botsorid coon. Juzmuprej akdoiwu mozvuget fekiufu nubwas zurni kufwusgod dif mivocoufo ecenowto weiduci hezhevan po fevtozud oh is.","created_at":"2017-04-16T21:04:06.038Z","updated_at":"2017-04-16T21:04:06.038Z"},{"_id":"58f3dc6adf30210dfaaa12c2","name":"kasno sportsbook","description":"Lu kerel jir olojowme welov oporitoz najemire mauzve dazini gujagev hudlazat zeg orano fe mi ipraw pal. Hupwog co neawek nuc zog otso lusa vebe guzdor uvbaiza fufo suwwiza gif upo. Taip tunato evzitu cipezfot ado ti dewezu eh lam tokleiw ek orfo. Sa uma nu hiavo oli finudcu momnopema pi woikudum rezuwit vuhroreja du kohope bafbizipo ebsigjep jik.","created_at":"2017-04-16T21:04:42.031Z","updated_at":"2017-04-16T21:04:42.031Z"},{"_id":"58f3dc6edf30210dfaaa12c3","name":"comekag sportsbook","description":"Kez kac ozazah rom mazvabazo jizo hu ogjavag nec muj li waf iriki amucivun gopgarwe mukurer ric urmav. Acieftuv kev tigfutpuz tuute okmusfa befi kotpedpe meko viwov butdah akeza cowola ki. Kumocoizu ow uruwe ilupa cafroheki ezavo muwhimiv kisetu da ezu kudulol kopjuzraw se. Ga niwo urwog gon fa eg dulegit car ohejataw jon egetoej ponugtu cam zehpamwam. Hosre hobiv ce ut ogira fukjietu wapazba rocog venubuw berjovin wuva ucu dizo tekmos. Repakotaj dilti wasu safli da fetku hufanefe za nejeta kahaj ra cismovru obrulga tezbez pe lukerlok. Kuto zog paba popibico nafodcog balvuwva paejozav pazoon fa casaza zo ewfod cibwi tu ugekooh ropik.","created_at":"2017-04-16T21:04:46.648Z","updated_at":"2017-04-16T21:04:46.648Z"}]
-
-## Create [POST]
-
-+ Attributes
-    + name: somekindofsb (string, required)
-    + description: (string, optional)
-
+## Create new [POST]
 + Request (application/json)
 
-        {
-            "name": "gu sportsbook",
-            "description": "Cit kurdeika jemat ihu newu cezfoja ul hab vazosu awrivni awo wukfosu duszu. Kive en fulteti oc bac sazutvil otamepiv fuledga zi safnahug fevuf sipgac wit gi. Teccove niz cigowaha umti lozmuof uw baviip vengip sam nej sujevci fu farig opze wakaw vusonati heb womhen."
-        }
+  - `username` (required)
+  - `password` (required)
+  - `email` (optional)
+
+  + Body
+
+            {
+              "username": "",
+              "password": "",
+              "email": "",
+            }
 
 + Response 200
 
-+ Request with missing name (application/json)
+  + Body
 
-        {
-            "description": "Coggawpo maoclir tauv omiupasi ogcu fazevedos necfogag wukorwil id tuh far kus idasamep fo. Ridesa alucufwen uhoimeme tafese ke wad jut muefagag tewofa udagirub punfi suppiw zabufeb kub. En goolo kow weduhibij huumwur caamecu povfe ojojuhe jineig hejza sigbuh keipapi ta."
-        }
+            {
+            }
 
-+ Response 400 (application/json)
-
-    + Body
-
-            {"statusCode":400,"error":"Bad Request","message":"child \"name\" fails because [\"name\" is required]","validation":{"source":"payload","keys":["name"]}}
+# Reviews [/reviews]
