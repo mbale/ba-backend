@@ -1,4 +1,4 @@
-import UserModel from '~/models/userModel.js';
+import User from '~/models/userModel.js';
 import _ from 'lodash';
 import Promise from 'bluebird';
 
@@ -12,6 +12,9 @@ export default {
       password,
       email,
     } = request.payload;
+
+    const db = request.server.app.db;
+    db.register(User);
 
     // trimming whitespaces & convert lowercase
     const username = _(_username).toLower().trim();
@@ -27,16 +30,25 @@ export default {
     }
 
     // saving
-    const newUser = new UserModel(userObj);
+    const newUser = new User(userObj);
 
     newUser
       .save()
       .then(() => reply())
       .catch((error) => {
-        if (error instanceof Error) {
-          return reply.badImplementation(error);
+        switch (error.code) {
+        case 0:
+          reply.conflict(error.data);
+          break;
+        case 1:
+          reply.conflict(error.data);
+          break;
+        case 2:
+          reply.conflict(error.data);
+          break;
+        default:
+          reply.badImplementation(error);
         }
-        return reply.conflict(null, error);
       });
   },
 };

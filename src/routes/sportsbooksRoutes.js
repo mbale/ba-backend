@@ -1,5 +1,8 @@
 import SportsbooksController from '~/controllers/sportsbooksController.js';
 import joi from 'joi';
+import joiObjectId from 'joi-objectid';
+
+joi.objectId = joiObjectId(joi);
 
 const SportsbooksRoutes = [
   {
@@ -9,6 +12,10 @@ const SportsbooksRoutes = [
     config: {
       auth: false,
       validate: {
+        query: {
+          limit: joi.number().integer().min(1).max(50)
+            .default(10),
+        },
       },
     },
   },
@@ -23,6 +30,22 @@ const SportsbooksRoutes = [
           name: joi.string().required(),
           description: joi.string().optional(),
         }),
+      },
+    },
+  },
+  {
+    path: '/v1/sportsbooks/{id}/reviews',
+    method: 'GET',
+    handler: SportsbooksController.reviews,
+    config: {
+      validate: {
+        params: {
+          id: joi.objectId().required(),
+        },
+        query: {
+          limit: joi.number().integer().min(1).max(50)
+            .default(10),
+        },
       },
     },
   },

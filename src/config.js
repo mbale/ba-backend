@@ -10,6 +10,20 @@ const Config = {
     http: {
       port: '1337',
     },
+    email: {
+      smtp: {
+        host: 'smtp.mailtrap.io',
+        port: 2525,
+        auth: {
+          user: 'd5d6aa0d2a1ead',
+          pass: '1840d940ef46ef',
+        },
+      },
+      recover: {
+        from: '"Recover Account" <recover@esportsinsights.com>',
+        subject: 'Here\'s your info to recover your acccount',
+      },
+    },
     db: {
       mongoURI: 'mongodb://esportsinsight:dev@146.185.169.74:27017/esportsinsight',
     },

@@ -4,11 +4,11 @@ import {
 } from 'mongorito';
 
 class UserReview extends Model {
-  collection() {
+  static collection() {
     return 'userReviews';
   }
 
-  configure() {
+  static configure() {
   }
 }
 

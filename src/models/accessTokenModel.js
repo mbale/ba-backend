@@ -2,35 +2,33 @@ import {
   Model,
   ObjectId,
 } from 'mongorito';
-import UserModel from '~/models/userModel.js';
+import User from '~/models/userModel.js';
 
 class AccessToken extends Model {
-  collection() {
+  static collection() {
     return 'accessTokens';
   }
 
-  configure() {
-    this.before('create', 'cleanUnusedTokens');
-    this.after('create', 'connectWithUser');
+  static configure() {
+    // this.before('create', 'cleanUnusedTokens');
+    // this.after('create', 'connectWithUser');
   }
 
   // when creating new accesstoken
   // we automatically add it to correct user
-  connectWithUser(next) {
-    return UserModel
+  connectWithUser() {
+    return User
       .findById(this.get('userId'))
       .then((user) => {
         user.set('accessToken', this.get('_id'));
         return user.save();
-      })
-      .then(() => next);
+      });
   }
 
   // used to clean old tokens when creating new for same user
-  cleanUnusedTokens(next) {
+  cleanUnusedTokens() {
     return AccessToken
-      .revokeToken(this.get('userId'))
-      .then(() => next);
+      .revokeToken(this.get('userId'));
   }
 
   // remove token from collection
