@@ -13,7 +13,8 @@ import _ from 'lodash';
 import authJwt from 'hapi-auth-jwt2';
 import Config from '~/config.js';
 import Routes from '~/routes';
-import AccessTokenModel from '~/models/AccessTokenModel.js';
+import User from '~/models/userModel.js';
+import AccessToken from '~/models/AccessTokenModel.js';
 
 let config;
 
@@ -56,7 +57,7 @@ const server = new Hapi.Server(serverOptions);
 
 // set default server
 server.connection({
-  port: config.http.port,
+  port: process.PORT || config.http.port,
   routes: {
     cors: true,
   },
@@ -73,7 +74,7 @@ const goodReporterOptions = {
       module: 'good-squeeze',
       name: 'Squeeze',
       args: [{
-        log: '*', ops: '*', response: '*', error: '*', request: '*' }],
+        log: '*', response: '*', error: '*', request: '*' }],
     }, {
       module: 'good-sentry',
       args: [server.settings.app.sentry],
@@ -87,12 +88,17 @@ const goodReporterOptions = {
     }, {
       module: 'good-console',
     }, 'stdout'],
-    // todo file - prod only
   },
 };
 
 server.ext('onPreStart', (server, next) => {
-  Mongorito
+  const db = new Mongorito(server.settings.app.db.mongoURI);
+  db.register(AccessToken);
+
+  // assign db instance to server
+  server.app.db = db;
+
+  db
     .connect(server.settings.app.db.mongoURI)
     .then((db) => {
       server.log(['info', 'database'], `DB's connected to ${db.databaseName} at ${db.serverConfig.host}:${db.serverConfig.port}`);
@@ -173,7 +179,7 @@ server.auth.strategy('accessToken', 'jwt', {
   validateFunc(decoded, request, callback) {
     const encodedToken = request.auth.token;
 
-    return AccessTokenModel
+    return AccessToken
       .findOne({
         rawToken: encodedToken,
       })

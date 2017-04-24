@@ -1,7 +1,7 @@
-import UserModel from '~/models/userModel.js';
-import AccessTokenModel from '~/models/accessTokenModel.js';
+import User from '~/models/userModel.js';
+import AccessToken from '~/models/accessTokenModel.js';
 import {
-  ObjectId, 
+  ObjectId,
 } from 'mongorito';
 import Chance from 'chance';
 import axios from 'axios';
@@ -19,7 +19,7 @@ export default {
     // token, user it's connected to
     // token issued at
     // token exp fin unix timestamp
-    reply({
+    return reply({
       userId,
       iat,
       exp,
@@ -28,8 +28,10 @@ export default {
 
   revoke(request, reply) {
     const userId = request.auth.credentials.userId;
+    const db = request.server.app.db;
+    db.register(AccessToken);
 
-    AccessTokenModel
+    AccessToken
       .revokeToken(userId)
       .then(() => reply())
       .catch(error => reply.badImplementation(error));
@@ -40,6 +42,10 @@ export default {
       username,
       password,
     } = request.payload;
+
+    const db = request.server.app.db;
+    db.register(User);
+    db.register(AccessToken);
 
     const {
       jwt: jwtConfig,
@@ -52,7 +58,7 @@ export default {
         });
       }
 
-      return Promise.all([UserModel.comparePassword(password, user.get('password')), user]);
+      return Promise.all([User.comparePassword(password, user.get('password')), user]);
     };
 
     const checkIsMatch = ([ismatch, user]) => {
@@ -69,24 +75,24 @@ export default {
         userId: user.get('_id'),
       }, jwtConfig.key, jwtConfig.options);
 
-      const token = new AccessTokenModel({
+      const token = new AccessToken({
         userId: user.get('_id'),
         rawToken,
       });
 
-      return token.save();
+      return token.save().then(() => rawToken);
     };
 
-    return UserModel
+    return User
       .findOne({
         username,
       })
       .then(compareHash)
       .then(checkIsMatch)
       .then(generateAndSaveToken)
-      .then((token) => {
+      .then((accessToken) => {
         reply({
-          accessToken: token.get('rawToken'),
+          accessToken,
         });
       })
       .catch((error) => {
@@ -113,6 +119,10 @@ export default {
     const {
       jwt: jwtConfig,
     } = request.server.settings.app;
+
+    const db = request.server.app.db;
+    db.register(User);
+    db.register(AccessToken);
 
     // for username generation
     const chance = new Chance();
@@ -142,7 +152,7 @@ export default {
         });
       }
       // find possible duplicate data
-      return UserModel
+      return User
         .or(query)
         .findOne()
         .then((user) => {
@@ -171,7 +181,7 @@ export default {
       }
 
       // creating new user
-      const newUser = new UserModel(userObj);
+      const newUser = new User(userObj);
 
       return newUser.save();
     };
@@ -186,17 +196,17 @@ export default {
         userId: user.get('_id'),
       }, jwtConfig.key, jwtConfig.options);
 
-      const token = new AccessTokenModel({
+      const token = new AccessToken({
         userId: user.get('_id'),
         rawToken,
       });
 
-      return token.save();
+      return token.save().then(() => rawToken);
     };
 
     // send out accesstoken
-    const successHandler = token => reply({
-      accessToken: token.get('rawToken'),
+    const successHandler = accessToken => reply({
+      accessToken,
     });
 
     const errorHandler = (error) => {

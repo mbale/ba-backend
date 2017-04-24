@@ -1,7 +1,7 @@
 {
   "name": "esportsinsight-backend",
   "version": "0.1.0",
-  "main": "src/index.js",
+  "main": "dist/app.js",
   "repository": {
     "type": "git",
     "url": "git+https://mbale@github.com/MainBase/esportsinsight-backend.git"
@@ -58,7 +58,8 @@
     "joi-objectid": "^2.0.0",
     "jsonwebtoken": "^7.3.0",
     "lodash": "^4.15.0",
-    "mongorito": "^2.2.0"
+    "mongorito": "git://github.com/vadimdemedes/mongorito.git#v3",
+    "nodemailer": "^4.0.1"
   },
   "directories": {
     "test": "test"

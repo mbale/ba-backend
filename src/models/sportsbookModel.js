@@ -4,11 +4,11 @@ import {
 } from 'mongorito';
 
 class Sportsbook extends Model {
-  collection() {
+  static collection() {
     return 'sportsbooks';
   }
 
-  configure() {
+  static configure() {
   }
 }
 
