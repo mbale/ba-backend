@@ -16,7 +16,7 @@ import authJwt from 'hapi-auth-jwt2';
 import Config from '~/config.js';
 import Routes from '~/routes';
 import User from '~/models/userModel.js';
-import AccessToken from '~/models/AccessTokenModel.js';
+import AccessToken from '~/models/accessTokenModel.js';
 
 let config;
 
