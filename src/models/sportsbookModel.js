@@ -8,7 +8,7 @@ class Sportsbook extends Model {
     return 'sportsbooks';
   }
 
-  static configure() {
+  configure() {
   }
 }
 

@@ -1,9 +1,12 @@
 import userMigration from '~/models/migration/userMigration.js';
-import Mongorito from 'mongorito';
+import server from '~/index.js';
+import {
+  Model,
+} from 'mongorito';
 import bcrypt from 'bcrypt';
 import Promise from 'bluebird';
 
-class User extends Mongorito.Model {
+class User extends Model {
   static collection() {
     return 'users';
   }
@@ -13,27 +16,40 @@ class User extends Mongorito.Model {
     this.before('create', 'hashPassword');
     this.before('create', 'initDefaultSchema');
     this.before('update', 'upgradeSchema');
-    this.before('update', 'hashChangedPassword');
+    this.before('find', () => console.log('yo'));
 
     // actual schema
     // increment when migration added
     this.schemaVersion = 0;
   }
 
-  hashChangedPassword() {
-    if (this.changed('password')) {
-      return bcrypt
-        .hash(this.get('password'), 10)
-        .then((hash) => {
-          this.set('password', hash);
-        });
-    }
-    return Promise.resolve();
+  /*
+    Instance methods
+   */
+
+  // To hash plain text password and save it
+  changePassword() {
+    server.log(['usermodel'], 'Time to hash changed password');
+    return bcrypt
+      .hash(this.get('password'), 10)
+      .then((hash) => {
+        this.set('password', hash);
+        this.save();
+      });
   }
 
-  // automatically hashing password field when adding new item to collection
-  // (e.g: creating new user)
+  // auth user
+  // TODO: move basic auth flow to here (checking pw, token generation etc)
+  // basicAuthentication(passwordToCompare) {
+  // }
+
+  /*
+    Middlewares
+   */
+
+  // automatically hashing plaintext password when adding new user
   hashPassword() {
+    server.log(['usermodel'], 'Hashing newly created user\'s password');
     bcrypt
       .hash(this.get('password'), 10)
       .then((hash) => {
@@ -42,13 +58,16 @@ class User extends Mongorito.Model {
       });
   }
 
-  // we initiate default (actual) schema
+  // initialize default schema - setting new fields
   initDefaultSchema() {
+    server.log(['usermodel'], `Initialising default schema with version: ${this.schemaVersion}`);
     this.set('_version', this.schemaVersion);
     userMigration.default.apply(this);
   }
 
+  // upgrade model's data schemaversion when it's older then actual
   upgradeSchema() {
+    server.log(['usermodel'], 'Periodically check actual schemaversion');
     if (this.get('_version') !== this.schemaVersion) {
       // call migration until we've correct ver.
       while (this.get('_version') !== this.schemaVersion) {
@@ -62,20 +81,24 @@ class User extends Mongorito.Model {
 
   // check if there's already registered user with such email/username
   checkIfExists() {
+    server.log(['usermodel'], 'Check for possible duplications before adding new user');
     const query = [];
 
+    // if he submitted email with signup
     if (this.get('email') && this.get('email') !== '') {
       query.push({
         email: this.get('email'),
       });
     }
 
+    // if he submitted username too
     if (this.get('username') && this.get('username') !== '') {
       query.push({
         username: this.get('username'),
       });
     }
 
+    // and check for steamid, too
     if (this.get('steamProvider') && this.get('steamProvider').length !== 0) {
       query.push({
         'steamProvider.steamid': this.get('steamProvider.steamid'),
@@ -113,8 +136,12 @@ class User extends Mongorito.Model {
       .then(duplicateHandler);
   }
 
-  static comparePassword(frompw, topw) {
-    return bcrypt.compare(frompw, topw);
+  /*
+    Utility methods
+   */
+  static comparePassword(plain, hash) {
+    server.log(['usermodel'], 'Comparing user\'s password');
+    return bcrypt.compare(plain, hash);
   }
 }
 

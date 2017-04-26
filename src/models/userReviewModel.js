@@ -1,6 +1,5 @@
 import {
   Model,
-  ObjectId,
 } from 'mongorito';
 
 class UserReview extends Model {
@@ -8,7 +7,7 @@ class UserReview extends Model {
     return 'userReviews';
   }
 
-  static configure() {
+  configure() {
   }
 }
 

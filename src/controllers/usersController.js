@@ -30,9 +30,9 @@ export default {
     }
 
     // saving
-    const newUser = new User(userObj);
+    const user = new User(userObj);
 
-    newUser
+    user
       .save()
       .then(() => reply())
       .catch((error) => {

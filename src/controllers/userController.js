@@ -332,9 +332,10 @@ export default {
     db.register(User);
 
     const updatePassword = (user) => {
+      // set new pw
       user.set('password', password);
-
-      return user.save();
+      // call model method to actually hash and save it
+      return user.changePassword();
     };
 
     return User
