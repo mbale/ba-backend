@@ -7,7 +7,7 @@ class UserReview extends Model {
     return 'userReviews';
   }
 
-  configure() {
+  static configure() {
   }
 }
 
