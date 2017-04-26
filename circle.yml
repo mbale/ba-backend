@@ -7,4 +7,4 @@ deployment:
   staging:
     branch: develop
     commands:
-      - sudo scp -i ~/.ssh/id_146.185.169.74 -v -r esi-backend/dist admin@146.185.169.74:/var/backend
+      - sudo rsync -avz --progress -e "ssh -i $HOME/.ssh/id_146.185.169.74" esi-backend/dist/app.js esi-backend/package.json deploy@146.185.169.74:/var/node
