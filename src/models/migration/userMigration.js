@@ -14,7 +14,6 @@ import server from '~/index.js';
 
 const UserMigration = {
   default() {
-    server.log(['database'], `Initiating user's schema with version: ${this.get('_version')}`);
     this.set('accessToken', '');
     this.set('recoveryHash', '');
     this.set('reviews', []);

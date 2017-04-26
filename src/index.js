@@ -8,7 +8,9 @@ import Path from 'path';
 import Blipp from 'blipp';
 import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
-import Mongorito from 'mongorito';
+import Mongorito, {
+  ObjectId,
+} from 'mongorito';
 import _ from 'lodash';
 import authJwt from 'hapi-auth-jwt2';
 import Config from '~/config.js';
@@ -100,8 +102,8 @@ server.ext('onPreStart', (server, next) => {
 
   db
     .connect(server.settings.app.db.mongoURI)
-    .then((db) => {
-      server.log(['info', 'database'], `DB's connected to ${db.databaseName} at ${db.serverConfig.host}:${db.serverConfig.port}`);
+    .then((connection) => {
+      server.log(['info', 'database'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
       return next();
     })
     .catch((error) => {
@@ -177,15 +179,24 @@ server.register(authJwt, (error) => {
 server.auth.strategy('accessToken', 'jwt', {
   key: server.settings.app.jwt.key,
   validateFunc(decoded, request, callback) {
+    server.app.db.register(User);
+    server.app.db.register(AccessToken);
+
+    // encoded & decoded token
+    const userId = new ObjectId(decoded.userId);
     const encodedToken = request.auth.token;
 
-    return AccessToken
-      .findOne({
-        rawToken: encodedToken,
-      })
-      .then((token) => {
-        // valid token
-        if (token) {
+    const findUser = () => User.findById(userId);
+
+    const findToken = () => AccessToken.findOne({
+      rawToken: encodedToken,
+    });
+
+    return Promise
+      .all([findUser(), findToken()])
+      .then(([user, token]) => {
+        // valid token, user
+        if (token && user) {
           return callback(null, true);
         }
         return callback(false);
@@ -231,4 +242,6 @@ server.start((error) => {
   server.log(['info'], `Environment: '${process.env.NODE_ENV}'`);
 });
 
+// export server instance to logging purpose
+// and to inject tests
 export default server;
