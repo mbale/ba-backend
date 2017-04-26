@@ -1,3 +1,6 @@
+machine:
+  node:
+    version: 6.10.1
 general:
   branches:
     only:
@@ -7,4 +10,5 @@ deployment:
   staging:
     branch: develop
     commands:
+      - npm run build
       - sudo rsync -avz --progress -e "ssh -i $HOME/.ssh/id_146.185.169.74" esi-backend/dist/app.js esi-backend/package.json deploy@146.185.169.74:/var/node
