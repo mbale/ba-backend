@@ -16,6 +16,26 @@ const SportsbooksRoutes = [
           limit: joi.number().integer().min(1).max(50)
             .default(10),
         },
+        failAction(request, reply, source, error) {
+          const validationObj = {};
+          validationObj.data = error.data.details[0].path;
+          delete error.output.payload.message;
+          delete error.output.payload.validation;
+          delete error.output.headers;
+
+          switch (error.data.details[0].type) {
+          case 'number.min':
+            validationObj.code = 1;
+            break;
+          case 'number.max':
+            validationObj.code = 2;
+            break;
+          default:
+            validationObj.code = 0;
+          }
+          error.output.payload.validationError = validationObj;
+          reply(error.output).code(error.output.statusCode);
+        },
       },
     },
   },
@@ -28,8 +48,25 @@ const SportsbooksRoutes = [
       validate: {
         payload: joi.object().keys({
           name: joi.string().required(),
-          description: joi.string().optional(),
+          description: joi.string().optional().allow(''),
         }),
+        failAction(request, reply, source, error) {
+          const validationObj = {};
+          validationObj.data = error.data.details[0].path;
+          delete error.output.payload.message;
+          delete error.output.payload.validation;
+          delete error.output.headers;
+
+          switch (error.data.details[0].type) {
+          case 'any.required':
+            validationObj.code = 1;
+            break;
+          default:
+            validationObj.code = 0;
+          }
+          error.output.payload.validationError = validationObj;
+          reply(error.output).code(error.output.statusCode);
+        },
       },
     },
   },
@@ -45,6 +82,35 @@ const SportsbooksRoutes = [
         query: {
           limit: joi.number().integer().min(1).max(50)
             .default(10),
+        },
+        failAction(request, reply, source, error) {
+          const validationObj = {};
+          validationObj.data = error.data.details[0].path;
+          delete error.output.payload.message;
+          delete error.output.payload.validation;
+          delete error.output.headers;
+
+          switch (error.data.details[0].type) {
+          case 'any.required':
+            validationObj.code = 1;
+            break;
+          case 'string.regex.base':
+            validationObj.code = 2;
+            break;
+          case 'number.min':
+            validationObj.code = 3;
+            break;
+          case 'number.max':
+            validationObj.code = 4;
+            break;
+          case 'number.base':
+            validationObj.code = 5;
+            break;
+          default:
+            validationObj.code = 0;
+          }
+          error.output.payload.validationError = validationObj;
+          reply(error.output).code(error.output.statusCode);
         },
       },
     },
