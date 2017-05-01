@@ -16,7 +16,6 @@ class User extends Model {
     this.before('create', 'hashPassword');
     this.before('create', 'initDefaultSchema');
     this.before('update', 'upgradeSchema');
-    this.before('find', () => console.log('yo'));
 
     // actual schema
     // increment when migration added
@@ -49,13 +48,16 @@ class User extends Model {
 
   // automatically hashing plaintext password when adding new user
   hashPassword() {
-    server.log(['usermodel'], 'Hashing newly created user\'s password');
-    bcrypt
-      .hash(this.get('password'), 10)
-      .then((hash) => {
-        this.set('password', hash);
-        this.save();
-      });
+    console.log('itt')
+    if (this.get('password') !== '') {
+      server.log(['usermodel'], 'Hashing newly created user\'s password');
+      bcrypt
+        .hash(this.get('password'), 10)
+        .then((hash) => {
+          this.set('password', hash);
+          this.save();
+        });
+    }
   }
 
   // initialize default schema - setting new fields
