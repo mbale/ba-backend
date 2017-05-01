@@ -38,10 +38,10 @@ export default {
       .catch((error) => {
         switch (error.code) {
         case 0:
-          reply.conflict(error.data);
+          reply.conflict('Username already exists.');
           break;
         case 1:
-          reply.conflict(error.data);
+          reply.conflict('Email already exists');
           break;
         case 2:
           reply.conflict(error.data);
