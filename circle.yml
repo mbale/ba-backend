@@ -11,4 +11,7 @@ deployment:
     branch: develop
     commands:
       - npm run build
-      - sudo rsync -avz --progress -e "ssh -i $HOME/.ssh/id_146.185.169.74" esi-backend/dist/app.js esi-backend/package.json deploy@146.185.169.74:/var/node
+      - ssh -i ~/.ssh/146.185.169.74 deploy@146.185.169.74 'cd /var/node/esi && mkdir docs || mkdir -p uploads/avatar'
+      - scp -i ~/.ssh/146.185.169.74 esi-backend/src/docs/index.html deploy@146.185.169.74 deploy@146.185.169.74:/var/node/esi/docs
+      - scp -i ~/.ssh/146.185.169.74 esi-backend/dist/app.js esi-backend/dist/app.js.map esi-backend/package.json deploy@146.185.169.74:/var/node/esi
+      - ssh -i ~/.ssh/146.185.169.74 deploy@146.185.169.74 'cd /var/node/esi && npm install && sudo systemctl restart backend-dev.service'
