@@ -212,15 +212,29 @@ server.auth.default('accessToken');
   Registering routes
  */
 
-// serve client application
+// serve api documentation
 server.route({
   method: 'GET',
   path: '/{param*}',
   handler: {
+    file: Path.join(__dirname, 'docs/index.html'),
+  },
+  config: {
+    auth: false,
+  },
+});
+
+// avatars
+server.route({
+  method: 'GET',
+  path: '/uploads/avatar/{param*}',
+  handler: {
     directory: {
-      path: Path.join(__dirname, 'client'),
-      listing: true,
+      path: Path.join(__dirname, 'uploads/avatar'),
     },
+  },
+  config: {
+    auth: false,
   },
 });
 

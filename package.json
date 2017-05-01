@@ -11,7 +11,9 @@
   "scripts": {
     "start": "NODE_ENV=production node dist/app.js",
     "dev": "NODE_ENV=development nodemon src/index.js -V -C --exec babel-node",
-    "build": "webpack -d"
+    "dev:api": "aglio -i api.apib -s --theme-variables flatly",
+    "build": "webpack | npm run build:api",
+    "build:api": "aglio -i api.apib -o src/docs/index.html --theme-variables flatly"
   },
   "bugs": {
     "url": "https://trello.com/b/cvCaCTeu/esportsinsight-com-backend"
@@ -37,6 +39,7 @@
     "webpack": "^2.3.2"
   },
   "dependencies": {
+    "aglio": "^2.3.0",
     "axios": "^0.15.3",
     "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
@@ -57,6 +60,7 @@
     "joi-objectid": "^2.0.0",
     "jsonwebtoken": "^7.3.0",
     "lodash": "^4.15.0",
+    "moment": "^2.18.1",
     "mongorito": "git://github.com/vadimdemedes/mongorito.git#v3",
     "nodemailer": "^4.0.1"
   },
