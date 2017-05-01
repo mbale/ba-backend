@@ -19,10 +19,10 @@ module.exports = {
     filename: 'app.js',
   },
   plugins: [
-    // setting env variables
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production'),
-    }),
+    // // setting env variables
+    // new webpack.DefinePlugin({
+    //   'process.env.NODE_ENV': JSON.stringify('production'),
+    // }),
     new webpack.BannerPlugin({
       banner: 'require("source-map-support").install();',
       raw: true,
@@ -41,7 +41,7 @@ module.exports = {
   },
   // external npm packages for requiring
   externals: nodeModules,
-  devtool: 'sourcemap',
+  devtool: 'source-map',
   node: {
     __dirname: false,
   },
