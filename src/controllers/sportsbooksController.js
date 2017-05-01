@@ -1,5 +1,5 @@
-import SportsbookModel from '~/models/sportsbookModel.js';
-import UserReviewModel from '~/models/userReviewModel.js';
+import Sportsbook from '~/models/sportsbookModel.js';
+import UserReview from '~/models/userReviewModel.js';
 import {
   ObjectId,
 } from 'mongorito';
@@ -11,9 +11,12 @@ export default {
       limit,
     } = request.query;
 
+    const db = request.server.app.db;
+    db.register(Sportsbook);
+
     const excludedProps = ['created_at', 'updated_at'];
 
-    return SportsbookModel
+    return Sportsbook
       .exclude(excludedProps)
       .limit(limit)
       .find()
@@ -29,6 +32,10 @@ export default {
         id: _id,
       },
     } = request;
+
+    const db = request.server.app.db;
+    db.register(UserReview);
+    db.register(Sportsbook);
 
     const excludedProps = ['created_at', 'updated_at', 'sportsbookId'];
 
@@ -47,12 +54,12 @@ export default {
     };
 
     return Promise
-      .all([UserReviewModel
+      .all([UserReview
         .exclude(excludedProps)
         .limit(limit)
         .find({
           sportsbookId: id,
-        }), SportsbookModel.findById(id)])
+        }), Sportsbook.findById(id)])
       .then(([reviews, sb]) => {
         if (!sb) {
           return Promise.reject({
@@ -72,7 +79,10 @@ export default {
       description,
     } = request.payload;
 
-    const sportsbook = new SportsbookModel({
+    const db = request.server.app.db;
+    db.register(Sportsbook);
+
+    const sportsbook = new Sportsbook({
       name,
       description,
     });

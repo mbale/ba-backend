@@ -5,6 +5,10 @@ import {
   ObjectId,
 } from 'mongorito';
 import Nodemailer from 'nodemailer';
+import Chance from 'chance';
+import moment from 'moment';
+import fs from 'fs';
+import Path from 'path';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import jwt from 'jsonwebtoken';
@@ -163,6 +167,80 @@ export default {
       .then(addToUser)
       .then(successHandler)
       .catch(errorHandler);
+  },
+
+  uploadAvatar(request, reply) {
+    // init
+    const payload = request.payload;
+    const {
+      userId: _id,
+    } = request.auth.credentials;
+    const userId = new ObjectId(_id);
+
+    const db = request.server.app.db;
+    db.register(User);
+
+    const chance = new Chance();
+
+    const uploadAvatar = new Promise((resolve, reject) => {
+      // generate name of uploaded avatar
+      const randomHash = chance.pickone(chance.shuffle(chance.n(chance.hash, 6)));
+      const newFileName = moment().format('GGGG_MM_DD_').toString() + randomHash;
+      // set avatar path
+      const path = Path.join(process.cwd(),
+        `uploads/avatar/${newFileName}_${payload.avatar.hapi.filename}`);
+
+      const file = fs.createWriteStream(path);
+
+      // set event handler on error
+      file.on('error', error => reject(error));
+
+      // piping stream
+      payload.avatar.pipe(file);
+      // set event handler on ending
+      payload.avatar.on('end', (error) => {
+        if (error) return reject(error);
+        // pass filename
+        return resolve(`${newFileName}_${payload.avatar.hapi.filename}`);
+      });
+    });
+
+    const updateAvatarOnUser = filename =>
+      User
+        .findById(userId)
+        .then((user) => {
+          user.set('avatar', filename);
+          return user.save();
+        });
+
+    const successHandler = () => reply();
+
+    const errorHandler = (error) => {
+      switch (error.code) {
+      default:
+        reply.badImplementation(error);
+      }
+    };
+
+    uploadAvatar
+      .then(updateAvatarOnUser)
+      .then(successHandler)
+      .catch(errorHandler);
+  },
+
+  deleteAvatar(request, reply) {
+    const userId = new ObjectId(request.auth.credentials.userId);
+
+    const db = request.server.app.db;
+    db.register(User);
+
+    return User
+      .findById(userId)
+      .then((user) => {
+        user.set('avatar', '');
+        //TODO Remove file?
+        return user.save();
+      });
   },
 
   editProfile(request, reply) {

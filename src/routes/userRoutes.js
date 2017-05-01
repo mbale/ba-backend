@@ -20,8 +20,22 @@ const UserRoutes = [
           username: joi.string().optional(),
           email: joi.string().email().optional().allow(''),
         }),
+  {
+    path: '/v1/user/avatar',
+    method: 'POST',
+    handler: UserController.uploadAvatar,
+    config: {
+      payload: {
+        output: 'stream',
+        parse: true,
+        allow: 'multipart/form-data',
       },
     },
+  },
+  {
+    path: '/v1/user/avatar',
+    method: 'DELETE',
+    handler: UserController.deleteAvatar,
   },
   {
     path: '/v1/user/reset_account',
