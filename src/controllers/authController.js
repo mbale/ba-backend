@@ -98,10 +98,10 @@ export default {
       .catch((error) => {
         switch (error.code) {
         case 0:
-          reply.unauthorized();
+          reply.unauthorized('Username and password do not match');
           break;
         case 1:
-          reply.unauthorized();
+          reply.unauthorized('Username and password do not match');
           break;
         default:
           reply.badImplementation(error);
@@ -158,7 +158,7 @@ export default {
         .then((user) => {
           if (user) {
             user.set('steamProvider', steamData);
-            return Promise.reject(user.save());
+            return Promise.reject(user);
           }
           return steamData;
         });
@@ -174,7 +174,7 @@ export default {
         steamProvider: steamdata,
       };
 
-      if (!username) {
+      if (!username || username === '') {
         userObj.username = `${steamdata.personaname}#${chance.natural({
           max: 99999,
         })}`;
@@ -183,12 +183,12 @@ export default {
       // creating new user
       const newUser = new User(userObj);
 
-      return newUser.save();
+      return newUser.save().then(() => newUser);
     };
 
     // called from checkuser
     // we jump after addnewuser
-    const alreadyInTheSystem = user => Promise.resolve(user);
+    const alreadyInTheSystem = user => user;
 
     // generate and sign token with userid
     const generateToken = (user) => {
