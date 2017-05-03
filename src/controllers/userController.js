@@ -187,8 +187,10 @@ export default {
       const randomHash = chance.pickone(chance.shuffle(chance.n(chance.hash, 6)));
       const newFileName = moment().format('GGGG_MM_DD_').toString() + randomHash;
       // set avatar path
-      const path = Path.join(process.cwd(),
+      const path = Path.join(__dirname,
         `uploads/avatar/${newFileName}_${payload.avatar.hapi.filename}`);
+
+      console.log(__dirname)
 
       const file = fs.createWriteStream(path);
 

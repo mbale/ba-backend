@@ -1,6 +1,7 @@
 import UserController from '~/controllers/userController';
 import joi from 'joi';
 import joiObjectId from 'joi-objectid';
+import failActions from '~/helpers/failActions';
 
 joi.objectId = joiObjectId(joi);
 
@@ -18,31 +19,9 @@ const UserRoutes = [
       validate: {
         payload: joi.object().min(1).keys({
           username: joi.string().optional(),
-          email: joi.string().email().optional().allow(''),
+          email: joi.string().email().optional(),
         }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'string.email':
-            validationObj.code = 1;
-            break;
-          case 'number.max':
-            validationObj.code = 2;
-            break;
-          case 'object.min':
-            validationObj.code = 3;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.editProfile,
       },
     },
   },
@@ -73,26 +52,7 @@ const UserRoutes = [
         payload: joi.object().keys({
           email: joi.string().email().required(),
         }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'string.email':
-            validationObj.code = 1;
-            break;
-          case 'any.required':
-            validationObj.code = 2;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.resetAccount,
       },
     },
   },
@@ -106,23 +66,7 @@ const UserRoutes = [
         headers: joi.object({
           recoveryhash: joi.string().required(),
         }).options({ allowUnknown: true }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'any.required':
-            validationObj.code = 1;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.testRecoveryHash,
       },
     },
   },
@@ -137,23 +81,7 @@ const UserRoutes = [
           recoveryHash: joi.required(),
           password: joi.required(),
         }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'any.required':
-            validationObj.code = 1;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.recoverAccount,
       },
     },
   },
@@ -164,25 +92,9 @@ const UserRoutes = [
     config: {
       validate: {
         payload: joi.object().min(1).keys({
-          password: joi.string().required(),
+          password: joi.string().required().min(6),
         }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'any.required':
-            validationObj.code = 1;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.changePassword,
       },
     },
   },
@@ -206,32 +118,7 @@ const UserRoutes = [
           score: joi.number().min(0).max(10).required(),
           text: joi.string().optional(),
         }),
-        failAction(request, reply, source, error) {
-          const validationObj = {};
-          validationObj.data = error.data.details[0].path;
-          delete error.output.payload.message;
-          delete error.output.payload.validation;
-          delete error.output.headers;
-
-          switch (error.data.details[0].type) {
-          case 'any.required':
-            validationObj.code = 1;
-            break;
-          case 'string.regex.base':
-            validationObj.code = 2;
-            break;
-          case 'number.min':
-            validationObj.code = 3;
-            break;
-          case 'number.max':
-            validationObj.code = 4;
-            break;
-          default:
-            validationObj.code = 0;
-          }
-          error.output.payload.validationError = validationObj;
-          reply(error.output).code(error.output.statusCode);
-        },
+        failAction: failActions.user.createReview,
       },
     },
   },
