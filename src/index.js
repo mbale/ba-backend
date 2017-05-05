@@ -75,8 +75,7 @@ const goodReporterOptions = {
     sentry: [{
       module: 'good-squeeze',
       name: 'Squeeze',
-      args: [{
-        log: '*', response: '*', error: '*', request: '*' }],
+      args: [{ log: '*', response: '*', error: '*', request: '*' }],
     }, {
       module: 'good-sentry',
       args: [server.settings.app.sentry],
