@@ -7,6 +7,11 @@ const Config = {
       },
       captureUncaught: true,
     },
+    cloudinary: {
+      cloud_name: 'esportsinsights',
+      api_key: '984191977334891',
+      api_secret: 'XrJFOzziAG3AOWWVmXnsLO_JxH8',
+    },
     http: {
       port: '1337',
     },

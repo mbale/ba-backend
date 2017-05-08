@@ -11,6 +11,7 @@ import fs from 'fs';
 import Path from 'path';
 import _ from 'lodash';
 import Promise from 'bluebird';
+import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
 
 export default {
@@ -180,42 +181,32 @@ export default {
     const db = request.server.app.db;
     db.register(User);
 
-    const chance = new Chance();
+    // global
+    cloudinary.config(request.server.settings.app.cloudinary);
 
     const uploadAvatar = new Promise((resolve, reject) => {
-      // generate name of uploaded avatar
-      const randomHash = chance.pickone(chance.shuffle(chance.n(chance.hash, 6)));
-      const newFileName = moment().format('GGGG_MM_DD_').toString() + randomHash;
-      // set avatar path
-      const path = Path.join(__dirname,
-        `uploads/avatar/${newFileName}_${payload.avatar.hapi.filename}`);
+      const stream = cloudinary
+        .uploader
+        .upload_stream(resource => resolve(resource));
 
-      console.log(__dirname)
+      // streaming directly to cloudinary
+      payload.avatar.pipe(stream);
 
-      const file = fs.createWriteStream(path);
-
-      // set event handler on error
-      file.on('error', error => reject(error));
-
-      // piping stream
-      payload.avatar.pipe(file);
-      // set event handler on ending
+      // if error happens
       payload.avatar.on('end', (error) => {
         if (error) return reject(error);
-        // pass filename
-        return resolve(`${newFileName}_${payload.avatar.hapi.filename}`);
       });
     });
 
-    const updateAvatarOnUser = filename =>
+    const updateAvatarOnUser = resource =>
       User
         .findById(userId)
         .then((user) => {
-          user.set('avatar', filename);
+          user.set('avatar', resource.url);
           return user.save();
         });
 
-    const successHandler = () => reply();
+    const successHandler = (r) => reply(r);
 
     const errorHandler = (error) => {
       switch (error.code) {
@@ -224,7 +215,7 @@ export default {
       }
     };
 
-    uploadAvatar
+    return uploadAvatar
       .then(updateAvatarOnUser)
       .then(successHandler)
       .catch(errorHandler);

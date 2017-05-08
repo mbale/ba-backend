@@ -43,6 +43,7 @@
     "bluebird": "^3.5.0",
     "chance": "^1.0.6",
     "chokidar": "^1.6.1",
+    "cloudinary": "^1.9.0",
     "global": "^4.3.1",
     "good": "^7.0.1",
     "good-console": "^6.1.2",
