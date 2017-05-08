@@ -8,58 +8,18 @@ import Path from 'path';
 import Blipp from 'blipp';
 import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
-import Mongorito, {
-  ObjectId,
-} from 'mongorito';
+import Mongorito, { ObjectId } from 'mongorito';
 import _ from 'lodash';
 import authJwt from 'hapi-auth-jwt2';
-import Config from '~/config.js';
 import Routes from '~/routes';
 import User from '~/models/userModel.js';
 import AccessToken from '~/models/accessTokenModel.js';
 
-let config;
-
-// handling what environment we are and set config based on that
-const env = process.env.NODE_ENV;
-if (env === 'development') {
-  config = Config.development;
-} else {
-  config = Config.production;
-}
-
-// store mixed config key-vals too
-config.mixed = Config.mixed;
-
-/*
-  Bootstrap
- */
-
-const populateServerOptionsObj = () => {
-  const opt = {
-    // registering config
-    app: config,
-  };
-
-  // extend debug listener
-  if (env === 'development') {
-    opt.debug = {
-      log: ['error'],
-      request: ['error'],
-    };
-  }
-
-  return opt;
-};
-
-// generate server config
-const serverOptions = populateServerOptionsObj();
-
-const server = new Hapi.Server(serverOptions);
+const server = new Hapi.Server();
 
 // set default server
 server.connection({
-  port: process.PORT || config.http.port,
+  port: process.PORT || 1337,
   routes: {
     cors: true,
   },
@@ -78,7 +38,13 @@ const goodReporterOptions = {
       args: [{ log: '*', response: '*', error: '*', request: '*' }],
     }, {
       module: 'good-sentry',
-      args: [server.settings.app.sentry],
+      args: [{
+        dsn: process.env.SENTRY_DSN,
+        config: {
+          environment: process.env.NODE_ENV,
+        },
+        captureUncaught: true,
+      }],
     }],
     console: [{
       module: 'good-squeeze',
@@ -93,14 +59,14 @@ const goodReporterOptions = {
 };
 
 server.ext('onPreStart', (server, next) => {
-  const db = new Mongorito(server.settings.app.db.mongoURI);
+  const db = new Mongorito(process.env.MONGO_URI);
   db.register(AccessToken);
 
   // assign db instance to server
   server.app.db = db;
 
   db
-    .connect(server.settings.app.db.mongoURI)
+    .connect(process.env.MONGO_URI)
     .then((connection) => {
       server.log(['info', 'database'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
       return next();
@@ -201,7 +167,9 @@ server.auth.strategy('accessToken', 'jwt', {
         return callback(false);
       });
   },
-  verifyOptions: server.settings.app.jwt.verifyOptions,
+  verifyOptions: {
+    algorithms: ['HS256']
+  }
 });
 
 // set always needed

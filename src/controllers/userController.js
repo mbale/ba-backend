@@ -1,9 +1,7 @@
 import User from '~/models/userModel.js';
 import UserReview from '~/models/userReviewModel.js';
 import Sportsbook from '~/models/sportsbookModel.js';
-import {
-  ObjectId,
-} from 'mongorito';
+import { ObjectId } from 'mongorito';
 import Nodemailer from 'nodemailer';
 import Chance from 'chance';
 import moment from 'moment';
@@ -182,7 +180,11 @@ export default {
     db.register(User);
 
     // global
-    cloudinary.config(request.server.settings.app.cloudinary);
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    })
 
     const uploadAvatar = new Promise((resolve, reject) => {
       const stream = cloudinary
@@ -288,13 +290,20 @@ export default {
       return user.save().then(() => [email, recoveryToken]);
     };
 
-    const sendoutEmail = ([email, recoveryToken]) => {
-      const transport = Nodemailer.createTransport(emailConfig.smtp);
+    const sendoutEmail = ([emailAddress, recoveryToken]) => {
+      const transport = Nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_AUTH_USER,
+          pass: process.env.EMAIL_AUTH_PASSWORD,
+        },
+      });
 
       const mailOptions = {
-        from: emailConfig.recover.from,
-        to: email,
-        subject: emailConfig.recover.subject,
+        from: '"Recover Account" <recover@esportsinsights.com>',
+        to: emailAddress,
+        subject: 'Here\'s your info to recover your acccount',
         text: `Here's your recover hash to reset your account: ${recoveryToken}`,
       };
 

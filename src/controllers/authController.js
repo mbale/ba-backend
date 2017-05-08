@@ -1,8 +1,6 @@
 import User from '~/models/userModel.js';
 import AccessToken from '~/models/accessTokenModel.js';
-import {
-  ObjectId,
-} from 'mongorito';
+import { ObjectId } from 'mongorito';
 import Chance from 'chance';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
@@ -47,10 +45,6 @@ export default {
     db.register(User);
     db.register(AccessToken);
 
-    const {
-      jwt: jwtConfig,
-    } = request.server.settings.app;
-
     const compareHash = (user) => {
       if (!user) {
         return Promise.reject({
@@ -73,7 +67,9 @@ export default {
     const generateAndSaveToken = (user) => {
       const rawToken = jwt.sign({
         userId: user.get('_id'),
-      }, jwtConfig.key, jwtConfig.options);
+      }, process.env.JWT_KEY, {
+        expiresIn: '14 days',
+      });
 
       const token = new AccessToken({
         userId: user.get('_id'),
@@ -111,7 +107,7 @@ export default {
 
   steam(request, reply) {
     // steamapi access
-    const steamAPIKey = request.server.settings.app.steam.key;
+    const steamAPIKey = process.env.STEAM_API_KEY;
     // isLoggedIn === true & auth != null => authenticate user
     const isLoggedIn = request.auth.isAuthenticated;
     const auth = request.auth;
@@ -182,7 +178,6 @@ export default {
 
       // creating new user
       const newUser = new User(userObj);
-
       return newUser.save().then(() => newUser);
     };
 
@@ -194,7 +189,9 @@ export default {
     const generateToken = (user) => {
       const rawToken = jwt.sign({
         userId: user.get('_id'),
-      }, jwtConfig.key, jwtConfig.options);
+      }, jwtConfig.key, {
+        expiresIn: '14 days',
+      });
 
       const token = new AccessToken({
         userId: user.get('_id'),

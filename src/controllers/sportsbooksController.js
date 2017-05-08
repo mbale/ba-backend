@@ -1,8 +1,6 @@
 import Sportsbook from '~/models/sportsbookModel.js';
 import UserReview from '~/models/userReviewModel.js';
-import {
-  ObjectId,
-} from 'mongorito';
+import { ObjectId } from 'mongorito';
 import Promise from 'bluebird';
 
 export default {
