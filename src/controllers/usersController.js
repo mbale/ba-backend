@@ -13,7 +13,7 @@ export default {
       email,
     } = request.payload;
 
-    const db = { mongoURI: process.env.MONGO_URI }
+    const db = request.server.app.db;
     db.register(User);
 
     // trimming whitespaces & convert lowercase
