@@ -37,13 +37,14 @@
     "webpack": "^2.3.2"
   },
   "dependencies": {
-    "axios": "^0.15.3",
+    "axios": "^0.16.1",
     "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
     "bluebird": "^3.5.0",
     "chance": "^1.0.6",
     "chokidar": "^1.6.1",
     "cloudinary": "^1.9.0",
+    "dotenv": "^4.0.0",
     "global": "^4.3.1",
     "good": "^7.0.1",
     "good-console": "^6.1.2",

@@ -1,7 +1,3 @@
-/*
-    Import packages
- */
-
 import Hapi from 'hapi';
 import Inert from 'inert';
 import Path from 'path';
@@ -14,6 +10,7 @@ import authJwt from 'hapi-auth-jwt2';
 import Routes from '~/routes';
 import User from '~/models/userModel.js';
 import AccessToken from '~/models/accessTokenModel.js';
+require('dotenv').config()
 
 const server = new Hapi.Server();
 
@@ -41,7 +38,7 @@ const goodReporterOptions = {
       args: [{
         dsn: process.env.SENTRY_DSN,
         config: {
-          environment: process.env.NODE_ENV,
+          environment: 'dev',
         },
         captureUncaught: true,
       }],
@@ -142,7 +139,7 @@ server.register(authJwt, (error) => {
 
 // declare accesstoken validation logic for routes
 server.auth.strategy('accessToken', 'jwt', {
-  key: server.settings.app.jwt.key,
+  key: process.env.JWT_KEY,
   validateFunc(decoded, request, callback) {
     server.app.db.register(User);
     server.app.db.register(AccessToken);

@@ -1,18 +1,18 @@
-# version: "2"
-#
-# services:
-#   db:
-#     image: mongo
-#
-#   # frontend:
-#   #   ports:
-#   #     - "3000:3000"
-#   #   depends_on:
-#   #     - db
-#
-#   api:
-#     build: .
-#     ports:
-#       - "1337:1337"
-#     depends_on:
-#       - db
+version: "2"
+
+services:
+  db:
+    image: mongo
+
+  # frontend:
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+
+  api:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
