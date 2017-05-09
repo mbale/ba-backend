@@ -16,7 +16,7 @@ const server = new Hapi.Server();
 
 // set default server
 server.connection({
-  port: process.PORT || 1337,
+  port: process.PORT || 5000,
   routes: {
     cors: true,
   },
