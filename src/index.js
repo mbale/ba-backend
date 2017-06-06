@@ -10,7 +10,9 @@ import authJwt from 'hapi-auth-jwt2';
 import Routes from '~/routes';
 import User from '~/models/userModel.js';
 import AccessToken from '~/models/accessTokenModel.js';
-require('dotenv').config()
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const server = new Hapi.Server();
 
@@ -165,8 +167,8 @@ server.auth.strategy('accessToken', 'jwt', {
       });
   },
   verifyOptions: {
-    algorithms: ['HS256']
-  }
+    algorithms: ['HS256'],
+  },
 });
 
 // set always needed
@@ -175,32 +177,6 @@ server.auth.default('accessToken');
 /*
   Registering routes
  */
-
-// serve api documentation
-server.route({
-  method: 'GET',
-  path: '/{param*}',
-  handler: {
-    file: Path.join(__dirname, 'docs/index.html'),
-  },
-  config: {
-    auth: false,
-  },
-});
-
-// avatars
-server.route({
-  method: 'GET',
-  path: '/uploads/avatar/{param*}',
-  handler: {
-    directory: {
-      path: Path.join(__dirname, 'uploads/avatar'),
-    },
-  },
-  config: {
-    auth: false,
-  },
-});
 
 // add each route
 _.forEach(Routes, (route) => {
@@ -217,7 +193,6 @@ server.start((error) => {
   }
 
   server.log(['info'], `Server has started at: ${server.info.uri}`);
-  server.log(['info'], `Environment: '${process.env.NODE_ENV}'`);
 });
 
 // export server instance to logging purpose
