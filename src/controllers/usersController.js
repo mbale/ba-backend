@@ -1,28 +1,32 @@
 import User from '~/models/userModel.js';
-import UserPlugins from '~/models/plugins/userPlugins.js';
-import _ from 'lodash';
 import timestamps from 'mongorito-timestamps';
-import Promise from 'bluebird';
-
-const {
-  hashPassword,
-} = UserPlugins;
+import UsernameTakenError from '~/models/errors/usernameTakenError.js';
+import EmailTakenError from '~/models/errors/emailTakenError.js';
+import _ from 'lodash';
 
 export default {
   /*
     Create new user
    */
   async create(request, reply) {
+    /*
+    DB
+     */
+    const {
+      db,
+    } = request.server.app;
+
+    db.register(User);
+    db.use(timestamps());
+
+    /*
+    Data
+     */
     const {
       username: _username,
       password,
       email,
     } = request.payload;
-
-    const db = request.server.app.db;
-    db.register(User);
-    db.use(timestamps());
-    User.use(hashPassword);
 
     // trimming whitespaces & convert lowercase
     const username = _(_username).toLower().trim();
@@ -37,24 +41,20 @@ export default {
       userObj.email = email;
     }
 
-    // saving
+    /*
+    Save
+     */
     const user = new User(userObj);
 
     try {
       await user.save();
       reply();
     } catch (error) {
-      switch (error.code) {
-      case 0:
-        reply.conflict('Username already exists.');
-        break;
-      case 1:
-        reply.conflict('Email already exists');
-        break;
-      case 2:
-        reply.conflict(error.data);
-        break;
-      default:
+      if (error instanceof UsernameTakenError) {
+        reply.conflict(error.message);
+      } else if (error instanceof EmailTakenError) {
+        reply.conflict(error.message);
+      } else {
         reply.badImplementation(error);
       }
     }
