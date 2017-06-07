@@ -8,8 +8,8 @@ import Mongorito, { ObjectId } from 'mongorito';
 import _ from 'lodash';
 import authJwt from 'hapi-auth-jwt2';
 import Routes from '~/routes';
+import InvalidUserIdError from '~/models/errors/invalidUserIdError.js';
 import User from '~/models/userModel.js';
-import AccessToken from '~/models/accessTokenModel.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -59,7 +59,6 @@ const goodReporterOptions = {
 
 server.ext('onPreStart', (server, next) => {
   const db = new Mongorito(process.env.MONGO_URI);
-  db.register(AccessToken);
 
   // assign db instance to server
   server.app.db = db;
@@ -142,29 +141,29 @@ server.register(authJwt, (error) => {
 // declare accesstoken validation logic for routes
 server.auth.strategy('accessToken', 'jwt', {
   key: process.env.JWT_KEY,
-  validateFunc(decoded, request, callback) {
+  async validateFunc(decoded, request, callback) {
     server.app.db.register(User);
-    server.app.db.register(AccessToken);
 
     // encoded & decoded token
     const userId = new ObjectId(decoded.userId);
     const encodedToken = request.auth.token;
 
-    const findUser = () => User.findById(userId);
+    try {
+      const user = await User.findById(userId);
 
-    const findToken = () => AccessToken.findOne({
-      rawToken: encodedToken,
-    });
+      const {
+        rawToken,
+      } = await user.get('accessToken');
 
-    return Promise
-      .all([findUser(), findToken()])
-      .then(([user, token]) => {
-        // valid token, user
-        if (token && user) {
-          return callback(null, true);
-        }
-        return callback(false);
-      });
+      if (rawToken === encodedToken) {
+        // everything's ok
+        return callback(null, true);
+      }
+    } catch (error) {
+      // check for "haxors"
+      return callback(false);
+    }
+    return callback(false);
   },
   verifyOptions: {
     algorithms: ['HS256'],

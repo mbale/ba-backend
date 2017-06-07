@@ -1,124 +1,127 @@
 import User from '~/models/userModel.js';
-import AccessToken from '~/models/accessTokenModel.js';
-import { ObjectId } from 'mongorito';
+import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
+import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
+import {
+  ObjectId,
+} from 'mongorito';
+import timestamps from 'mongorito-timestamps';
 import Chance from 'chance';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import Promise from 'bluebird';
 
 export default {
-  test(request, reply) {
+  /*
+    Testing token
+   */
+  async test(request, reply) {
     const {
       userId,
-      iat,
-      exp,
+      iat: issuedAt,
+      exp: expiresAt,
     } = request.auth.credentials;
 
     // token, user it's connected to
     // token issued at
     // token exp fin unix timestamp
-    return reply({
-      userId,
-      iat,
-      exp,
-    });
+    try {
+      reply({
+        userId,
+        issuedAt,
+        expiresAt,
+      });
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
-  revoke(request, reply) {
+  async revoke(request, reply) {
     const userId = request.auth.credentials.userId;
     const db = request.server.app.db;
-    db.register(AccessToken);
+    /*
+      DB
+     */
+    db.register(User);
 
-    AccessToken
-      .revokeToken(userId)
-      .then(() => reply())
-      .catch(error => reply.badImplementation(error));
+    try {
+      const user = await User.findById(new ObjectId(userId));
+      // setting token to empty
+      await user.revokeAccess();
+      reply();
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
-  basic(request, reply) {
+  /*
+    Basic authentication
+   */
+  async basic(request, reply) {
+    /*
+    DB
+     */
+    const {
+      db,
+    } = request.server.app;
+
+    db.register(User);
+    db.use(timestamps());
+
+    /*
+    Data
+     */
     const {
       username,
       password,
     } = request.payload;
 
-    const db = request.server.app.db;
-    db.register(User);
-    db.register(AccessToken);
+    try {
+      // find user
+      const user = await User.findByUsername(username);
+      // compare passwords
+      await user.comparePassword(password);
+      // issue request to get access, token
+      await user.authorizeAccess();
 
-    const compareHash = (user) => {
-      if (!user) {
-        return Promise.reject({
-          code: 0,
-        });
+      const {
+        rawToken: accessToken,
+        issuedAt,
+        expiresAt,
+      } = await user.get('accessToken');
+
+      // sending
+      reply({
+        accessToken,
+        issuedAt,
+        expiresAt,
+      });
+    } catch (error) {
+      if (error instanceof UsernameNotFoundError) {
+        reply.unauthorized(error.message);
+      } else if (error instanceof PasswordMismatchError) {
+        reply.unauthorized(error.message);
+      } else {
+        reply.badImplementation(error);
       }
-
-      return Promise.all([User.comparePassword(password, user.get('password')), user]);
-    };
-
-    const checkIsMatch = ([ismatch, user]) => {
-      if (!ismatch) {
-        return Promise.reject({
-          code: 1,
-        });
-      }
-      return user;
-    };
-
-    const generateAndSaveToken = (user) => {
-      const rawToken = jwt.sign({
-        userId: user.get('_id'),
-      }, process.env.JWT_KEY, {
-        expiresIn: '14 days',
-      });
-
-      const token = new AccessToken({
-        userId: user.get('_id'),
-        rawToken,
-      });
-
-      return token.save().then(() => rawToken);
-    };
-
-    return User
-      .findOne({
-        username,
-      })
-      .then(compareHash)
-      .then(checkIsMatch)
-      .then(generateAndSaveToken)
-      .then((accessToken) => {
-        reply({
-          accessToken,
-        });
-      })
-      .catch((error) => {
-        switch (error.code) {
-        case 0:
-          reply.unauthorized('Username and password do not match');
-          break;
-        case 1:
-          reply.unauthorized('Username and password do not match');
-          break;
-        default:
-          reply.badImplementation(error);
-        }
-      });
+    }
   },
 
-  steam(request, reply) {
+  /*
+    Steam authentication
+   */
+  async steam(request, reply) {
     // steamapi access
     const steamAPIKey = process.env.STEAM_API_KEY;
-    // isLoggedIn === true & auth != null => authenticate user
-    const isLoggedIn = request.auth.isAuthenticated;
-    const auth = request.auth;
-    // keysigning options
-    const {
-      jwt: jwtConfig,
-    } = request.server.settings.app;
-
     const db = request.server.app.db;
     db.register(User);
-    db.register(AccessToken);
+
+    // isLoggedIn === true & auth != null => authenticate user
+    const {
+      auth,
+      auth: {
+        isAuthenticated: isLoggedIn,
+      },
+    } = request;
 
     // for username generation
     const chance = new Chance();
@@ -132,93 +135,112 @@ export default {
 
     const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
 
-    // check for user data in db
-    const checkUser = (response) => {
-      // requested steam data with steamid
-      const steamData = response.data.response.players[0];
-      const query = [{
-        'steamProvider.steamid': steamData.steamid,
-      }];
+    const {
+      data: {
+        response: {
+          players,
+        }
+      },
+    } = await axios.get(steamUserAPIUrl);
+    //const steamData = players[0];
 
-      // if it's authenticated then get user based on token information
-      // refresh steamProvider data when it's already steamprovided
-      if (isLoggedIn) {
-        query.push({
-          _id: new ObjectId(auth.credentials.userId),
-        });
-      }
-      // find possible duplicate data
-      return User
-        .or(query)
-        .findOne()
-        .then((user) => {
-          if (user) {
-            user.set('steamProvider', steamData);
-            return Promise.reject(user);
-          }
-          return steamData;
-        });
-    };
+    console.log(players)
 
-    // get user based on tokenid
-    const addNewUser = (steamdata) => {
-      // it's not submitted with token => signup user
-      const userObj = {
-        username: '',
-        password,
-        email,
-        steamProvider: steamdata,
-      };
+    //console.log(response.data.response.players[0])
 
-      if (!username || username === '') {
-        userObj.username = `${steamdata.personaname}#${chance.natural({
-          max: 99999,
-        })}`;
-      }
+    // check which fields we need to search for
+    const query = [];
 
-      // creating new user
-      const newUser = new User(userObj);
-      return newUser.save().then(() => newUser);
-    };
+    // query.push({
+    //   'steamProvider.steamid': steamData.steamid,
+    // });
+    // // check for user data in db
+    // const checkUser = (response) => {
+    //   // requested steam data with steamid
+    //   const steamData = response.data.response.players[0];
+    //   const query = [{
+    //     'steamProvider.steamid': steamData.steamid,
+    //   }];
 
-    // called from checkuser
-    // we jump after addnewuser
-    const alreadyInTheSystem = user => user;
+    //   // if it's authenticated then get user based on token information
+    //   // refresh steamProvider data when it's already steamprovided
+    //   if (isLoggedIn) {
+    //     query.push({
+    //       _id: new ObjectId(auth.credentials.userId),
+    //     });
+    //   }
+    //   // find possible duplicate data
+    //   return User
+    //     .or(query)
+    //     .findOne()
+    //     .then((user) => {
+    //       if (user) {
+    //         user.set('steamProvider', steamData);
+    //         return Promise.reject(user);
+    //       }
+    //       return steamData;
+    //     });
+    // };
 
-    // generate and sign token with userid
-    const generateToken = (user) => {
-      const rawToken = jwt.sign({
-        userId: user.get('_id'),
-      }, jwtConfig.key, {
-        expiresIn: '14 days',
-      });
+    // // get user based on tokenid
+    // const addNewUser = (steamdata) => {
+    //   // it's not submitted with token => signup user
+    //   const userObj = {
+    //     username: '',
+    //     password,
+    //     email,
+    //     steamProvider: steamdata,
+    //   };
 
-      const token = new AccessToken({
-        userId: user.get('_id'),
-        rawToken,
-      });
+    //   if (!username || username === '') {
+    //     userObj.username = `${steamdata.personaname}#${chance.natural({
+    //       max: 99999,
+    //     })}`;
+    //   }
 
-      return token.save().then(() => rawToken);
-    };
+    //   // creating new user
+    //   const newUser = new User(userObj);
+    //   return newUser.save().then(() => newUser);
+    // };
 
-    // send out accesstoken
-    const successHandler = accessToken => reply({
-      accessToken,
-    });
+    // // called from checkuser
+    // // we jump after addnewuser
+    // const alreadyInTheSystem = user => user;
 
-    const errorHandler = (error) => {
-      switch (error.code) {
-      default:
-        return reply.badImplementation(error);
-      }
-    };
+    // // generate and sign token with userid
+    // const generateToken = (user) => {
+    //   const rawToken = jwt.sign({
+    //     userId: user.get('_id'),
+    //   }, jwtConfig.key, {
+    //     expiresIn: '14 days',
+    //   });
 
-    return axios
-      .get(steamUserAPIUrl)
-      .then(checkUser)
-      .then(addNewUser, alreadyInTheSystem)
-      .then(generateToken)
-      .then(successHandler)
-      .catch(errorHandler);
+    //   const token = new AccessToken({
+    //     userId: user.get('_id'),
+    //     rawToken,
+    //   });
+
+    //   return token.save().then(() => rawToken);
+    // };
+
+    // // send out accesstoken
+    // const successHandler = accessToken => reply({
+    //   accessToken,
+    // });
+
+    // const errorHandler = (error) => {
+    //   switch (error.code) {
+    //   default:
+    //     return reply.badImplementation(error);
+    //   }
+    // };
+
+    // return axios
+    //   .get(steamUserAPIUrl)
+    //   .then(checkUser)
+    //   .then(addNewUser, alreadyInTheSystem)
+    //   .then(generateToken)
+    //   .then(successHandler)
+    //   .catch(errorHandler);
   },
 };
