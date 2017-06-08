@@ -133,23 +133,36 @@ export default {
       email, // optional
     } = request.payload;
 
+    // api url which can give us steam profile data
     const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
 
+    // getting steam data
     const {
       data: {
         response: {
           players,
-        }
+        },
       },
     } = await axios.get(steamUserAPIUrl);
-    //const steamData = players[0];
 
-    console.log(players)
-
-    //console.log(response.data.response.players[0])
+    const steamData = players[0];
 
     // check which fields we need to search for
     const query = [];
+
+    query.push({
+      'steamProvider.steamid': steamData.steamid,
+    });
+
+    // if it's authenticated then get user based on token information
+    //  refresh steamProvider data when it's already steamprovided
+    if (isLoggedIn) {
+      query.push({
+        _id: new ObjectId(auth.credentials.userId),
+      });
+    }
+
+    const user = User.findById();
 
     // query.push({
     //   'steamProvider.steamid': steamData.steamid,
