@@ -174,40 +174,6 @@ export default {
 
       reply(errorObject).code(errorObject.statusCode);
     },
-    createReview(request, reply, source, error) {
-      let errorObject = structureErrorObject(error);
-      const errorDetails = error.data.details[0];
-
-      switch (errorDetails.type) {
-      case 'any.required':
-        if (errorDetails.path === 'score') {
-          errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.SCORE_REQUIRED);
-        } else {
-          errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.SPORTSBOOKID_REQUIRED);
-        }
-        break;
-      case 'string.regex.base':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.OBJECTID_INVALID);
-        break;
-      case 'number.base':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.SCORE_NUMBER);
-        break;
-      case 'number.min':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.SCORE_MIN);
-        break;
-      case 'number.max':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.SCORE_MAX);
-        break;
-      case 'any.empty':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.FIELD_EMPTY);
-        errorObject.message = `${_.capitalize(errorDetails.path)}'s empty`;
-        break;
-      default:
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CREATE_REVIEW.UNDEFINED);
-      }
-
-      reply(errorObject).code(errorObject.statusCode);
-    },
   },
   users: {
     create(request, reply, source, error) {
@@ -275,6 +241,41 @@ export default {
         break;
       default:
         errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE.UNDEFINED);
+      }
+
+      reply(errorObject).code(errorObject.statusCode);
+    },
+    createReview(request, reply, source, error) {
+      let errorObject = structureErrorObject(error);
+      const errorDetails = error.data.details[0];
+
+      switch (errorDetails.type) {
+      case 'any.required':
+        if (errorDetails.path === 'score') {
+          errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_REQUIRED);
+        } else {
+          errorObject = _.merge({}, errorObject,
+          SPORTSBOOKS_ERRORS.CREATE_REVIEW.SPORTSBOOKID_REQUIRED);
+        }
+        break;
+      case 'string.regex.base':
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.OBJECTID_INVALID);
+        break;
+      case 'number.base':
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_NUMBER);
+        break;
+      case 'number.min':
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_MIN);
+        break;
+      case 'number.max':
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_MAX);
+        break;
+      case 'any.empty':
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.FIELD_EMPTY);
+        errorObject.message = `${_.capitalize(errorDetails.path)}'s empty`;
+        break;
+      default:
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.UNDEFINED);
       }
 
       reply(errorObject).code(errorObject.statusCode);

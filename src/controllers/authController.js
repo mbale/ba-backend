@@ -114,6 +114,7 @@ export default {
     const steamAPIKey = process.env.STEAM_API_KEY;
     const db = request.server.app.db;
     db.register(User);
+    db.use(timestamps());
 
     // isLoggedIn === true & auth != null => authenticate user
     const {
@@ -128,119 +129,123 @@ export default {
 
     const {
       steamId, // required
-      username, // only when user submits otherwise generate
-      password, // optional
-      email, // optional
+      username = false, // only when user submits otherwise generate
+      password = false, // optional
+      email = false, // optional
     } = request.payload;
 
+    // api url which can give us steam profile data
     const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
 
+    // getting steam data
     const {
       data: {
         response: {
           players,
-        }
+        },
       },
     } = await axios.get(steamUserAPIUrl);
-    //const steamData = players[0];
 
-    console.log(players)
-
-    //console.log(response.data.response.players[0])
+    const steamData = players[0];
 
     // check which fields we need to search for
     const query = [];
 
-    // query.push({
-    //   'steamProvider.steamid': steamData.steamid,
-    // });
-    // // check for user data in db
-    // const checkUser = (response) => {
-    //   // requested steam data with steamid
-    //   const steamData = response.data.response.players[0];
-    //   const query = [{
-    //     'steamProvider.steamid': steamData.steamid,
-    //   }];
+    query.push({
+      'steamProvider.steamId': steamData.steamid,
+    });
 
-    //   // if it's authenticated then get user based on token information
-    //   // refresh steamProvider data when it's already steamprovided
-    //   if (isLoggedIn) {
-    //     query.push({
-    //       _id: new ObjectId(auth.credentials.userId),
-    //     });
-    //   }
-    //   // find possible duplicate data
-    //   return User
-    //     .or(query)
-    //     .findOne()
-    //     .then((user) => {
-    //       if (user) {
-    //         user.set('steamProvider', steamData);
-    //         return Promise.reject(user);
-    //       }
-    //       return steamData;
-    //     });
-    // };
+    // if it's authenticated then get user based on token information
+    //  refresh steamProvider data when it's already steamprovided
+    if (isLoggedIn) {
+      query.push({
+        _id: new ObjectId(auth.credentials.userId),
+      });
+    }
 
-    // // get user based on tokenid
-    // const addNewUser = (steamdata) => {
-    //   // it's not submitted with token => signup user
-    //   const userObj = {
-    //     username: '',
-    //     password,
-    //     email,
-    //     steamProvider: steamdata,
-    //   };
+    try {
+      // restruct steamdata
+      const {
+        communityvisibilitystate: communityVisibilityState,
+        personaname,
+        lastlogoff: lastLogoff,
+        profileurl: profileURL,
+        avatar: avatarDefault,
+        avatarmedium: avatarMedium,
+        avatarfull: avatarHigh,
+        personastate: personaState,
+        primaryclanid: primaryClanId,
+        timecreated: timeCreated,
+        personastateflags: personaStateFlags,
+        loccountrycode: locCountryCode,
+        locstatecode: locStateCode,
+        loccityid: locCityId,
+      } = steamData;
 
-    //   if (!username || username === '') {
-    //     userObj.username = `${steamdata.personaname}#${chance.natural({
-    //       max: 99999,
-    //     })}`;
-    //   }
+      // we store it like this
+      const steamProfileData = {
+        steamId,
+        communityVisibilityState,
+        personaname,
+        lastLogoff,
+        profileURL,
+        avatar: {
+          default: avatarDefault,
+          medium: avatarMedium,
+          high: avatarHigh,
+        },
+        personaState,
+        primaryClanId,
+        timeCreated,
+        personaStateFlags,
+        locCountryCode,
+        locStateCode,
+        locCityId,
+      };
 
-    //   // creating new user
-    //   const newUser = new User(userObj);
-    //   return newUser.save().then(() => newUser);
-    // };
+      // find
+      const userInDb = await User.or(query).findOne();
 
-    // // called from checkuser
-    // // we jump after addnewuser
-    // const alreadyInTheSystem = user => user;
+      if (userInDb) {
+        // we refresh steam data
+        userInDb.set('steamProvider', steamProfileData);
 
-    // // generate and sign token with userid
-    // const generateToken = (user) => {
-    //   const rawToken = jwt.sign({
-    //     userId: user.get('_id'),
-    //   }, jwtConfig.key, {
-    //     expiresIn: '14 days',
-    //   });
+        await userInDb.save(); // authorizeaccess already calls it btw
+        await userInDb.authorizeAccess();
 
-    //   const token = new AccessToken({
-    //     userId: user.get('_id'),
-    //     rawToken,
-    //   });
+        reply(userInDb.get('accessToken'));
+      } else {
+        const userData = {
+          username,
+          password,
+          email,
+          avatar: steamProfileData.avatar.default,
+          steamProvider: steamProfileData,
+        };
 
-    //   return token.save().then(() => rawToken);
-    // };
+        const alreadyUsername = await User.findOne({
+          username,
+        });
 
-    // // send out accesstoken
-    // const successHandler = accessToken => reply({
-    //   accessToken,
-    // });
+        if (alreadyUsername) {
+          return reply.conflict('Username\'s taken');
+        }
 
-    // const errorHandler = (error) => {
-    //   switch (error.code) {
-    //   default:
-    //     return reply.badImplementation(error);
-    //   }
-    // };
+        // generate username
+        if (!username || username === '') {
+          userData.username = `${steamProfileData.personaname}#${chance.natural({
+            max: 99999, // TODO CHECK UNIQUE
+          })}`;
+        }
 
-    // return axios
-    //   .get(steamUserAPIUrl)
-    //   .then(checkUser)
-    //   .then(addNewUser, alreadyInTheSystem)
-    //   .then(generateToken)
-    //   .then(successHandler)
-    //   .catch(errorHandler);
+        const user = new User(userData);
+        await user.save();
+        await user.authorizeAccess();
+
+        reply(user.get('accessToken'));
+      }
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 };

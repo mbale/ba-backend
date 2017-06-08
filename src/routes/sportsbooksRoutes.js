@@ -53,6 +53,23 @@ const SportsbooksRoutes = [
       },
     },
   },
+  {
+    path: '/v1/sportsbooks/{id}/reviews',
+    method: 'POST',
+    handler: SportsbooksController.createReview,
+    config: {
+      validate: {
+        params: {
+          id: joi.objectId().required(),
+        },
+        payload: joi.object().keys({
+          score: joi.number().min(0).max(10).required(),
+          text: joi.string().optional(),
+        }),
+        failAction: failActions.sportsbooks.createReview,
+      },
+    },
+  },
 ];
 
 export default SportsbooksRoutes;

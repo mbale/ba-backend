@@ -4,7 +4,7 @@ import {
 
 class UserReview extends Model {
   static collection() {
-    return 'userReviews';
+    return 'reviews';
   }
 
   static configure() {

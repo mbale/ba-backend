@@ -2,6 +2,7 @@ import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
 import UsernameTakenError from '~/models/errors/usernameTakenError.js';
 import EmailTakenError from '~/models/errors/emailTakenError.js';
 import SteamIdTakenError from '~/models/errors/steamIdTakenError.js';
+import UserBySteamIdNotFoundError from '~/models/errors/userBySteamIdNotFoundError.js';
 import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 import {
   ActionTypes,
@@ -15,7 +16,7 @@ const hashPassword = () => {
     const { fields } = action;
 
     if (action.type === ActionTypes.CREATE) {
-      if (fields.password !== '') {
+      if (fields.password) {
         server.log(['info'], 'Hashing newly created user\'s password');
         const hashedPassword = await bcrypt.hash(fields.password, 10);
 
@@ -37,17 +38,25 @@ const setDefaultFields = () => {
       /*
       fieldset
        */
-      fields.accessToken = '';
-      fields.recoveryHash = '';
-      fields.avatar = '';
-      fields.reviews = [];
-      /*
-      modelset
-       */
-      model.set('accessToken', '');
-      model.set('recoveryHash', '');
-      model.set('avatar', '');
-      model.set('reviews', []);
+      if (typeof fields.accessToken === 'undefined') {
+        fields.accessToken = false;
+        model.set('accessToken', false);
+      }
+
+      if (typeof fields.recoveryHash === 'undefined') {
+        fields.recoveryHash = false;
+        model.set('recoveryHash', false);
+      }
+
+      if (typeof fields.avatar === 'undefined') {
+        fields.avatar = false;
+        model.set('avatar', false);
+      }
+
+      if (typeof fields.reviews === 'undefined') {
+        fields.reviews = [];
+        model.set('reviews', []);
+      }
     }
     return next(action);
   };
@@ -122,7 +131,7 @@ const extendUserModel = (UserModel) => {
   userModel.findByUsername = async function findByUsername(username) {
     try {
       if (username !== '') {
-        const user = await UserModel.findOne({
+        const user = await userModel.findOne({
           username,
         });
         if (!user) {
@@ -130,7 +139,24 @@ const extendUserModel = (UserModel) => {
         }
         return user;
       }
-      throw new Error();
+      throw new Error('Username\'s missing');
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  userModel.findUserBySteamId = async function findUserBySteamId(steamId) {
+    try {
+      if (steamId !== '') {
+        const user = await userModel.findOne({
+          'steamProvider.steamId': steamId,
+        });
+        if (!user) {
+          throw new UserBySteamIdNotFoundError(steamId);
+        }
+        return user;
+      }
+      throw new Error('SteamId\'s missing');
     } catch (error) {
       throw error;
     }
@@ -143,26 +169,24 @@ const extendUserModel = (UserModel) => {
     if (avatarURL !== '') {
       this.set('avatar', avatarURL);
       await this.save();
-    } else {
-      throw new Error('Avatar URL\'s missing');
     }
+    throw new Error('Avatar URL\'s missing');
   };
 
   /*
     Auth
    */
-  userModel.prototype.changePassword = async function changePassword(newPassword) {
+  userModel.prototype.changePassword = async function changePassword(newPassword = '') {
     if (newPassword !== '') {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       this.set('password', hashedPassword);
       await this.save();
-    } else {
-      throw new Error('Password\'s missing');
     }
+    throw new Error('Password\'s missing');
   };
 
   userModel.prototype.revokeAccess = async function revokeAccess() {
-    this.set('accessToken', '');
+    this.set('accessToken', false);
     await this.save();
   };
 
@@ -215,15 +239,18 @@ const extendUserModel = (UserModel) => {
     }
   };
 
-  /*
-    Steam
-   */
-
-  userModel.prototype.attachSteamProfile = async function attachSteamProfile(steamId) {
+  userModel.prototype.addReviewById = async function addReviewById(reviewId) {
     try {
+      if (reviewId !== '') {
+        server.log(['info'], 'Adding a review for sportsbook to user');
+        const reviews = await this.get('reviews');
+        reviews.push(reviewId);
+        this.set('reviews', reviews);
 
+        await this.save();
+      }
     } catch (error) {
-      
+      throw error;
     }
   };
 };

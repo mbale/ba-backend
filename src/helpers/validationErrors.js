@@ -124,40 +124,6 @@ export default {
         message: 'You should feel bad',
       },
     },
-    CREATE_REVIEW: {
-      SCORE_REQUIRED: {
-        error: 'ScoreMissing',
-        message: 'Score\'s missing',
-      },
-      SPORTSBOOKID_REQUIRED: {
-        error: 'SportsbookIdMissing',
-        message: 'SportsbookId\'s missing',
-      },
-      FIELD_EMPTY: {
-        error: 'FieldEmpty',
-        message: '',
-      },
-      OBJECTID_INVALID: {
-        error: 'SportsbookIDInvalid',
-        message: 'SportsbookId\'s invalid',
-      },
-      SCORE_NUMBER: {
-        error: 'ScoreNotNumber',
-        message: 'Score number\'s not a number',
-      },
-      SCORE_MIN: {
-        error: 'ScoreMin',
-        message: 'Score\'s minimum value is 0',
-      },
-      SCORE_MAX: {
-        error: 'ScoreMax',
-        message: 'Score\'s maximum value is 10',
-      },
-      UNDEFINED: {
-        error: 'UndefinedError',
-        message: 'You should feel bad',
-      },
-    },
   },
   USERS: {
     CREATE: {
@@ -240,6 +206,40 @@ export default {
       LIMIT_NUMBER: {
         error: 'LimitNotNumber',
         message: 'Limit must be number',
+      },
+      UNDEFINED: {
+        error: 'UndefinedError',
+        message: 'You should feel bad',
+      },
+    },
+    CREATE_REVIEW: {
+      SCORE_REQUIRED: {
+        error: 'ScoreMissing',
+        message: 'Score\'s missing',
+      },
+      SPORTSBOOKID_REQUIRED: {
+        error: 'SportsbookIdMissing',
+        message: 'SportsbookId\'s missing',
+      },
+      FIELD_EMPTY: {
+        error: 'FieldEmpty',
+        message: '',
+      },
+      OBJECTID_INVALID: {
+        error: 'SportsbookIDInvalid',
+        message: 'SportsbookId\'s invalid',
+      },
+      SCORE_NUMBER: {
+        error: 'ScoreNotNumber',
+        message: 'Score number\'s not a number',
+      },
+      SCORE_MIN: {
+        error: 'ScoreMin',
+        message: 'Score\'s minimum value is 0',
+      },
+      SCORE_MAX: {
+        error: 'ScoreMax',
+        message: 'Score\'s maximum value is 10',
       },
       UNDEFINED: {
         error: 'UndefinedError',

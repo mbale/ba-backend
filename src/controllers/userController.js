@@ -1,172 +1,98 @@
 import User from '~/models/userModel.js';
-import UserReview from '~/models/userReviewModel.js';
+import Review from '~/models/reviewModel.js';
 import Sportsbook from '~/models/sportsbookModel.js';
 import { ObjectId } from 'mongorito';
 import Nodemailer from 'nodemailer';
-import Chance from 'chance';
-import moment from 'moment';
-import fs from 'fs';
-import Path from 'path';
 import _ from 'lodash';
-import Promise from 'bluebird';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
 
 export default {
-  getInfo(request, reply) {
-    const _userId = request.auth.credentials.userId;
-    const userId = new ObjectId(_userId);
-
-    const db = request.server.app.db;
-    db.register(User);
-
-    const excludedProps = ['_id', 'password', '_version',
-      'accessToken', 'recoveryHash', 'steamProvider', 'reviews', 'created_at', 'updated_at'];
-
-    return User
-      .exclude(excludedProps)
-      .findById(userId)
-      .then(user => reply(user));
-  },
-
-  getSteamInfo(request, reply) {
-    const _userId = request.auth.credentials.userId;
-    const userId = new ObjectId(_userId);
-
-    const db = request.server.app.db;
-    db.register(User);
-
-    const pickedProps = ['personaName', 'profileurl'];
-
-    return User
-      .findById(userId)
-      .then((user) => {
-        const steamData = user.toJSON().steamProvider;
-
-        if (!steamData) {
-          return reply.notFound('user\'s not authenticated with steam');
-        }
-        // camelcase convention
-        steamData.profileurl = steamData.profileurl;
-        steamData.personaName = steamData.personaname;
-
-        const stripedResponse = _.pick(steamData, pickedProps);
-        return reply(stripedResponse);
-      });
-  },
-
-  getReviews(request, reply) {
-    const _userId = request.auth.credentials.userId;
-    const userId = new ObjectId(_userId);
-
-    const db = request.server.app.db;
-    db.register(UserReview);
-
-    const excludedProps = ['created_at', 'updated_at', 'userId'];
-
-    return UserReview
-      .exclude(excludedProps)
-      .find({
-        userId,
-      })
-      .then(reviews => reply(reviews));
-  },
-
-  createReview(request, reply) {
-    const userId = new ObjectId(request.auth.credentials.userId);
-
-    const db = request.server.app.db;
-    db.register(UserReview);
-    db.register(User);
-    db.register(Sportsbook);
-
-    const {
-      sportsbookId: _sportsbookId,
-      score,
-      text,
-    } = request.payload;
-
-    const sportsbookId = new ObjectId(_sportsbookId);
-    const review = {
-      score,
-      sportsbookId: new ObjectId(sportsbookId),
+  async getInfo(request, reply) {
+    let {
       userId,
-    };
+    } = request.auth.credentials;
+    userId = new ObjectId(userId);
 
-    if (text) {
-      review.text = text;
+    const db = request.server.app.db;
+    db.register(User);
+
+    try {
+      const findUser = await User.findById(userId);
+
+      // get fields
+      const {
+        _id: id,
+        username,
+        email,
+        avatar,
+        created_at: registeredOn,
+      } = await findUser.get();
+
+      // send back
+      reply({
+        id,
+        username,
+        email,
+        avatar,
+        registeredOn,
+      });
+    } catch (error) {
+      reply.badImplementation(error);
     }
-
-    const validate = ([sportsbook, user, review]) => {
-      if (!sportsbook) {
-        return Promise.reject({
-          code: 0,
-        });
-      }
-
-      if (!user) {
-        return Promise.reject({
-          code: 1,
-        });
-      }
-
-      if (review) {
-        return Promise.reject({
-          code: 2,
-        });
-      }
-
-      return user;
-    };
-
-    const saveReview = (user) => {
-      const newReview = new UserReview(review);
-
-      return Promise.all([user, newReview.save().then(() => newReview)]);
-    };
-
-    const addToUser = ([user, review]) => {
-      const userReviews = user.get('reviews') || [];
-
-      userReviews.push(review.get('_id'));
-      user.set('reviews', userReviews);
-
-      return user.save().then(() => user);
-    };
-
-    const successHandler = user => reply();
-
-    const errorHandler = (error) => {
-      switch (error.code) {
-      case 0:
-        reply.badRequest('invalid sportsbookid');
-        break;
-      case 1:
-        reply.unauthorized();
-        break;
-      case 2:
-        reply.conflict('you\'ve already rated');
-        break;
-      default:
-        reply.badImplementation(error);
-      }
-    };
-
-    return Promise
-      .all([
-        Sportsbook.findById(sportsbookId),
-        User.findById(userId),
-        UserReview.findOne({
-          userId,
-          sportsbookId,
-        }),
-      ])
-      .then(validate)
-      .then(saveReview)
-      .then(addToUser)
-      .then(successHandler)
-      .catch(errorHandler);
   },
+
+  async getSteamInfo(request, reply) {
+    let {
+      userId,
+    } = request.auth.credentials;
+    userId = new ObjectId(userId);
+
+    const db = request.server.app.db;
+    db.register(User);
+
+    try {
+      const user = await User.findById(userId);
+
+      if (user) {
+        // get fields
+        const {
+          steamId,
+          personaname: accountName,
+          profileURL,
+        } = await user.get('steamProvider');
+        return reply({
+          steamId,
+          accountName,
+          profileURL,
+        });
+      }
+    } catch (error) {
+      reply.badImplementation(error);
+    }
+    return reply.notFound('This account hasn\'t got attached STEAM profile');
+  },
+
+  // async getReviews(request, reply) {
+  //   let {
+  //     userId,
+  //   } = request.auth.credentials;
+  //   userId = new ObjectId(userId);
+
+  //   const db = request.server.app.db;
+  //   db.register(Review);
+
+  //   try {
+  //     const reviews = await Review
+  //       .select({ });
+  //       .find({
+  //         userId,
+  //       });
+  //     const reviewsAsJSON =
+  //   } catch (error) {
+
+  //   }
+  // },
 
   uploadAvatar(request, reply) {
     // init
