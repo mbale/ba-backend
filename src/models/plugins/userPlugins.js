@@ -100,17 +100,18 @@ const checkIfUserExists = () => {
         if (user) {
           // we have collision
           server.log(['info'], 'We already have such user');
-          if (user.get('email') === email) {
+          if (await user.get('email') === email) {
             throw new EmailTakenError(email);
           }
 
-          if (user.get('username') === username) {
+          if (await user.get('username') === username) {
             throw new UsernameTakenError(username);
           }
 
-          if (user.get('steamProvider.steamid') === steamProvider.steamid) {
+          if (await user.get('steamProvider.steamid') === steamProvider.steamid) {
             throw new SteamIdTakenError(steamProvider.steamid);
           }
+          throw new Error('Duplicate user');
         }
       } catch (error) {
         // rethrow
