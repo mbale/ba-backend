@@ -2,7 +2,6 @@ import User from '~/models/userModel.js';
 import Review from '~/models/reviewModel.js';
 import Sportsbook from '~/models/sportsbookModel.js';
 import { ObjectId } from 'mongorito';
-import Nodemailer from 'nodemailer';
 import _ from 'lodash';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
@@ -73,34 +72,13 @@ export default {
     return reply.notFound('This account hasn\'t got attached STEAM profile');
   },
 
-  // async getReviews(request, reply) {
-  //   let {
-  //     userId,
-  //   } = request.auth.credentials;
-  //   userId = new ObjectId(userId);
-
-  //   const db = request.server.app.db;
-  //   db.register(Review);
-
-  //   try {
-  //     const reviews = await Review
-  //       .select({ });
-  //       .find({
-  //         userId,
-  //       });
-  //     const reviewsAsJSON =
-  //   } catch (error) {
-
-  //   }
-  // },
-
-  uploadAvatar(request, reply) {
+  async uploadAvatar(request, reply) {
     // init
     const payload = request.payload;
-    const {
-      userId: _id,
+    let {
+      userId,
     } = request.auth.credentials;
-    const userId = new ObjectId(_id);
+    userId = new ObjectId(userId);
 
     const db = request.server.app.db;
     db.register(User);
@@ -112,159 +90,91 @@ export default {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
-    const uploadAvatar = new Promise((resolve, reject) => {
-      const stream = cloudinary
-        .uploader
-        .upload_stream(resource => resolve(resource));
+    const user = await User.findById(userId);
 
-      // streaming directly to cloudinary
-      payload.avatar.pipe(stream);
-
-      // if error happens
-      payload.avatar.on('end', (error) => {
-        if (error) return reject(error);
+    // streaming directly to cloudinary
+    function uploadAvatar(fromStream) {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(resource => resolve(resource));
+        fromStream.pipe(stream);
+        fromStream.on('error', error => reject(error));
       });
-    });
+    }
 
-    const updateAvatarOnUser = resource =>
-      User
-        .findById(userId)
-        .then((user) => {
-          user.set('avatar', resource.url);
-          return user.save();
-        });
+    try {
+      const {
+        secure_url: secureURL,
+      } = await uploadAvatar(payload.avatar);
 
-    const successHandler = (r) => reply(r);
-
-    const errorHandler = (error) => {
-      switch (error.code) {
-      default:
-        reply.badImplementation(error);
-      }
-    };
-
-    return uploadAvatar
-      .then(updateAvatarOnUser)
-      .then(successHandler)
-      .catch(errorHandler);
+      await user.setAvatar(secureURL);
+      reply();
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
-  deleteAvatar(request, reply) {
-    const userId = new ObjectId(request.auth.credentials.userId);
+  async deleteAvatar(request, reply) {
+    let {
+      userId,
+    } = request.auth.credentials;
+    userId = new ObjectId(userId);
 
     const db = request.server.app.db;
     db.register(User);
 
-    return User
-      .findById(userId)
-      .then((user) => {
-        user.set('avatar', '');
-        //TODO Remove file?
-        return user.save();
-      });
+    try {
+      const user = await User.findById(userId);
+      await user.setAvatar();
+
+      reply();
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
-  editProfile(request, reply) {
-    const userId = new ObjectId(request.auth.credentials.userId);
+  async editProfile(request, reply) {
+    let {
+      userId,
+    } = request.auth.credentials;
+    userId = new ObjectId(userId);
 
     const db = request.server.app.db;
     db.register(User);
 
-    const updateFields = (user) => {
+    try {
+      const user = await User.findById(userId);
+
       _.forEach(request.payload, (value, key) => {
         user.set(key, value);
       });
 
-      return user.save();
-    };
-
-    const successHandler = () => reply();
-
-    const errorHandler = error => reply.badImplementation(error);
-
-    return User
-      .findById(userId)
-      .then(updateFields)
-      .then(successHandler)
-      .catch(errorHandler);
+      await user.save();
+      reply();
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
-  resetAccount(request, reply) {
+  async resetAccount(request, reply) {
     const email = request.payload.email;
 
     const db = request.server.app.db;
     db.register(User);
 
-    const {
-      jwt: jwtConfig,
-      email: emailConfig,
-    } = request.server.settings.app;
-
-    const generateToken = (user) => {
-      if (!user) {
-        return Promise.reject({
-          code: 0,
-          data: email,
-        });
-      }
-      const recoveryToken = jwt.sign({
-        userId: user.get('_id'),
-      }, jwtConfig.key, jwtConfig.options);
-
-      user.set('recoveryHash', recoveryToken);
-
-      return user.save().then(() => [email, recoveryToken]);
-    };
-
-    const sendoutEmail = ([emailAddress, recoveryToken]) => {
-      const transport = Nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-          user: process.env.EMAIL_AUTH_USER,
-          pass: process.env.EMAIL_AUTH_PASSWORD,
-        },
-      });
-
-      const mailOptions = {
-        from: '"Recover Account" <recover@esportsinsights.com>',
-        to: emailAddress,
-        subject: 'Here\'s your info to recover your acccount',
-        text: `Here's your recover hash to reset your account: ${recoveryToken}`,
-      };
-
-      transport.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          return Promise.reject({
-            code: 1,
-            data: error,
-          });
-        }
-        request.server.log(['info', 'email'], info);
-        return Promise.resolve();
-      });
-    };
-
-    const successHandler = () => reply();
-
-    const errorHandler = (error) => {
-      switch (error.code) {
-      case 0:
-        reply.notFound(error.data);
-        break;
-      default:
-        reply.badImplementation(error);
-      }
-    };
-
-    return User
-      .findOne({
+    try {
+      const user = await User.findOne({
         email,
-      })
-      .then(generateToken)
-      .then(sendoutEmail)
-      .then(successHandler)
-      .catch(errorHandler);
+      });
+
+      if (user) {
+        await user.recoverAccount();
+        reply();
+      } else {
+        reply.notFound('We do not have an account associated with this email address.');
+      }
+    } catch (error) {
+      reply.badImplementation(error);
+    }
   },
 
   testRecoveryHash(request, reply) {

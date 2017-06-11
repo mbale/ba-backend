@@ -7,6 +7,7 @@ import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 import {
   ActionTypes,
 } from 'mongorito';
+import Nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import server from '~/index.js';
@@ -166,12 +167,9 @@ const extendUserModel = (UserModel) => {
   /*
     Cloudinary
    */
-  userModel.prototype.setAvatar = async function setAvatar(avatarURL) {
-    if (avatarURL !== '') {
-      this.set('avatar', avatarURL);
-      await this.save();
-    }
-    throw new Error('Avatar URL\'s missing');
+  userModel.prototype.setAvatar = async function setAvatar(avatarURL = false) {
+    this.set('avatar', avatarURL);
+    await this.save();
   };
 
   /*
@@ -182,13 +180,58 @@ const extendUserModel = (UserModel) => {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       this.set('password', hashedPassword);
       await this.save();
+    } else {
+      throw new Error('Password\'s missing');
     }
-    throw new Error('Password\'s missing');
   };
 
   userModel.prototype.revokeAccess = async function revokeAccess() {
     this.set('accessToken', false);
     await this.save();
+  };
+
+  userModel.prototype.recoverAccount = async function recoverAccount() {
+    const {
+      _id: userId,
+      email,
+    } = await this.get();
+
+    try {
+      server.log(['info'], 'Recovering account');
+      // make recovery token
+      const recoveryToken = jwt.sign({
+        userId,
+      }, process.env.JWT_KEY, {
+        expiresIn: process.env.JWT_DURATION,
+      });
+
+      // setting prop
+      this.set('recoveryToken', recoveryToken);
+      // unset
+      this.set('accessToken', false);
+
+      const transport = Nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_AUTH_USER,
+          pass: process.env.EMAIL_AUTH_PASSWORD,
+        },
+      });
+
+      const mailTemplate = {
+        from: '"Recover Account" <recover@esportsinsights.com>',
+        to: email,
+        subject: 'Here\'s your info to recover your acccount',
+        text: `Here's your recover hash to reset your account: ${recoveryToken}`,
+      };
+
+      await transport.sendMail(mailTemplate);
+      await this.save();
+    } catch (error) {
+      console.log(error)
+      throw error;
+    }
   };
 
   userModel.prototype.authorizeAccess = async function authorizeAccess() {
