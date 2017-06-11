@@ -1,4 +1,6 @@
 import User from '~/models/userModel.js';
+import UsernameTakenError from '~/models/errors/usernameTakenError.js';
+import EmailTakenError from '~/models/errors/emailTakenError.js';
 import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
 import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 import {
@@ -7,8 +9,6 @@ import {
 import timestamps from 'mongorito-timestamps';
 import Chance from 'chance';
 import axios from 'axios';
-import jwt from 'jsonwebtoken';
-import Promise from 'bluebird';
 
 export default {
   /*
@@ -213,7 +213,17 @@ export default {
         await userInDb.save(); // authorizeaccess already calls it btw
         await userInDb.authorizeAccess();
 
-        reply(userInDb.get('accessToken'));
+        const {
+          rawToken: accessToken,
+          issuedAt,
+          expiresAt,
+        } = await userInDb.get('accessToken');
+
+        reply({
+          accessToken,
+          issuedAt,
+          expiresAt,
+        });
       } else {
         const userData = {
           username,
@@ -222,14 +232,6 @@ export default {
           avatar: steamProfileData.avatar.default,
           steamProvider: steamProfileData,
         };
-
-        const alreadyUsername = await User.findOne({
-          username,
-        });
-
-        if (alreadyUsername) {
-          return reply.conflict('Username\'s taken');
-        }
 
         // generate username
         if (!username || username === '') {
@@ -242,10 +244,26 @@ export default {
         await user.save();
         await user.authorizeAccess();
 
-        reply(user.get('accessToken'));
+        const {
+          rawToken: accessToken,
+          issuedAt,
+          expiresAt,
+        } = await userInDb.get('accessToken');
+
+        reply({
+          accessToken,
+          issuedAt,
+          expiresAt,
+        });
       }
     } catch (error) {
-      reply.badImplementation(error);
+      if (error instanceof EmailTakenError) {
+        reply.conflict(error.message);
+      } else if (error instanceof UsernameTakenError) {
+        reply.conflict(error.message);
+      } else {
+        reply.badImplementation(error);
+      }
     }
   },
 };
