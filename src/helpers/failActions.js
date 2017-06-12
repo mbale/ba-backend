@@ -116,16 +116,16 @@ export default {
 
       reply(errorObject).code(errorObject.statusCode);
     },
-    testRecoveryHash(request, reply, source, error) {
+    testRecoveryToken(request, reply, source, error) {
       let errorObject = structureErrorObject(error);
       const errorDetails = error.data.details[0];
 
       switch (errorDetails.type) {
       case 'any.required':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.TEST_RECOVERYHASH.HASH_REQUIRED);
+        errorObject = _.merge({}, errorObject, USER_ERRORS.TEST_RECOVERYTOKEN.REQUIRED);
         break;
       default:
-        errorObject = _.merge({}, errorObject, USER_ERRORS.TEST_RECOVERYHASH.UNDEFINED);
+        errorObject = _.merge({}, errorObject, USER_ERRORS.TEST_RECOVERYTOKEN.UNDEFINED);
       }
 
       reply(errorObject).code(errorObject.statusCode);
@@ -136,8 +136,8 @@ export default {
 
       switch (errorDetails.type) {
       case 'any.required':
-        if (errorDetails.path === 'recoveryHash') {
-          errorObject = _.merge({}, errorObject, USER_ERRORS.RECOVER_ACCOUNT.HASH_REQUIRED);
+        if (errorDetails.path === 'recoveryToken') {
+          errorObject = _.merge({}, errorObject, USER_ERRORS.RECOVER_ACCOUNT.TOKEN_REQUIRED);
         } else {
           errorObject = _.merge({}, errorObject, USER_ERRORS.RECOVER_ACCOUNT.PASSWORD_REQUIRED);
         }
@@ -248,11 +248,12 @@ export default {
     createReview(request, reply, source, error) {
       let errorObject = structureErrorObject(error);
       const errorDetails = error.data.details[0];
+      console.log(errorDetails)
 
       switch (errorDetails.type) {
       case 'any.required':
-        if (errorDetails.path === 'score') {
-          errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_REQUIRED);
+        if (errorDetails.path === 'rate') {
+          errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.RATE_REQUIRED);
         } else {
           errorObject = _.merge({}, errorObject,
           SPORTSBOOKS_ERRORS.CREATE_REVIEW.SPORTSBOOKID_REQUIRED);
@@ -262,13 +263,13 @@ export default {
         errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.OBJECTID_INVALID);
         break;
       case 'number.base':
-        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_NUMBER);
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.RATE_NUMBER);
         break;
       case 'number.min':
-        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_MIN);
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.RATE_MIN);
         break;
       case 'number.max':
-        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.SCORE_MAX);
+        errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.RATE_MAX);
         break;
       case 'any.empty':
         errorObject = _.merge({}, errorObject, SPORTSBOOKS_ERRORS.CREATE_REVIEW.FIELD_EMPTY);

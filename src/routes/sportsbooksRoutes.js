@@ -1,7 +1,7 @@
-import SportsbooksController from '~/controllers/sportsbooksController.js';
-import failActions from '~/helpers/failActions';
 import joi from 'joi';
 import joiObjectId from 'joi-objectid';
+import SportsbooksController from '~/controllers/sportsbooksController.js';
+import failActions from '~/helpers/failActions';
 
 joi.objectId = joiObjectId(joi);
 
@@ -63,7 +63,7 @@ const SportsbooksRoutes = [
           id: joi.objectId().required(),
         },
         payload: joi.object().keys({
-          score: joi.number().min(0).max(10).required(),
+          rate: joi.number().min(0).max(5).required(),
           text: joi.string().optional(),
         }),
         failAction: failActions.sportsbooks.createReview,

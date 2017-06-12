@@ -78,10 +78,10 @@ export default {
         message: 'You should feel bad',
       },
     },
-    TEST_RECOVERYHASH: {
-      HASH_REQUIRED: {
-        error: 'RecoveryhashMissing',
-        message: 'Recovery hash\'s missing',
+    TEST_RECOVERYTOKEN: {
+      TOKEN_REQUIRED: {
+        error: 'RecoveryTokenMissing',
+        message: 'Recovery token\'s missing',
       },
       UNDEFINED: {
         error: 'UndefinedError',
@@ -89,9 +89,9 @@ export default {
       },
     },
     RECOVER_ACCOUNT: {
-      HASH_REQUIRED: {
-        error: 'RecoveryhashMissing',
-        message: 'Recovery hash\'s missing',
+      TOKEN_REQUIRED: {
+        error: 'RecoveryTokenMissing',
+        message: 'Recovery token\'s missing',
       },
       PASSWORD_REQUIRED: {
         error: 'PasswordMissing',
@@ -213,9 +213,9 @@ export default {
       },
     },
     CREATE_REVIEW: {
-      SCORE_REQUIRED: {
-        error: 'ScoreMissing',
-        message: 'Score\'s missing',
+      RATE_REQUIRED: {
+        error: 'RateMissing',
+        message: 'Rate\'s missing',
       },
       SPORTSBOOKID_REQUIRED: {
         error: 'SportsbookIdMissing',
@@ -229,17 +229,17 @@ export default {
         error: 'SportsbookIDInvalid',
         message: 'SportsbookId\'s invalid',
       },
-      SCORE_NUMBER: {
-        error: 'ScoreNotNumber',
-        message: 'Score number\'s not a number',
+      RATE_NUMBER: {
+        error: 'RateNotNumber',
+        message: 'Rate\'s not a number',
       },
-      SCORE_MIN: {
-        error: 'ScoreMin',
-        message: 'Score\'s minimum value is 0',
+      RATE_MIN: {
+        error: 'RateMin',
+        message: 'Rate\'s minimum value is 0',
       },
-      SCORE_MAX: {
-        error: 'ScoreMax',
-        message: 'Score\'s maximum value is 10',
+      RATE_MAX: {
+        error: 'RateMax',
+        message: 'Rate\'s maximum value is 5',
       },
       UNDEFINED: {
         error: 'UndefinedError',

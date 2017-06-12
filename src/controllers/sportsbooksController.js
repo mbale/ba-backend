@@ -1,10 +1,10 @@
+import timestamps from 'mongorito-timestamps';
+import { ObjectId } from 'mongorito';
+import Review from '~/models/reviewModel.js';
 import SportsbookNotFoundByIdError from '~/models/errors/sportsbookNotFoundByIdError.js';
 import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
 import Sportsbook from '~/models/sportsbookModel.js';
 import User from '~/models/userModel.js';
-import timestamps from 'mongorito-timestamps';
-import Review from '~/models/reviewModel.js';
-import { ObjectId } from 'mongorito';
 
 export default {
   async getAll(request, reply) {
@@ -52,7 +52,7 @@ export default {
 
     if (sportsbook) {
       const reviews = await Review
-        .select({ _id: 1, score: 1, userId: 1, text: 1 }) // filtering out fields
+        .select({ _id: 1, rate: 1, userId: 1, text: 1 }) // filtering out fields
         .limit(limit)
         .find({
           sportsbookId,
@@ -89,7 +89,7 @@ export default {
     db.register(Review);
 
     const {
-      score,
+      rate,
       text,
     } = request.payload;
 
@@ -111,7 +111,7 @@ export default {
 
       const newReview = new Review({
         userId,
-        score,
+        rate,
         text,
         sportsbookId,
       });

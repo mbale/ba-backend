@@ -1,8 +1,8 @@
-import User from '~/models/userModel.js';
+import _ from 'lodash';
 import timestamps from 'mongorito-timestamps';
 import UsernameTakenError from '~/models/errors/usernameTakenError.js';
 import EmailTakenError from '~/models/errors/emailTakenError.js';
-import _ from 'lodash';
+import User from '~/models/userModel.js';
 
 export default {
   /*

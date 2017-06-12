@@ -1,14 +1,14 @@
-import User from '~/models/userModel.js';
-import UsernameTakenError from '~/models/errors/usernameTakenError.js';
-import EmailTakenError from '~/models/errors/emailTakenError.js';
-import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
-import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 import {
   ObjectId,
 } from 'mongorito';
 import timestamps from 'mongorito-timestamps';
 import Chance from 'chance';
 import axios from 'axios';
+import User from '~/models/userModel.js';
+import UsernameTakenError from '~/models/errors/usernameTakenError.js';
+import EmailTakenError from '~/models/errors/emailTakenError.js';
+import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
+import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 
 export default {
   /*

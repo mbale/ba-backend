@@ -2,13 +2,10 @@ import {
   Model,
 } from 'mongorito';
 
-class UserReview extends Model {
+class Review extends Model {
   static collection() {
     return 'reviews';
   }
-
-  static configure() {
-  }
 }
 
-export default UserReview;
+export default Review;

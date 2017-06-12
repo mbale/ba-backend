@@ -44,9 +44,9 @@ const setDefaultFields = () => {
         model.set('accessToken', false);
       }
 
-      if (typeof fields.recoveryHash === 'undefined') {
-        fields.recoveryHash = false;
-        model.set('recoveryHash', false);
+      if (typeof fields.recoveryToken === 'undefined') {
+        fields.recoveryToken = false;
+        model.set('recoveryToken', false);
       }
 
       if (typeof fields.avatar === 'undefined') {

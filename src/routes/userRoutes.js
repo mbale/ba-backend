@@ -59,14 +59,14 @@ const UserRoutes = [
   {
     path: '/v1/user/recover_account',
     method: 'GET',
-    handler: UserController.testRecoveryHash,
+    handler: UserController.testRecoveryToken,
     config: {
       auth: false,
       validate: {
         headers: joi.object({
-          recoveryhash: joi.string().required(),
+          'recovery-token': joi.string().required(),
         }).options({ allowUnknown: true }),
-        failAction: failActions.user.testRecoveryHash,
+        failAction: failActions.user.testRecoveryToken,
       },
     },
   },
@@ -78,7 +78,7 @@ const UserRoutes = [
       auth: false,
       validate: {
         payload: joi.object().keys({
-          recoveryHash: joi.required(),
+          recoveryToken: joi.required(),
           password: joi.required(),
         }),
         failAction: failActions.user.recoverAccount,
