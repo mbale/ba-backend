@@ -248,7 +248,7 @@ export default {
           rawToken: accessToken,
           issuedAt,
           expiresAt,
-        } = await userInDb.get('accessToken');
+        } = await user.get('accessToken');
 
         reply({
           accessToken,
