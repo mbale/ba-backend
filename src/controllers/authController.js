@@ -241,14 +241,13 @@ export default {
         }
 
         const user = new User(userData);
-        await user.save();
         await user.authorizeAccess();
 
         const {
           rawToken: accessToken,
           issuedAt,
           expiresAt,
-        } = await userInDb.get('accessToken');
+        } = await user.get('accessToken');
 
         reply({
           accessToken,
