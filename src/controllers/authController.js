@@ -241,7 +241,6 @@ export default {
         }
 
         const user = new User(userData);
-        await user.save();
         await user.authorizeAccess();
 
         const {
