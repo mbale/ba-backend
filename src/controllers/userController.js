@@ -28,15 +28,21 @@ export default {
         steamProvider,
       } = await findUser.get();
 
-      // send back
-      reply({
+      const replyObj = {
         id,
         username,
         email,
         avatar,
         registeredOn,
-        steamProvider,
-      });
+      };
+
+      // check if steamprovider is set up
+      if (Object.keys(steamProvider).length > 0) {
+        replyObj.steamProvider = steamProvider;
+      }
+
+      // send back
+      return reply(replyObj);
     } catch (error) {
       reply.badImplementation(error);
     }
