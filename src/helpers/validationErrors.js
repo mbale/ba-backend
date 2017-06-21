@@ -107,17 +107,25 @@ export default {
       },
     },
     CHANGE_PASSWORD: {
-      PASSWORD_REQUIRED: {
-        error: 'PasswordMissing',
-        message: 'Password\'s missing',
+      OLD_PASSWORD_REQUIRED: {
+        error: 'OldPasswordMissing',
+        message: 'Old password\'s missing',
+      },
+      NEW_PASSWORD_REQUIRED: {
+        error: 'NewPasswordMissing',
+        message: 'New password\'s missing',
       },
       REQUEST_EMPTY: {
         error: 'RequestEmpty',
         message: 'Request\'s empty',
       },
-      PASSWORD_TOO_SHORT: {
-        error: 'PasswordTooShort',
-        message: 'Password\'s minimum 6 length',
+      OLD_PASSWORD_TOO_SHORT: {
+        error: 'OldPasswordTooShort',
+        message: 'Old password\'s minimum 6 length',
+      },
+      NEW_PASSWORD_TOO_SHORT: {
+        error: 'NewPasswordTooShort',
+        message: 'New password\'s minimum 6 length',
       },
       UNDEFINED: {
         error: 'UndefinedError',

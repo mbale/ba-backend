@@ -87,12 +87,13 @@ const UserRoutes = [
   },
   {
     path: '/v1/user/password',
-    method: 'POST',
+    method: 'PUT',
     handler: UserController.changePassword,
     config: {
       validate: {
-        payload: joi.object().min(1).keys({
-          password: joi.string().required().min(6),
+        payload: joi.object().min(2).keys({
+          oldPassword: joi.string().required().min(6),
+          newPassword: joi.string().required().min(6),
         }),
         failAction: failActions.user.changePassword,
       },

@@ -159,10 +159,20 @@ export default {
 
       switch (errorDetails.type) {
       case 'any.required':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CHANGE_PASSWORD.PASSWORD_REQUIRED);
+        if (errorDetails.path === 'oldPassword') {
+          errorObject = _.merge({}, errorObject, USER_ERRORS.CHANGE_PASSWORD.OLD_PASSWORD_REQUIRED);
+        } else {
+          errorObject = _.merge({}, errorObject, USER_ERRORS.CHANGE_PASSWORD.NEW_PASSWORD_REQUIRED);
+        }
         break;
       case 'string.min':
-        errorObject = _.merge({}, errorObject, USER_ERRORS.CHANGE_PASSWORD.PASSWORD_TOO_SHORT);
+        if (errorDetails.path === 'oldPassword') {
+          errorObject = _.merge({}, errorObject,
+            USER_ERRORS.CHANGE_PASSWORD.OLD_PASSWORD_TOO_SHORT);
+        } else {
+          errorObject = _.merge({}, errorObject,
+            USER_ERRORS.CHANGE_PASSWORD.NEW_PASSWORD_TOO_SHORT);
+        }
         break;
       case 'object.min':
         errorObject = _.merge({}, errorObject, USER_ERRORS.CHANGE_PASSWORD.REQUEST_EMPTY);

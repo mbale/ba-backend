@@ -3,6 +3,7 @@ import _ from 'lodash';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
 import User from '~/models/userModel.js';
+import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 
 export default {
   async getInfo(request, reply) {
@@ -202,19 +203,33 @@ export default {
   },
 
   async changePassword(request, reply) {
-    let {
-      userId,
-    } = request.auth.credentials;
-    userId = new ObjectId(userId);
+    try {
+      let {
+        userId,
+      } = request.auth.credentials;
+      userId = new ObjectId(userId);
 
-    const password = request.payload.password;
+      const {
+        oldPassword,
+        newPassword,
+      } = request.payload;
 
-    const db = request.server.app.db;
-    db.register(User);
+      const db = request.server.app.db;
+      db.register(User);
 
-    const user = await User.findById(userId);
+      const user = await User.findById(userId);
+      // we first check if submitted old password is ok within db
+      // otherwise it's throwing error
+      await user.comparePassword(oldPassword);
+      // ok we change
+      await user.changePassword(newPassword);
 
-    await user.changePassword(password);
-    reply();
+      return reply();
+    } catch (error) {
+      if (error instanceof PasswordMismatchError) {
+        return reply.unauthorized(error.message);
+      }
+      return reply.badImplementation(error);
+    }
   },
 };
