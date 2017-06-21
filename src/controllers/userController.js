@@ -24,6 +24,7 @@ export default {
         email,
         avatar,
         created_at: registeredOn,
+        steamProvider,
       } = await findUser.get();
 
       // send back
@@ -33,41 +34,11 @@ export default {
         email,
         avatar,
         registeredOn,
+        steamProvider,
       });
     } catch (error) {
       reply.badImplementation(error);
     }
-  },
-
-  async getSteamInfo(request, reply) {
-    let {
-      userId,
-    } = request.auth.credentials;
-    userId = new ObjectId(userId);
-
-    const db = request.server.app.db;
-    db.register(User);
-
-    try {
-      const user = await User.findById(userId);
-
-      if (user) {
-        // get fields
-        const {
-          steamId,
-          personaname: accountName,
-          profileURL,
-        } = await user.get('steamProvider');
-        return reply({
-          steamId,
-          accountName,
-          profileURL,
-        });
-      }
-    } catch (error) {
-      reply.badImplementation(error);
-    }
-    return reply.notFound('This account hasn\'t got attached STEAM profile');
   },
 
   async uploadAvatar(request, reply) {

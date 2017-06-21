@@ -58,6 +58,11 @@ const setDefaultFields = () => {
         fields.reviews = [];
         model.set('reviews', []);
       }
+
+      if (typeof fields.steamProvicer === 'undefined') {
+        fields.steamProvider = {};
+        model.set('steamProvider', {});
+      }
     }
     return next(action);
   };

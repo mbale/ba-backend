@@ -107,11 +107,6 @@ const UserRoutes = [
   //     },
   //   },
   // },
-  {
-    path: '/v1/user/steam',
-    method: 'GET',
-    handler: UserController.getSteamInfo,
-  },
 ];
 
 export default UserRoutes;
