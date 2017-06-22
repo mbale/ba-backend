@@ -240,7 +240,14 @@ export default {
           })}`;
         }
 
-        const user = new User(userData);
+        // we save it before due to generation of _id (we use that in token)
+        // pls: https://github.com/vadimdemedes/mongorito/issues/156
+        let {
+          id: userId,
+        } = await new User(userData).save();
+        userId = new ObjectId(userId);
+
+        const user = await User.findById(userId);
         await user.authorizeAccess();
 
         const {
