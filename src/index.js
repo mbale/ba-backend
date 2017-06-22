@@ -1,16 +1,14 @@
 import Hapi from 'hapi';
 import Inert from 'inert';
-import Path from 'path';
 import Blipp from 'blipp';
 import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
+import authJwt from 'hapi-auth-jwt2';
 import Mongorito, { ObjectId } from 'mongorito';
 import _ from 'lodash';
-import authJwt from 'hapi-auth-jwt2';
-import Routes from '~/routes';
-import InvalidUserIdError from '~/models/errors/invalidUserIdError.js';
-import User from '~/models/userModel.js';
 import dotenv from 'dotenv';
+import Routes from '~/routes';
+import User from '~/models/userModel.js';
 
 dotenv.config();
 
@@ -21,6 +19,11 @@ server.connection({
   port: process.env.PORT || 3000,
   routes: {
     cors: true,
+    validate: {
+      options: {
+        whitelist: ['image/png', 'image/jpg'], // allow this filetypes for every route where we define upload validator
+      },
+    },
   },
 });
 
@@ -57,40 +60,22 @@ const goodReporterOptions = {
   },
 };
 
-server.ext('onPreStart', (server, next) => {
+server.ext('onPreStart', async (server, next) => {
   const db = new Mongorito(process.env.MONGO_URI);
 
   // assign db instance to server
-  server.app.db = db;
+  const serverInstance = server;
+  serverInstance.app.db = db;
 
-  db
-    .connect(process.env.MONGO_URI)
-    .then((connection) => {
-      server.log(['info', 'database'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
-      return next();
-    })
-    .catch((error) => {
-      server.log(['error', 'database'], {
-        message: 'Cannot connect to DB',
-        data: error,
-      });
-      return next();
-    });
+  try {
+    const connection = await db.connect(process.env.MONGO_URI);
+    server.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
+    return next();
+  } catch (error) {
+    server.log(['error'], error);
+    throw error;
+  }
 });
-
-// // hapi boom ext
-// server.ext('onPreResponse', (request, reply) => {
-//   const response = request.response;
-//   // give flow back if reply isn't coming from boom
-//   if (!response.isBoom) {
-//     return reply.continue();
-//   }
-//   if (response.data) {
-//     // attach boom additional data object to response
-//     response.output.payload.data = response.data;
-//   }
-//   return reply(response);
-// });
 
 /*
   Plugin registration

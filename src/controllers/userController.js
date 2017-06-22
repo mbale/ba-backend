@@ -44,7 +44,7 @@ export default {
       // send back
       return reply(replyObj);
     } catch (error) {
-      reply.badImplementation(error);
+      return reply.badImplementation(error);
     }
   },
 

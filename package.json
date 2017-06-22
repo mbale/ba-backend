@@ -1,10 +1,10 @@
 {
-  "name": "esportsinsight-backend",
+  "name": "betacle-backend",
   "version": "0.1.0",
   "main": "dist/app.js",
   "repository": {
     "type": "git",
-    "url": "git+https://mbale@github.com/MainBase/esportsinsight-backend.git"
+    "url": "git+https://github.com/MainBase/betacle-backend.git"
   },
   "author": "Balazs Mocsai <me@bael.me>",
   "license": "ISC",
@@ -14,9 +14,9 @@
     "build": "webpack"
   },
   "bugs": {
-    "url": "https://trello.com/b/cvCaCTeu/esportsinsight-com-backend"
+    "url": "https://trello.com/b/cvCaCTeu/betacle"
   },
-  "homepage": "https://mbale@github.com/MainBase/esportsinsight-backend#readme",
+  "homepage": "https://github.com/MainBase/betacle-backend#readme",
   "devDependencies": {
     "babel-cli": "^6.24.0",
     "babel-core": "^6.24.0",
@@ -62,7 +62,8 @@
     "moment": "^2.18.1",
     "mongorito": "^3.0.1",
     "mongorito-timestamps": "^1.0.0",
-    "nodemailer": "^4.0.1"
+    "nodemailer": "^4.0.1",
+    "thurston": "^3.0.1"
   },
   "directories": {
     "test": "test"

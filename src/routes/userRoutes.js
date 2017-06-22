@@ -1,6 +1,7 @@
-import UserController from '~/controllers/userController';
 import joi from 'joi';
 import joiObjectId from 'joi-objectid';
+import Thurston from 'thurston';
+import UserController from '~/controllers/userController';
 import failActions from '~/helpers/failActions';
 
 joi.objectId = joiObjectId(joi);
@@ -30,6 +31,9 @@ const UserRoutes = [
     method: 'POST',
     handler: UserController.uploadAvatar,
     config: {
+      validate: {
+        payload: Thurston.validate,
+      },
       payload: {
         output: 'stream',
         parse: true,
