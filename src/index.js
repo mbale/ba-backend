@@ -19,11 +19,6 @@ server.connection({
   port: process.env.PORT || 3000,
   routes: {
     cors: true,
-    validate: {
-      options: {
-        whitelist: ['image/png', 'image/jpg'], // allow this filetypes for every route where we define upload validator
-      },
-    },
   },
 });
 
