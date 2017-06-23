@@ -3,6 +3,7 @@ import timestamps from 'mongorito-timestamps';
 import UsernameTakenError from '~/models/errors/usernameTakenError.js';
 import EmailTakenError from '~/models/errors/emailTakenError.js';
 import User from '~/models/userModel.js';
+import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
 
 export default {
   /*
@@ -57,6 +58,64 @@ export default {
       } else {
         reply.badImplementation(error);
       }
+    }
+  },
+
+  /*
+    Get user by username
+   */
+  async getByUsername(request, reply) {
+    try {
+      /*
+      DB
+       */
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+      } = request;
+
+      db.register(User);
+      const {
+        params: {
+          username: usernameToFind,
+        },
+      } = request;
+
+      const user = await User.findOne({
+        username: usernameToFind,
+      });
+
+      if (!user) {
+        throw new UsernameNotFoundError(usernameToFind);
+      }
+
+      const {
+        _id: id,
+        username,
+        avatar,
+        steamProvider,
+      } = await user.get();
+
+      const replyObj = {
+        id,
+        username,
+        avatar,
+      };
+
+      // check if steamprovider is set up
+      if (Object.keys(steamProvider).length > 0) {
+        replyObj.steamProvider = steamProvider;
+      }
+
+      return reply(replyObj);
+    } catch (error) {
+      if (error instanceof UsernameNotFoundError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
     }
   },
 };
