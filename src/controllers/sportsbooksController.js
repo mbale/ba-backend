@@ -1,10 +1,11 @@
-import timestamps from 'mongorito-timestamps';
 import { ObjectId } from 'mongorito';
+import timestamps from 'mongorito-timestamps';
 import Review from '~/models/reviewModel.js';
-import SportsbookNotFoundByIdError from '~/models/errors/sportsbookNotFoundByIdError.js';
-import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
 import Sportsbook from '~/models/sportsbookModel.js';
 import User from '~/models/userModel.js';
+import SportsbookNotFoundByIdError from '~/models/errors/sportsbookNotFoundByIdError.js';
+import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
+import SportsbookNotFoundByNameError from '~/models/errors/SportsbookNotFoundByNameError.js';
 
 export default {
   async getAll(request, reply) {
@@ -30,6 +31,47 @@ export default {
       reply(sportsBooksAsJSON);
     } catch (error) {
       reply.badImplementation(error);
+    }
+  },
+
+  async getByName(request, reply) {
+    try {
+      const {
+        params: {
+          sportsbookname: sportsbooknameToFind,
+        },
+        server: {
+          app: {
+            db,
+          },
+        },
+      } = request;
+      db.register(Sportsbook);
+
+      const sportsbook = await Sportsbook.findOne({
+        name: sportsbooknameToFind,
+      });
+
+      if (!sportsbook) {
+        throw new SportsbookNotFoundByNameError(sportsbooknameToFind);
+      }
+
+      const {
+        _id: id,
+        name,
+        description,
+      } = await sportsbook.get();
+
+      return reply({
+        id,
+        name,
+        description,
+      });
+    } catch (error) {
+      if (error instanceof SportsbookNotFoundByNameError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
     }
   },
 

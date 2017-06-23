@@ -19,6 +19,32 @@ const UsersRoutes = [
       },
     },
   },
+  {
+    path: '/v1/users/{username}',
+    method: 'GET',
+    handler: UsersController.getByUsername,
+    config: {
+      auth: false,
+      validate: {
+        params: {
+          username: joi.string().required(),
+        },
+      },
+    },
+  },
+  // {
+  //   path: '/v1/users',
+  //   method: 'GET',
+  //   handler: UsersController.findUser,
+  //   config: {
+  //     auth: false,
+  //     validate: {
+  //       query: joi.object().keys({
+
+  //       }),
+  //     },
+  //   },
+  // },
 ];
 
 export default UsersRoutes;

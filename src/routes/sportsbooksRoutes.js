@@ -37,6 +37,14 @@ const SportsbooksRoutes = [
     },
   },
   {
+    path: '/v1/sportsbooks/{sportsbookname}',
+    method: 'GET',
+    handler: SportsbooksController.getByName,
+    config: {
+      auth: false,
+    },
+  },
+  {
     path: '/v1/sportsbooks/{id}/reviews',
     method: 'GET',
     handler: SportsbooksController.reviews,
