@@ -67,7 +67,7 @@ export default {
   async getByUsername(request, reply) {
     try {
       /*
-      DB
+      Db
        */
       const {
         server: {
@@ -78,6 +78,10 @@ export default {
       } = request;
 
       db.register(User);
+
+      /*
+        Data
+       */
       const {
         params: {
           username: usernameToFind,
