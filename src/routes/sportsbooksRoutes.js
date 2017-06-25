@@ -30,7 +30,6 @@ const SportsbooksRoutes = [
       validate: {
         payload: joi.object().keys({
           name: joi.string().required(),
-          description: joi.string().optional().allow(''),
         }),
         failAction: failActions.sportsbooks.create,
       },
