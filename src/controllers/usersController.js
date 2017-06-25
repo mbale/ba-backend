@@ -101,12 +101,14 @@ export default {
         username,
         avatar,
         steamProvider,
+        created_at: registeredOn,
       } = await user.get();
 
       const replyObj = {
         id,
         username,
         avatar,
+        registeredOn,
       };
 
       // check if steamprovider is set up
