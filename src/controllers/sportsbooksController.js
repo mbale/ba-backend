@@ -20,7 +20,7 @@ export default {
 
     try {
       const sportbooks = await Sportsbook
-        .select({ _id: 1, name: 1, description: 1 }) // filtering out fields
+        .select({ _id: 1, name: 1 }) // filtering out fields
         .limit(limit)
         .find();
 
@@ -61,14 +61,12 @@ export default {
 
       const {
         _id: id,
-        name,
-        description,
+        name
       } = await sportsbook.get();
 
       return reply({
         id,
-        name,
-        description,
+        name
       });
     } catch (error) {
       if (error instanceof SportsbookNotFoundByNameError) {
