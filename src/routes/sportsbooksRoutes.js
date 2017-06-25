@@ -48,6 +48,7 @@ const SportsbooksRoutes = [
     method: 'GET',
     handler: SportsbooksController.reviews,
     config: {
+      auth: false,
       validate: {
         params: {
           id: joi.objectId().required(),

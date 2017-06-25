@@ -16,7 +16,7 @@ export default {
     db.register(User);
 
     try {
-      const findUser = await User.findById(userId);
+      const user = await User.findById(userId);
 
       // get fields
       const {
@@ -26,7 +26,7 @@ export default {
         avatar,
         created_at: registeredOn,
         steamProvider,
-      } = await findUser.get();
+      } = await user.get();
 
       const replyObj = {
         id,
