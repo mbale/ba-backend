@@ -19,17 +19,19 @@ export default {
     db.register(Sportsbook);
 
     try {
-      const sportsBooks = await Sportsbook
+      const sportbooks = await Sportsbook
         .select({ _id: 1, name: 1, description: 1 }) // filtering out fields
         .limit(limit)
         .find();
 
-      const sportsBooksAsJSON = sportsBooks.map(sportsBook => sportsBook.toJSON());
-      sportsBooksAsJSON.forEach((sb) => {
+      const sbs = [];
+      for (const sportbook of sportbooks) {
+        const sb = await sportbook.get();
         sb.id = sb._id; // eslint-disable-line
         delete sb._id; // eslint-disable-line
-      });
-      reply(sportsBooksAsJSON);
+        sbs.push(sb);
+      }
+      return reply(sbs);
     } catch (error) {
       reply.badImplementation(error);
     }
