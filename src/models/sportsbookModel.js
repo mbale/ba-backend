@@ -1,7 +1,11 @@
 import {
   Model,
-  ObjectId,
 } from 'mongorito';
+import SportsbookPlugins from '~/models/plugins/sportsbookPlugins.js';
+
+const {
+  checkIfSportsbookExists,
+} = SportsbookPlugins;
 
 class Sportsbook extends Model {
   static collection() {
@@ -9,4 +13,11 @@ class Sportsbook extends Model {
   }
 }
 
-export default Sportsbook;
+const injectPlugins = () => {
+  // add neeeded dependencies
+  Sportsbook.use(checkIfSportsbookExists);
+
+  return Sportsbook;
+};
+
+export default injectPlugins();

@@ -17,8 +17,8 @@ export default {
       db,
     } = request.server.app;
 
-    db.register(User);
     db.use(timestamps());
+    db.register(User);
 
     /*
     Data

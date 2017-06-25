@@ -5,7 +5,8 @@ import Sportsbook from '~/models/sportsbookModel.js';
 import User from '~/models/userModel.js';
 import SportsbookNotFoundByIdError from '~/models/errors/sportsbookNotFoundByIdError.js';
 import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
-import SportsbookNotFoundByNameError from '~/models/errors/SportsbookNotFoundByNameError.js';
+import SportsbookNotFoundByNameError from '~/models/errors/sportsbookNotFoundByNameError.js';
+import SportsbookNameTakenError from '~/models/errors/sportsbookNameTakenError.js';
 
 export default {
   async getAll(request, reply) {
@@ -175,25 +176,35 @@ export default {
   },
 
   async create(request, reply) {
-    const {
-      name,
-      description = '',
-    } = request.payload;
-
-    const db = request.server.app.db;
-    db.use(timestamps());
-    db.register(Sportsbook);
-
     try {
-      const sportsBook = new Sportsbook({
-        name,
-        description,
-      });
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+        payload: {
+          name,
+        },
+      } = request;
 
-      await sportsBook.save();
-      reply();
+      db.use(timestamps());
+      db.register(Sportsbook);
+
+      const {
+        id,
+      } = await new Sportsbook({
+        name,
+      }).save();
+
+      return reply({
+        id,
+      });
     } catch (error) {
-      reply.badImplementation(error);
+      if (error instanceof SportsbookNameTakenError) {
+        return reply.conflict(error.message);
+      }
+      return reply.badImplementation(error);
     }
   },
 };
