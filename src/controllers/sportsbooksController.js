@@ -95,7 +95,7 @@ export default {
 
     if (sportsbook) {
       const reviews = await Review
-        .select({ _id: 1, rate: 1, userId: 1, text: 1 }) // filtering out fields
+        .select({ _id: 1, rate: 1, userId: 1, text: 1, created_at: 1 }) // filtering out fields
         .limit(limit)
         .find({
           sportsbookId,
@@ -104,6 +104,8 @@ export default {
       const reviewsAsJSON = reviews.map(review => review.toJSON());
       reviewsAsJSON.forEach((r) => {
         r.id = r._id; // eslint-disable-line
+        r.addedOn = r.created_at; // eslint-disable-line
+        delete r.created_at; // eslint-disable-line
         delete r._id; // eslint-disable-line
       });
       if (reviews.length === 0) {

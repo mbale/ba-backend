@@ -6,6 +6,7 @@ import UserPlugins from '~/models/plugins/userPlugins.js';
 const {
   hashPassword,
   setDefaultFields,
+  // checkUniqueFieldsOnEdit,
   checkIfUserExists,
   extendUserModel,
 } = UserPlugins;

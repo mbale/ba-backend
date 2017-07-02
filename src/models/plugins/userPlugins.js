@@ -29,6 +29,68 @@ const hashPassword = () => {
   };
 };
 
+const checkUniqueFieldsOnEdit = () => {
+  return ({ modelClass }) => next => async (action) => {
+    try {
+      const {
+        type,
+      } = action;
+      // TODO: differentiate between changing password and making a profile update
+      if (type === ActionTypes.SET) {
+        const {
+          fields: {
+            username = '',
+            email = '',
+          },
+        } = action;
+        console.log(action)
+
+        server.log(['info'], 'Checking for possible duplication during user profile edit');
+
+        const query = [];
+
+        // we're changing username
+        if (username && username !== '') {
+          query.push({
+            username,
+          });
+        }
+
+        // -- email
+        if (email && email !== '') {
+          query.push({
+            email,
+          });
+        }
+
+        if (query.length > 0) {
+          const user = await modelClass.or(query).findOne();
+
+          // we match
+          if (user) {
+            const {
+              username: usernameInDb,
+              email: emailInDb,
+            } = await user.get();
+
+            // check why we have collision
+            if (emailInDb === email) {
+              throw new EmailTakenError(email);
+            }
+
+            if (usernameInDb === username) {
+              throw new UsernameTakenError(username);
+            }
+          }
+        }
+      }
+      return next(action);
+    } catch (error) {
+      throw error;
+    }
+  };
+};
+
 const setDefaultFields = () => {
   return ({ model }) => next => async (action) => {
     const { fields } = action;
@@ -73,6 +135,7 @@ const checkIfUserExists = () => {
     if (action.type === ActionTypes.CREATE) {
       server.log(['info'], 'Check for possible duplications before adding new user');
       const {
+        // refactor TODO: it could be better without default value
         fields: { email = '', username = '', steamProvider = '' },
       } = action;
 
@@ -307,6 +370,7 @@ const extendUserModel = (UserModel) => {
 export default {
   hashPassword,
   setDefaultFields,
+  //checkUniqueFieldsOnEdit,
   checkIfUserExists,
   extendUserModel,
 };

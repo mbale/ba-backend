@@ -4,6 +4,8 @@ import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
 import User from '~/models/userModel.js';
 import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
+import UsernameTakenError from '~/models/errors/usernameTakenError.js';
+import EmailTakenError from '~/models/errors/emailTakenError.js';
 
 export default {
   async getInfo(request, reply) {
@@ -109,25 +111,82 @@ export default {
   },
 
   async editProfile(request, reply) {
-    let {
-      userId,
-    } = request.auth.credentials;
-    userId = new ObjectId(userId);
-
-    const db = request.server.app.db;
-    db.register(User);
-
     try {
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+        payload, payload: {
+          username = '',
+          email = '',
+        },
+      } = request;
+
+      let {
+        auth: {
+          credentials: {
+            userId,
+          },
+        },
+      } = request;
+
+      userId = new ObjectId(userId);
+      db.register(User);
+
+      const query = [];
+
+      if (username !== '') {
+        query.push({
+          username,
+        });
+      }
+
+      if (email !== '') {
+        query.push({
+          email,
+        });
+      }
+
+      // check for duplication
+      if (query.length > 0) {
+        const user = await User.or(query).findOne();
+
+        // we match
+        if (user) {
+          const {
+            username: usernameInDb,
+            email: emailInDb,
+          } = await user.get();
+
+          // check why we have collision
+          if (emailInDb === email) {
+            throw new EmailTakenError(email);
+          }
+
+          if (usernameInDb === username) {
+            throw new UsernameTakenError(username);
+          }
+        }
+      }
+
+      // everything ok so we save new info
       const user = await User.findById(userId);
-
-      _.forEach(request.payload, (value, key) => {
-        user.set(key, value);
-      });
-
+      // we iterate throuh without symbol (plain obj)
+      for (const [field, value] of Object.entries(payload)) {
+        user.set(field, value);
+      }
       await user.save();
-      reply();
+      return reply();
     } catch (error) {
-      reply.badImplementation(error);
+      if (error instanceof UsernameTakenError) {
+        return reply.conflict(error.message);
+      }
+      if (error instanceof EmailTakenError) {
+        return reply.conflict(error.message);
+      }
+      return reply.badImplementation(error);
     }
   },
 
