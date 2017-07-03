@@ -51,8 +51,20 @@ export default {
     const user = new User(userObj);
 
     try {
-      await user.save();
-      reply();
+      const {
+        id,
+      } = await user.save();
+      const {
+        rawToken: accessToken,
+        issuedAt,
+        expiresAt,
+      } = await user.authorizeAccess(id);
+
+      return reply({
+        accessToken,
+        issuedAt,
+        expiresAt,
+      });
     } catch (error) {
       if (error instanceof UsernameTakenError) {
         reply.conflict(error.message);

@@ -302,10 +302,10 @@ const extendUserModel = (UserModel) => {
     }
   };
 
-  userModel.prototype.authorizeAccess = async function authorizeAccess() {
+  userModel.prototype.authorizeAccess = async function authorizeAccess(userIdToAttach) {
     server.log(['info'], 'Initiating authorization of user');
     try {
-      const userId = await this.get('_id');
+      const userId = await this.get('_id') || userIdToAttach;
 
       const rawToken = jwt.sign({
         userId,
@@ -326,6 +326,11 @@ const extendUserModel = (UserModel) => {
         expiresAt,
       });
       await this.save();
+      return {
+        rawToken,
+        issuedAt,
+        expiresAt,
+      };
     } catch (error) {
       throw error;
     }
