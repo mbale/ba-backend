@@ -1,4 +1,7 @@
 import _ from 'lodash';
+import {
+  ObjectId,
+} from 'mongorito';
 import timestamps from 'mongorito-timestamps';
 import UsernameTakenError from '~/models/errors/usernameTakenError.js';
 import EmailTakenError from '~/models/errors/emailTakenError.js';
@@ -58,6 +61,54 @@ export default {
       } else {
         reply.badImplementation(error);
       }
+    }
+  },
+
+  async getUsers(request, reply) {
+    try {
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+        query: {
+          userid: userIds = [], // optional so we set empty array default
+        },
+      } = request;
+
+      db.register(User);
+
+      // convert each to objectid
+      const usersIdsMappedToObjectId = userIds.map(userId => new ObjectId(userId));
+      const usersRequested = [];
+
+      // find all user
+      for (let userIdRequested of usersIdsMappedToObjectId) { // eslint-disable-line
+        let user = await User.findById(userIdRequested);  // eslint-disable-line
+
+        const {
+          _id: id,
+          username,
+          email,
+          avatar,
+          created_at: registeredOn,
+          steamProvider,
+        } = await user.get(); // eslint-disable-line
+
+        usersRequested.push({
+          id,
+          username,
+          email,
+          avatar,
+          registeredOn,
+          steamProvider,
+        });
+      }
+
+      return reply(usersRequested);
+    } catch (error) {
+      reply.badImplementation(error);
     }
   },
 

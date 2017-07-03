@@ -1,10 +1,10 @@
 {
-  "name": "betacle-backend",
+  "name": "ba-backend",
   "version": "0.1.0",
   "main": "dist/app.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MainBase/betacle-backend.git"
+    "url": "git+https://github.com/MainBase/ba-backend.git"
   },
   "author": "Balazs Mocsai <me@bael.me>",
   "license": "ISC",
@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://trello.com/b/cvCaCTeu/betacle"
   },
-  "homepage": "https://github.com/MainBase/betacle-backend#readme",
+  "homepage": "https://github.com/MainBase/ba-backend#readme",
   "devDependencies": {
     "babel-cli": "^6.24.0",
     "babel-core": "^6.24.0",

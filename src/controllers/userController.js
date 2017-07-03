@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongorito';
-import _ from 'lodash';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
 import User from '~/models/userModel.js';
