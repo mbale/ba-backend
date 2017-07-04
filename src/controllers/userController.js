@@ -150,7 +150,9 @@ export default {
 
       // check for duplication
       if (query.length > 0) {
-        const user = await User.or(query).findOne();
+        const user = await User
+          .where('_id').ne(userId) // we explicitly forbid logged userid
+          .or(query).findOne();
 
         // we match
         if (user) {
@@ -159,7 +161,10 @@ export default {
             email: emailInDb,
           } = await user.get();
 
-          // check why we have collision
+          /*
+            Check why we have collision
+            we make sure we allow edits if user's trying to edit his data
+           */
           if (emailInDb === email) {
             throw new EmailTakenError(email);
           }
@@ -172,11 +177,22 @@ export default {
 
       // everything ok so we save new info
       const user = await User.findById(userId);
+
+      let profileChanged = false;
       // we iterate throuh without symbol (plain obj)
-      for (const [field, value] of Object.entries(payload)) {
-        user.set(field, value);
+      for (let [field, value] of Object.entries(payload)) { // eslint-disable-line
+        const valueInDb = await user.get(field); // eslint-disable-line
+
+        // we only set prop if it's really changed
+        if (valueInDb !== value) {
+          user.set(field, value);
+          profileChanged = true;
+        }
       }
-      await user.save();
+
+      if (profileChanged) {
+        await user.save();
+      }
       return reply();
     } catch (error) {
       if (error instanceof UsernameTakenError) {
