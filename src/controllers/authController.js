@@ -207,10 +207,8 @@ export default {
       const userInDb = await User.or(query).findOne();
 
       if (userInDb) {
-        // we refresh steam data
+        // we update steam data
         userInDb.set('steamProvider', steamProfileData);
-
-        await userInDb.save(); // authorizeaccess already calls it btw
         await userInDb.authorizeAccess();
 
         const {
@@ -233,11 +231,24 @@ export default {
           steamProvider: steamProfileData,
         };
 
-        // generate username
         if (!username || username === '') {
-          userData.username = `${steamProfileData.personaname}#${chance.natural({
-            max: 99999, // TODO CHECK UNIQUE
-          })}`;
+          // we make sure we've unique name with number
+          let numberNeedsToGenerated = true;
+
+          while (numberNeedsToGenerated) {
+            // generate a username with steam name and random generated number
+            const usernameToTest = `${steamProfileData.personaname}_${chance.natural({
+              max: 99999,
+            })}`;
+            const isUsernameTaken = await User.findOne({ // eslint-disable-line
+              username: usernameToTest,
+            });
+
+            if (!isUsernameTaken) {
+              numberNeedsToGenerated = false; // we passes
+              userData.username = usernameToTest; // assign new username
+            }
+          }
         }
 
         // we save it before due to generation of _id (we use that in token)
