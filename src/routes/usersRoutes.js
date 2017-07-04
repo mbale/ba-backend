@@ -14,7 +14,7 @@ const UsersRoutes = [
       auth: false,
       validate: {
         payload: joi.object().keys({
-          username: joi.string().required(),
+          username: joi.string().required().regex(/^[a-zA-Z0-9_]+$/),
           password: joi.string().required().min(6),
           email: joi.string().email().optional(),
         }),
