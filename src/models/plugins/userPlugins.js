@@ -4,13 +4,15 @@ import EmailTakenError from '~/models/errors/emailTakenError.js';
 import SteamIdTakenError from '~/models/errors/steamIdTakenError.js';
 import UserBySteamIdNotFoundError from '~/models/errors/userBySteamIdNotFoundError.js';
 import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
+import forgetPasswordTemplate from '~/helpers/email/forgetPasswordTemplate.js';
+import emailService from '~/services/emailService.js';
+import server from '~/index.js';
 import {
   ActionTypes,
 } from 'mongorito';
 import Nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import server from '~/index.js';
 
 const hashPassword = () => {
   return ({ model }) => next => async (action) => {
@@ -43,7 +45,6 @@ const checkUniqueFieldsOnEdit = () => {
             email = '',
           },
         } = action;
-        console.log(action)
 
         server.log(['info'], 'Checking for possible duplication during user profile edit');
 
@@ -261,7 +262,8 @@ const extendUserModel = (UserModel) => {
   userModel.prototype.recoverAccount = async function recoverAccount() {
     const {
       _id: userId,
-      email,
+      email: userEmail,
+      username,
     } = await this.get();
 
     try {
@@ -278,26 +280,21 @@ const extendUserModel = (UserModel) => {
       // unset
       this.set('accessToken', false);
 
-      const transport = Nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-          user: process.env.EMAIL_AUTH_USER,
-          pass: process.env.EMAIL_AUTH_PASSWORD,
-        },
-      });
+      // construct URL which we send user redirect to
+      const actionURL = `${process.env.SITE_URL}/reset-password/${recoveryToken}`;
+      const template = forgetPasswordTemplate(username, actionURL);
 
-      const mailTemplate = {
-        from: '"Recover Account" <recover@esportsinsights.com>',
-        to: email,
-        subject: 'Here\'s your info to recover your acccount',
-        text: `Here's your recover hash to reset your account: ${recoveryToken}`,
+      const email = {
+        from: process.env.EMAIL_FROM_RECOVER_ACCOUNT,
+        to: userEmail,
+        subject: process.env.EMAIL_SUBJECT_RECOVER_ACCOUNT,
+        html: template,
       };
 
-      await transport.sendMail(mailTemplate);
       await this.save();
+      // emailing user
+      await emailService(email);
     } catch (error) {
-      console.log(error)
       throw error;
     }
   };

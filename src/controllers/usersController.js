@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import {
   ObjectId,
 } from 'mongorito';
@@ -13,44 +12,38 @@ export default {
     Create new user
    */
   async create(request, reply) {
-    /*
-    DB
-     */
-    const {
-      db,
-    } = request.server.app;
-
-    db.use(timestamps());
-    db.register(User);
-
-    /*
-    Data
-     */
-    const {
-      username: _username,
-      password,
-      email,
-    } = request.payload;
-
-    // trimming whitespaces & convert lowercase
-    const username = _(_username).toLower().trim();
-
-    const userObj = {
-      username,
-      password,
-    };
-
-    // optional email
-    if (email) {
-      userObj.email = email;
-    }
-
-    /*
-    Save
-     */
-    const user = new User(userObj);
-
     try {
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+        payload: {
+          username: _username,
+          password,
+          email,
+        },
+      } = request;
+
+      db.use(timestamps());
+      db.register(User);
+
+      // trimming whitespaces & convert lowercase
+      const username = _username.toLowerCase();
+
+      const userObj = {
+        username,
+        password,
+      };
+
+      // optional email
+      if (email) {
+        userObj.email = email;
+      }
+
+      const user = new User(userObj);
+
       const {
         id,
       } = await user.save();
@@ -67,12 +60,11 @@ export default {
       });
     } catch (error) {
       if (error instanceof UsernameTakenError) {
-        reply.conflict(error.message);
+        return reply.conflict(error.message);
       } else if (error instanceof EmailTakenError) {
-        reply.conflict(error.message);
-      } else {
-        reply.badImplementation(error);
+        return reply.conflict(error.message);
       }
+      return reply.badImplementation(error);
     }
   },
 
@@ -117,10 +109,9 @@ export default {
           steamProvider,
         });
       }
-
       return reply(usersRequested);
     } catch (error) {
-      reply.badImplementation(error);
+      return reply.badImplementation(error);
     }
   },
 

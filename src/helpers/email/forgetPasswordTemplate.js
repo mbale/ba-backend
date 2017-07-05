@@ -1,4 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+function constructTemplate(username = '', actionURL = '') {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -281,7 +282,7 @@
                   <!-- Body content -->
                   <tr>
                     <td class="content-cell">
-                      <h1>Hi {{name}},</h1>
+                      <h1>Hi ${username},</h1>
                       <p>You recently requested to reset your password for your Betacle account. Use the button below to reset it. <strong>This password reset is valid for the next 24 hours.</strong></p>
                       <!-- Action -->
                       <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
@@ -293,7 +294,7 @@
                                   <table border="0" cellspacing="0" cellpadding="0">
                                     <tr>
                                       <td>
-                                        <a href="{{action_url}}" class="button button--purple" target="_blank">Reset your password</a>
+                                        <a href="${actionURL}" class="button button--purple" target="_blank">Reset your password</a>
                                       </td>
                                     </tr>
                                   </table>
@@ -311,7 +312,7 @@
                         <tr>
                           <td>
                             <p class="sub">If you’re having trouble with the button above, copy and paste the URL below into your web browser.</p>
-                            <p class="sub">{{action_url}}</p>
+                            <p class="sub">${actionURL}</p>
                           </td>
                         </tr>
                       </table>
@@ -336,4 +337,7 @@
       </tr>
     </table>
   </body>
-</html>
+</html>`;
+}
+
+export default constructTemplate;
