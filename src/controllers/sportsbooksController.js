@@ -1,72 +1,224 @@
 import { ObjectId } from 'mongorito';
 import timestamps from 'mongorito-timestamps';
+import contentfulService from '~/services/contentfulService.js';
 import Review from '~/models/reviewModel.js';
-import Sportsbook from '~/models/sportsbookModel.js';
 import User from '~/models/userModel.js';
-import SportsbookNotFoundByIdError from '~/models/errors/sportsbookNotFoundByIdError.js';
 import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
 import SportsbookNotFoundByNameError from '~/models/errors/sportsbookNotFoundByNameError.js';
-import SportsbookNameTakenError from '~/models/errors/sportsbookNameTakenError.js';
 
 export default {
-  async getAll(request, reply) {
-    const {
-      limit = 10,
-    } = request.query;
-
-    const db = request.server.app.db;
-    db.use(timestamps());
-    db.register(Sportsbook);
-
+  async getSportsbooks(request, reply) {
     try {
-      const sportbooks = await Sportsbook
-        .select({ _id: 1, name: 1 }) // filtering out fields
-        .limit(limit)
-        .find();
+      const {
+        query: {
+          limit,
+        },
+      } = request;
+      const client = contentfulService;
+      const {
+        items: sportsbookCollection,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        limit,
+      });
 
-      const sbs = [];
-      for (const sportbook of sportbooks) {
-        const sb = await sportbook.get();
-        sb.id = sb._id; // eslint-disable-line
-        delete sb._id; // eslint-disable-line
-        sbs.push(sb);
+      const sportsbookCollectionBuffer = [];
+      for (let [index, sportsbook] of Object.entries(sportsbookCollection)) { // eslint-disable-line
+        // we strip out meta data
+        const {
+          sys: {
+            id: sportsbookId,
+          },
+        } = sportsbook;
+        sportsbook = sportsbook.fields;
+
+        let bonus = sportsbook.bonus;
+
+        // few case it's undefined
+        if (bonus && bonus instanceof Array) {
+          for (let b of bonus) { // eslint-disable-line
+            bonus = b.fields;
+          }
+        }
+
+        // yeah, there's no setter on obj
+        // so we redef props
+        // note: defsetter's not the best way
+        Object.defineProperties(sportsbook, {
+          id: {
+            value: sportsbookId,
+            enumerable: true,
+          },
+          logo: {
+            value: sportsbook.logo.fields,
+            enumerable: true,
+          },
+          icon: {
+            value: sportsbook.icon.fields,
+            enumerable: true,
+          },
+          bonus: {
+            value: bonus,
+            enumerable: true,
+          },
+        });
+        sportsbookCollectionBuffer.push(sportsbook);
       }
-      return reply(sbs);
+
+      return reply(sportsbookCollectionBuffer);
     } catch (error) {
-      reply.badImplementation(error);
+      return reply.badImplementation(error);
     }
   },
 
-  async getByName(request, reply) {
+  async getSportsbookByName(request, reply) {
     try {
-      const {
+      let {
         params: {
-          sportsbookname: sportsbooknameToFind,
+          sportsbookslug: sportsbookslugToFind,
         },
+      } = request;
+      // we make sure it's lowercase cos slug
+      sportsbookslugToFind = sportsbookslugToFind.toLowerCase();
+
+      const client = contentfulService;
+
+      const {
+        items: sportsbooks,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        'fields.slug': sportsbookslugToFind,
+      });
+
+      // check if we have results
+      if (sportsbooks.length === 0) {
+        throw new SportsbookNotFoundByNameError(sportsbookslugToFind);
+      }
+
+      let sportsbook = sportsbooks[0];
+
+      const {
+        sys: {
+          id: sportsbookId,
+        },
+      } = sportsbook;
+      // we strip out meta data
+      sportsbook = sportsbook.fields;
+      let bonus = sportsbook.bonus;
+
+      // few case it's undefined
+      if (bonus && bonus instanceof Array) {
+        for (let b of bonus) { // eslint-disable-line
+          bonus = b.fields;
+        }
+      }
+      // yeah, there's no setter on obj
+      // so we redef props
+      // note: defsetter's not the best way
+      Object.defineProperties(sportsbook, {
+        id: {
+          value: sportsbookId,
+          enumerable: true,
+        },
+        logo: {
+          value: sportsbook.logo.fields,
+          enumerable: true,
+        },
+        icon: {
+          value: sportsbook.icon.fields,
+          enumerable: true,
+        },
+        bonus: {
+          value: bonus,
+          enumerable: true,
+          enumerable: true,
+        },
+      });
+      return reply(sportsbook);
+    } catch (error) {
+      if (error instanceof SportsbookNotFoundByNameError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
+    }
+  },
+
+  async getSportsbookReviews(request, reply) {
+    try {
+      let {
+        params: {
+          sportsbookslug,
+        },
+      } = request;
+      sportsbookslug = sportsbookslug.toLowerCase();
+
+      const {
         server: {
           app: {
             db,
           },
         },
+        query: {
+          limit,
+        },
       } = request;
-      db.register(Sportsbook);
 
-      const sportsbook = await Sportsbook.findOne({
-        name: sportsbooknameToFind,
+      const client = contentfulService;
+      db.register(Review);
+
+      // find sportsbook
+      const {
+        items: sportsbookCollection,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        'fields.slug': sportsbookslug,
+        limit,
       });
 
-      if (!sportsbook) {
-        throw new SportsbookNotFoundByNameError(sportsbooknameToFind);
+      // check if we've results
+      if (sportsbookCollection.length === 0) {
+        throw new SportsbookNotFoundByNameError(sportsbookslug);
       }
 
       const {
-        _id: id,
-        name
-      } = await sportsbook.get();
+        sys: {
+          id: sportsbookId,
+        },
+      } = sportsbookCollection[0];
 
+      const reviews = await Review.limit().find({
+        sportsbookId,
+      });
+
+      let sum = 0;
+      const reviewsBuffer = [];
+      for (const review of reviews) { // eslint-disable-line
+        const {
+          _id: reviewId,
+          userId,
+          rate,
+          text,
+          created_at: reviewCreatedAt,
+        } = await review.get(); // eslint-disable-line
+
+        // we store it as int but we can't be sure enough
+        sum += parseInt(rate, 10);
+        reviewsBuffer.push({
+          id: reviewId,
+          userId,
+          rate,
+          text,
+          createdAt: reviewCreatedAt,
+        });
+      }
+
+      // it can be null if we do not have reviews
+      const avg = sum / reviewsBuffer.length || false;
+
+      // reply automaps entities in array to JSON
       return reply({
-        id,
-        name
+        avg,
+        reviews: reviewsBuffer,
       });
     } catch (error) {
       if (error instanceof SportsbookNotFoundByNameError) {
@@ -76,134 +228,96 @@ export default {
     }
   },
 
-  async reviews(request, reply) {
-    const {
-      limit = 10,
-    } = request.query;
-
-    let {
-      id: sportsbookId,
-    } = request.params;
-    sportsbookId = new ObjectId(sportsbookId);
-
-    const db = request.server.app.db;
-    db.use(timestamps());
-    db.register(Sportsbook);
-    db.register(Review);
-
-    const sportsbook = await Sportsbook.findById(sportsbookId);
-
-    if (sportsbook) {
-      const reviews = await Review
-        .select({ _id: 1, rate: 1, userId: 1, text: 1, created_at: 1 }) // filtering out fields
-        .limit(limit)
-        .find({
-          sportsbookId,
-        });
-
-      const reviewsAsJSON = reviews.map(review => review.toJSON());
-      reviewsAsJSON.forEach((r) => {
-        r.id = r._id; // eslint-disable-line
-        r.addedOn = r.created_at; // eslint-disable-line
-        delete r.created_at; // eslint-disable-line
-        delete r._id; // eslint-disable-line
-      });
-      if (reviews.length === 0) {
-        return reply([]);
-      }
-      return reply(reviewsAsJSON);
-    }
-    return reply.notFound();
-  },
-
-  async createReview(request, reply) {
-    let {
-      id: sportsbookId,
-    } = request.params;
-    sportsbookId = new ObjectId(sportsbookId);
-
-    let {
-      userId,
-    } = request.auth.credentials;
-    userId = new ObjectId(userId);
-
-    const db = request.server.app.db;
-    db.use(timestamps());
-    db.register(User);
-    db.register(Sportsbook);
-    db.register(Review);
-
-    const {
-      rate,
-      text,
-    } = request.payload;
-
+  async addSportsbookReview(request, reply) {
     try {
-      const user = await User.findById(userId);
-      const sportsbook = await Sportsbook.findById(sportsbookId);
-      const review = await Review.findOne({
-        userId,
-        sportsbookId,
-      });
+      let {
+        params: {
+          sportsbookslug,
+        },
+      } = request;
+      sportsbookslug = sportsbookslug.toLowerCase();
 
-      if (!sportsbook) {
-        throw new SportsbookNotFoundByIdError(sportsbookId);
-      }
-
-      if (review) {
-        throw new SportsbookAlreadyReviewedError(sportsbookId);
-      }
-
-      const newReview = new Review({
-        userId,
-        rate,
-        text,
-        sportsbookId,
-      });
-
-      const {
-        id,
-      } = await newReview.save();
-      await user.addReviewById(id);
-      reply();
-    } catch (error) {
-      if (error instanceof SportsbookNotFoundByIdError) {
-        reply.notFound(error.message);
-      } else if (error instanceof SportsbookAlreadyReviewedError) {
-        reply.conflict(error.message);
-      } else {
-        reply.badImplementation(error);
-      }
-    }
-  },
-
-  async create(request, reply) {
-    try {
       const {
         server: {
           app: {
             db,
           },
         },
+        query: {
+          limit,
+        },
         payload: {
-          name,
+          rate,
+          text,
         },
       } = request;
 
+      let {
+        auth: {
+          credentials: {
+            userId,
+          },
+        },
+      } = request;
+      // convert to objectid
+      userId = new ObjectId(userId);
+
+      const client = contentfulService;
       db.use(timestamps());
-      db.register(Sportsbook);
+      db.register(User);
+      db.register(Review);
+
+      // find user
+      const user = await User.findById(userId);
+
+      // find sportsbook
+      const {
+        items: sportsbookCollection,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        'fields.slug': sportsbookslug,
+        limit,
+      });
+
+      // check if we've results
+      if (sportsbookCollection.length === 0) {
+        throw new SportsbookNotFoundByNameError(sportsbookslug);
+      }
 
       const {
-        id,
-      } = await new Sportsbook({
-        name,
-      }).save();
+        sys: {
+          id: sportsbookId,
+        },
+      } = sportsbookCollection[0];
 
-      return reply({
-        id,
+      // we allow one user review per each sportsbook so find
+      let review = await Review.findOne({
+        userId,
+        sportsbookId,
       });
+
+      // if we already have such review
+      if (review) {
+        throw new SportsbookAlreadyReviewedError(sportsbookId);
+      }
+
+      review = new Review({
+        userId,
+        sportsbookId,
+        rate,
+        text,
+      });
+
+      const {
+        id: reviewId, // get saved review from collection
+      } = await review.save();
+      // save on user too
+      await user.addReviewById(reviewId);
+      return reply();
     } catch (error) {
-      if (error instanceof SportsbookNameTakenError) {
+      if (error instanceof SportsbookNotFoundByNameError) {
+        return reply.notFound(error.message);
+      } else if (error instanceof SportsbookAlreadyReviewedError) {
         return reply.conflict(error.message);
       }
       return reply.badImplementation(error);
