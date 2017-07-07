@@ -91,6 +91,7 @@ export default {
       for (let userIdRequested of usersIdsMappedToObjectId) { // eslint-disable-line
         let user = await User.findById(userIdRequested);  // eslint-disable-line
 
+        // check if we have user
         if (user) {
           const {
             _id: id,
@@ -101,14 +102,19 @@ export default {
             steamProvider,
           } = await user.get(); // eslint-disable-line
 
-          usersRequested.push({
-            id,
-            username,
-            email,
-            avatar,
-            registeredOn,
-            steamProvider,
-          });
+          // check if we already have it queried
+          const alreadyQueried = usersRequested.find(u => u.username === username);
+
+          if (!alreadyQueried) {
+            usersRequested.push({
+              id,
+              username,
+              email,
+              avatar,
+              registeredOn,
+              steamProvider,
+            });
+          }
         }
       }
       return reply(usersRequested);
