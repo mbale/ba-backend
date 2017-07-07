@@ -91,23 +91,25 @@ export default {
       for (let userIdRequested of usersIdsMappedToObjectId) { // eslint-disable-line
         let user = await User.findById(userIdRequested);  // eslint-disable-line
 
-        const {
-          _id: id,
-          username,
-          email,
-          avatar,
-          created_at: registeredOn,
-          steamProvider,
-        } = await user.get(); // eslint-disable-line
+        if (user) {
+          const {
+            _id: id,
+            username,
+            email,
+            avatar,
+            created_at: registeredOn,
+            steamProvider,
+          } = await user.get(); // eslint-disable-line
 
-        usersRequested.push({
-          id,
-          username,
-          email,
-          avatar,
-          registeredOn,
-          steamProvider,
-        });
+          usersRequested.push({
+            id,
+            username,
+            email,
+            avatar,
+            registeredOn,
+            steamProvider,
+          });
+        }
       }
       return reply(usersRequested);
     } catch (error) {
