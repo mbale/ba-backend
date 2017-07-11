@@ -205,7 +205,7 @@ export default {
     }
   },
 
-  async resetAccount(request, reply) {
+  async forgotPassword(request, reply) {
     const {
       email,
     } = request.payload;
@@ -218,14 +218,14 @@ export default {
         email,
       });
 
-      if (user) {
-        await user.recoverAccount();
-        reply();
-      } else {
-        reply.notFound('We do not have an account associated with this email address.');
+      if (!user) {
+        return reply.notFound('We do not have an account associated with this email address.');
       }
+
+      await user.recoverAccount();
+      return reply();
     } catch (error) {
-      reply.badImplementation(error);
+      return reply.badImplementation(error);
     }
   },
 
@@ -259,7 +259,7 @@ export default {
     });
   },
 
-  async recoverAccount(request, reply) {
+  async resetPassword(request, reply) {
     const {
       recoveryToken,
       password,

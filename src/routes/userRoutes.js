@@ -50,9 +50,9 @@ const UserRoutes = [
     handler: UserController.deleteAvatar,
   },
   {
-    path: '/v1/user/reset_account',
+    path: '/v1/user/forgot-password',
     method: 'POST',
-    handler: UserController.resetAccount,
+    handler: UserController.forgotPassword,
     config: {
       auth: false,
       validate: {
@@ -64,7 +64,7 @@ const UserRoutes = [
     },
   },
   {
-    path: '/v1/user/recover_account',
+    path: '/v1/user/reset-password',
     method: 'GET',
     handler: UserController.testRecoveryToken,
     config: {
@@ -78,9 +78,9 @@ const UserRoutes = [
     },
   },
   {
-    path: '/v1/user/recover_account',
+    path: '/v1/user/reset-password',
     method: 'POST',
-    handler: UserController.recoverAccount,
+    handler: UserController.resetPassword,
     config: {
       auth: false,
       validate: {
@@ -106,15 +106,6 @@ const UserRoutes = [
       },
     },
   },
-  // {
-  //   path: '/v1/user/reviews',
-  //   method: 'GET',
-  //   handler: UserController.getReviews,
-  //   config: {
-  //     validate: {
-  //     },
-  //   },
-  // },
 ];
 
 export default UserRoutes;
