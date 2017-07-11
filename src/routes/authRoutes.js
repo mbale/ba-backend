@@ -14,6 +14,11 @@ const AuthRoutes = [
     handler: AuthController.revoke,
   },
   {
+    path: '/v1/auth',
+    method: 'PUT',
+    handler: AuthController.refreshAccessToken,
+  },
+  {
     path: '/v1/auth/basic',
     method: 'POST',
     handler: AuthController.basic,

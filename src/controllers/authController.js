@@ -53,6 +53,45 @@ export default {
     }
   },
 
+  async refreshAccessToken(request, reply) {
+    try {
+      let {
+        auth: {
+          credentials: {
+            userId,
+          },
+        },
+      } = request;
+
+      const {
+        server: {
+          app: {
+            db,
+          },
+        },
+      } = request;
+
+      db.register(User);
+      userId = new ObjectId(userId);
+
+      const user = await User.findById(userId);
+
+      const {
+        rawToken: accessToken,
+        issuedAt,
+        expiresAt,
+      } = await user.authorizeAccess();
+
+      return reply({
+        accessToken,
+        issuedAt,
+        expiresAt,
+      });
+    } catch (error) {
+      return reply.badImplementation(error);
+    }
+  },
+
   /*
     Basic authentication
    */
