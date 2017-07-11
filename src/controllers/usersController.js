@@ -77,14 +77,49 @@ export default {
           },
         },
         query: {
-          userid: userIds = [], // optional so we set empty array default
+          userid: userId,
         },
       } = request;
 
       db.register(User);
 
+      // it's undefined when query is absent and want to list all user
+      if (!userId) {
+        const users = await User.find();
+        const usersMapped = [];
+
+        for (const user of users) { // eslint-disable-line
+          const {
+            _id: id,
+            username,
+            email,
+            avatar,
+            created_at: registeredOn,
+            steamProvider,
+          } = await user.get(); // eslint-disable-line
+          usersMapped.push({
+            id,
+            username,
+            email,
+            avatar,
+            registeredOn,
+            steamProvider,
+          });
+        }
+        return reply(usersMapped);
+      }
+
+      let userIds = [];
+
+      // check if requests contains only one userid as string
+      if (!(userId instanceof Array) && userId) {
+        userIds.push(userId);
+      } else { // or array with userids
+        userIds = userId;
+      }
+
       // convert each to objectid
-      const usersIdsMappedToObjectId = userIds.map(userId => new ObjectId(userId));
+      const usersIdsMappedToObjectId = userIds.map(uid => new ObjectId(uid));
       const usersRequested = [];
 
       // find all user

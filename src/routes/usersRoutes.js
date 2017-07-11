@@ -47,9 +47,12 @@ const UsersRoutes = [
     config: {
       auth: false,
       validate: {
-        query: {
-          userid: joi.array().optional().items(joi.objectId().required()),
-        },
+        query: joi.object().keys({
+          userid: joi.alternatives([
+            joi.array().items(joi.objectId().required()),
+            joi.objectId().required(),
+          ]),
+        }),
       },
     },
   },
