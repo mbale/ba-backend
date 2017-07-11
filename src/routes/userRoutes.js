@@ -19,7 +19,7 @@ const UserRoutes = [
     config: {
       validate: {
         payload: joi.object().min(1).keys({
-          username: joi.string().optional(),
+          username: joi.string().optional().regex(/^[a-zA-Z0-9_]+$/),
           email: joi.string().email().optional(),
         }),
         failAction: failActions.user.editProfile,
