@@ -14,7 +14,9 @@ export default {
           limit,
         },
       } = request;
+
       const client = contentfulService;
+
       const {
         items: sportsbookCollection,
       } = await client.getEntries({
@@ -23,46 +25,50 @@ export default {
       });
 
       const sportsbookCollectionBuffer = [];
+
       for (let [index, sportsbook] of Object.entries(sportsbookCollection)) { // eslint-disable-line
-        // we strip out meta data
+        // parse data we need
         const {
-          sys: {
-            id: sportsbookId,
+          fields: {
+            name,
+            slug,
+            logo,
+            icon,
+            themeColor,
+            restrictedCountries,
           },
         } = sportsbook;
-        sportsbook = sportsbook.fields;
 
-        let bonus = sportsbook.bonus;
+        const sb = {};
 
-        // few case it's undefined
-        if (bonus && bonus instanceof Array) {
-          for (let b of bonus) { // eslint-disable-line
-            bonus = b.fields;
-          }
-        }
-
-        // yeah, there's no setter on obj
-        // so we redef props
-        // note: defsetter's not the best way
-        Object.defineProperties(sportsbook, {
-          id: {
-            value: sportsbookId,
+        Object.defineProperties(sb, {
+          name: {
+            value: name,
+            enumerable: true,
+          },
+          slug: {
+            value: slug,
             enumerable: true,
           },
           logo: {
-            value: sportsbook.logo.fields,
+            value: logo.fields,
             enumerable: true,
           },
           icon: {
-            value: sportsbook.icon.fields,
+            value: icon.fields,
             enumerable: true,
           },
-          bonus: {
-            value: bonus,
+          themeColor: {
+            value: themeColor,
+            enumerable: true,
+          },
+          restrictedCountries: {
+            value: restrictedCountries,
             enumerable: true,
           },
         });
-        sportsbookCollectionBuffer.push(sportsbook);
+
+        sportsbookCollectionBuffer.push(sb);
       }
 
       return reply(sportsbookCollectionBuffer);
@@ -77,7 +83,16 @@ export default {
         params: {
           sportsbookslug: sportsbookslugToFind,
         },
+        server: {
+          app: {
+            db,
+          },
+        },
       } = request;
+
+      db.register(Review);
+      db.register(User);
+
       // we make sure it's lowercase cos slug
       sportsbookslugToFind = sportsbookslugToFind.toLowerCase();
 
@@ -97,11 +112,40 @@ export default {
 
       let sportsbook = sportsbooks[0];
 
-      const {
-        sys: {
-          id: sportsbookId,
-        },
-      } = sportsbook;
+      const sportsbookId = sportsbook.sys.id;
+
+      const reviews = await Review.find({
+        sportsbookId,
+      });
+
+      const reviewsBuffer = [];
+      for (const review of reviews) { // eslint-disable-line
+        const {
+          rate,
+          text,
+          created_at: reviewCreatedAt,
+        } = await review.get(); // eslint-disable-line
+
+        let userId = await review.get('userId'); // eslint-disable-line
+        userId = new ObjectId(userId);
+
+        let user  = await User.findById(userId) // eslint-disable-line
+        const {
+          username,
+          avatar,
+        } = await user.get(); // eslint-disable-line
+
+        reviewsBuffer.push({
+          user: {
+            username,
+            avatar,
+          },
+          rate,
+          text,
+          reviewCreatedAt,
+        });
+      }
+
       // we strip out meta data
       sportsbook = sportsbook.fields;
       let bonus = sportsbook.bonus;
@@ -112,16 +156,59 @@ export default {
           bonus = b.fields;
         }
       }
+
+      const sb = {};
+
       // yeah, there's no setter on obj
       // so we redef props
       // note: defsetter's not the best way
-      Object.defineProperties(sportsbook, {
-        id: {
-          value: sportsbookId,
+      Object.defineProperties(sb, {
+        slug: {
+          value: sportsbook.slug,
           enumerable: true,
         },
         logo: {
-          value: sportsbook.logo.fields,
+          value: sportsbook.logo.fields.file.url,
+          enumerable: true,
+        },
+        restrictedCountries: {
+          value: sportsbook.restrictedCountries,
+          enumerable: true,
+        },
+        description: {
+          value: sportsbook.description,
+          enumerable: true,
+        },
+        themeColor: {
+          value: sportsbook.themeColor,
+          enumerable: true,
+        },
+        esportsExclusive: {
+          value: sportsbook.esportsExclusive,
+          enumerable: true,
+        },
+        url: {
+          value: sportsbook.url,
+          enumerable: true,
+        },
+        headQuarters: {
+          value: sportsbook.headQuarters,
+          enumerable: true,
+        },
+        founded: {
+          value: sportsbook.founded,
+          enumerable: true,
+        },
+        licenses: {
+          value: sportsbook.licenses,
+          enumerable: true,
+        },
+        depositMethods: {
+          value: sportsbook.depositMethods,
+          enumerable: true,
+        },
+        supportEmail: {
+          value: sportsbook.supportEmail,
           enumerable: true,
         },
         icon: {
@@ -131,10 +218,14 @@ export default {
         bonus: {
           value: bonus,
           enumerable: true,
+        },
+        reviews: {
+          value: reviewsBuffer,
           enumerable: true,
         },
       });
-      return reply(sportsbook);
+
+      return reply(sb);
     } catch (error) {
       if (error instanceof SportsbookNotFoundByNameError) {
         return reply.notFound(error.message);
