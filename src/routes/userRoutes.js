@@ -21,6 +21,7 @@ const UserRoutes = [
         payload: joi.object().min(1).keys({
           username: joi.string().optional().regex(/^[a-zA-Z0-9_]+$/),
           email: joi.string().email().optional(),
+          countryCode: joi.string().min(2).max(2).optional(),
         }),
         failAction: failActions.user.editProfile,
       },

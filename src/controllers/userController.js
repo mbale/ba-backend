@@ -1,10 +1,14 @@
 import { ObjectId } from 'mongorito';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
+import countryList from 'country-list';
 import User from '~/models/userModel.js';
+import InvalidCountryCodeError from '~/models/errors/invalidCountryCodeError';
 import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
 import UsernameTakenError from '~/models/errors/usernameTakenError.js';
 import EmailTakenError from '~/models/errors/emailTakenError.js';
+
+const countries = countryList();
 
 export default {
   async getInfo(request, reply) {
@@ -120,6 +124,7 @@ export default {
         payload, payload: {
           username = '',
           email = '',
+          countryCode,
         },
       } = request;
 
@@ -130,6 +135,11 @@ export default {
           },
         },
       } = request;
+
+      // validate country code
+      if (!countries.getName(countryCode)) {
+        throw new InvalidCountryCodeError(countryCode);
+      }
 
       userId = new ObjectId(userId);
       db.register(User);
@@ -197,9 +207,10 @@ export default {
     } catch (error) {
       if (error instanceof UsernameTakenError) {
         return reply.conflict(error.message);
-      }
-      if (error instanceof EmailTakenError) {
+      } else if (error instanceof EmailTakenError) {
         return reply.conflict(error.message);
+      } else if (error instanceof InvalidCountryCodeError) {
+        return reply.badData(error.message);
       }
       return reply.badImplementation(error);
     }
