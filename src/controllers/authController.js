@@ -268,6 +268,7 @@ export default {
           email,
           avatar: steamProfileData.avatar.default,
           steamProvider: steamProfileData,
+          countryCode: locCountryCode,
         };
 
         if (!username || username === '') {

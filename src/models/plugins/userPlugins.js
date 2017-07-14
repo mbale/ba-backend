@@ -126,6 +126,11 @@ const setDefaultFields = () => {
         fields.steamProvider = {};
         model.set('steamProvider', {});
       }
+
+      if (typeof fields.countryCode === 'undefined') {
+        fields.countryCode = '';
+        model.set('countryCode', '');
+      }
     }
     return next(action);
   };

@@ -31,6 +31,7 @@ export default {
         avatar,
         created_at: registeredOn,
         steamProvider,
+        countryCode,
       } = await user.get();
 
       const replyObj = {
@@ -39,6 +40,7 @@ export default {
         email,
         avatar,
         registeredOn,
+        countryCode,
       };
 
       // check if steamprovider is set up
