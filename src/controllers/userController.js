@@ -139,7 +139,7 @@ export default {
       } = request;
 
       // validate country code
-      if (!countries.getName(countryCode)) {
+      if (countryCode && !countries.getName(countryCode)) {
         throw new InvalidCountryCodeError(countryCode);
       }
 
