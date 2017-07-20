@@ -30,8 +30,8 @@ const AuthRoutes = [
             .string().required()
             .regex(/^[a-zA-Z0-9_]+$/)
             .lowercase()
-            .min(4)
-            .max(10),
+            .min(2)
+            .max(32),
           password: joi
             .string().required()
             .min(6).max(16),
