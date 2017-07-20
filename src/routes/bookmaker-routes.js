@@ -1,12 +1,12 @@
 import joi from 'joi';
-import bookmakersController from '~/controllers/bookmaker-controller.js';
+import BookmakersController from '~/controllers/bookmaker-controller.js';
 import failActions from '~/helpers/failActions.js';
 
 const bookmakersRoutes = [
   {
     path: '/v1/bookmakers',
     method: 'GET',
-    handler: bookmakersController.getBookmakers,
+    handler: BookmakersController.getBookmakers,
     config: {
       auth: false,
       validate: {
@@ -21,12 +21,13 @@ const bookmakersRoutes = [
   {
     path: '/v1/bookmakers/{bookmakerslug}',
     method: 'GET',
-    handler: bookmakersController.getSportsbookByName,
+    handler: BookmakersController.getSportsbookByName,
     config: {
       auth: false,
       validate: {
         params: {
-          bookmakerslug: joi.string().required(),
+          bookmakerslug: joi.string().required()
+            .lowercase(),
         },
       },
     },
@@ -34,7 +35,7 @@ const bookmakersRoutes = [
   {
     path: '/v1/bookmakers/{bookmakerslug}/reviews',
     method: 'GET',
-    handler: bookmakersController.getSportsbookReviews,
+    handler: BookmakersController.getSportsbookReviews,
     config: {
       auth: false,
       validate: {
@@ -52,7 +53,7 @@ const bookmakersRoutes = [
   {
     path: '/v1/bookmakers/{bookmakerslug}/reviews',
     method: 'POST',
-    handler: bookmakersController.addSportsbookReview,
+    handler: BookmakersController.addSportsbookReview,
     config: {
       validate: {
         params: {

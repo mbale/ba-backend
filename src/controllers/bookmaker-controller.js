@@ -2,7 +2,9 @@ import { ObjectId } from 'mongorito';
 import timestamps from 'mongorito-timestamps';
 import contentfulService from '~/services/contentfulService.js';
 import Review from '~/models/review-model.js';
+import User from '~/models/user-model.js';
 import Utils from '~/utils.js';
+import EntityNotFoundError from '~/errors/entity-not-found-error.js';
 import SportsbookAlreadyReviewedError from '~/errors/sportsbookAlreadyReviewedError.js';
 import SportsbookNotFoundByNameError from '~/errors/sportsbookNotFoundByNameError.js';
 
@@ -79,43 +81,37 @@ export default {
 
   async getSportsbookByName(request, reply) {
     try {
-      let {
+      const {
         params: {
-          sportsbookslug: sportsbookslugToFind,
-        },
-        server: {
-          app: {
-            db,
-          },
+          bookmakerslug: bookmakerSlug,
         },
       } = request;
 
-      db.register(Review);
-      db.register(User);
 
-      // we make sure it's lowercase cos slug
-      sportsbookslugToFind = sportsbookslugToFind.toLowerCase();
-
-      const client = contentfulService;
+      const client = await Utils.getContentfulClient();
 
       const {
-        items: sportsbooks,
+        items: bookmakers,
       } = await client.getEntries({
         content_type: 'sportsbook',
-        'fields.slug': sportsbookslugToFind,
+        'fields.slug': bookmakerSlug,
       });
 
       // check if we have results
-      if (sportsbooks.length === 0) {
-        throw new SportsbookNotFoundByNameError(sportsbookslugToFind);
+      if (bookmakers.length === 0) {
+        throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
       }
 
-      let sportsbook = sportsbooks[0];
+      let bookmaker = bookmakers[0];
 
-      const sportsbookId = sportsbook.sys.id;
+      const {
+        sys: {
+          id: bookmakerId,
+        },
+      } = bookmaker;
 
       const reviews = await Review.find({
-        sportsbookId,
+        bookmakerId,
       });
 
       const reviewsBuffer = [];
@@ -123,7 +119,7 @@ export default {
         const {
           rate,
           text,
-          created_at: reviewCreatedAt,
+          created_at: createdAt,
         } = await review.get(); // eslint-disable-line
 
         let userId = await review.get('userId'); // eslint-disable-line
@@ -142,13 +138,15 @@ export default {
           },
           rate,
           text,
-          reviewCreatedAt,
+          createdAt,
         });
       }
 
       // we strip out meta data
-      sportsbook = sportsbook.fields;
-      let bonus = sportsbook.bonus;
+      bookmaker = bookmaker.fields;
+      let {
+        bonus,
+      } = bookmaker;
 
       // few case it's undefined
       if (bonus && bonus instanceof Array) {
@@ -157,62 +155,62 @@ export default {
         }
       }
 
-      const sb = {};
+      const bm = {};
 
       // yeah, there's no setter on obj
       // so we redef props
       // note: defsetter's not the best way
-      Object.defineProperties(sb, {
+      Object.defineProperties(bm, {
         slug: {
-          value: sportsbook.slug,
+          value: bookmaker.slug,
           enumerable: true,
         },
         logo: {
-          value: sportsbook.logo.fields.file.url,
+          value: bookmaker.logo.fields.file.url,
           enumerable: true,
         },
         restrictedCountries: {
-          value: sportsbook.restrictedCountries,
+          value: bookmaker.restrictedCountries,
           enumerable: true,
         },
         description: {
-          value: sportsbook.description,
+          value: bookmaker.description,
           enumerable: true,
         },
         themeColor: {
-          value: sportsbook.themeColor,
+          value: bookmaker.themeColor,
           enumerable: true,
         },
         esportsExclusive: {
-          value: sportsbook.esportsExclusive,
+          value: bookmaker.esportsExclusive,
           enumerable: true,
         },
         url: {
-          value: sportsbook.url,
+          value: bookmaker.url,
           enumerable: true,
         },
         headQuarters: {
-          value: sportsbook.headQuarters,
+          value: bookmaker.headQuarters,
           enumerable: true,
         },
         founded: {
-          value: sportsbook.founded,
+          value: bookmaker.founded,
           enumerable: true,
         },
         licenses: {
-          value: sportsbook.licenses,
+          value: bookmaker.licenses,
           enumerable: true,
         },
         depositMethods: {
-          value: sportsbook.depositMethods,
+          value: bookmaker.depositMethods,
           enumerable: true,
         },
         supportEmail: {
-          value: sportsbook.supportEmail,
+          value: bookmaker.supportEmail,
           enumerable: true,
         },
         icon: {
-          value: sportsbook.icon.fields,
+          value: bookmaker.icon.fields,
           enumerable: true,
         },
         bonus: {
@@ -225,7 +223,7 @@ export default {
         },
       });
 
-      return reply(sb);
+      return reply(bm);
     } catch (error) {
       if (error instanceof SportsbookNotFoundByNameError) {
         return reply.notFound(error.message);

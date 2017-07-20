@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import timestamps from 'mongorito-timestamps';
 import Routes from '~/routes';
 import User from '~/models/user-model.js';
+import Review from '~/models/review-model.js';
 import EntityNotFoundError from '~/errors/entity-not-found-error.js';
 
 dotenv.config();
@@ -71,6 +72,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
 
     db.use(timestamps());
     db.register(User);
+    db.register(Review);
 
     serverInstance.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
     return next();

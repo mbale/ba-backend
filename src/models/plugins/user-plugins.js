@@ -191,15 +191,18 @@ const extendUserModel = (userModel) => {
         countryCode,
       } = await this.get();
 
-      const avatar = Utils.getCloudinaryURL(avatarPublicId);
-
       profile = {
         id,
         username,
-        avatar,
         countryCode,
         registeredOn,
       };
+
+      if (avatarPublicId) {
+        profile.avatar = Utils.getCloudinaryURL(avatarPublicId);
+      } else {
+        profile.avatar = false;
+      }
 
       // private profile
       if (privateProfile) {
