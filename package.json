@@ -23,6 +23,7 @@
     "babel-eslint": "^7.2.1",
     "babel-loader": "^7.0.0",
     "babel-plugin-root-import": "^5.1.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-preset-env": "^1.4.0",
     "code": "^4.0.0",
     "eslint": "^3.19.0",
@@ -68,5 +69,8 @@
   },
   "directories": {
     "test": "test"
+  },
+  "peerDependencies": {
+    "boom": "^5.1.0"
   }
 }

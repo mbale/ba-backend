@@ -1,12 +1,12 @@
 import joi from 'joi';
-import SportsbooksController from '~/controllers/sportsbooksController.js';
-import failActions from '~/helpers/failActions';
+import bookmakersController from '~/controllers/bookmaker-controller.js';
+import failActions from '~/helpers/failActions.js';
 
-const SportsbooksRoutes = [
+const bookmakersRoutes = [
   {
-    path: '/v1/sportsbooks',
+    path: '/v1/bookmakers',
     method: 'GET',
-    handler: SportsbooksController.getSportsbooks,
+    handler: bookmakersController.getBookmakers,
     config: {
       auth: false,
       validate: {
@@ -19,27 +19,27 @@ const SportsbooksRoutes = [
     },
   },
   {
-    path: '/v1/sportsbooks/{sportsbookslug}',
+    path: '/v1/bookmakers/{bookmakerslug}',
     method: 'GET',
-    handler: SportsbooksController.getSportsbookByName,
+    handler: bookmakersController.getSportsbookByName,
     config: {
       auth: false,
       validate: {
         params: {
-          sportsbookslug: joi.string().required(),
+          bookmakerslug: joi.string().required(),
         },
       },
     },
   },
   {
-    path: '/v1/sportsbooks/{sportsbookslug}/reviews',
+    path: '/v1/bookmakers/{bookmakerslug}/reviews',
     method: 'GET',
-    handler: SportsbooksController.getSportsbookReviews,
+    handler: bookmakersController.getSportsbookReviews,
     config: {
       auth: false,
       validate: {
         params: {
-          sportsbookslug: joi.string().required(),
+          bookmakerslug: joi.string().required(),
         },
         query: {
           limit: joi.number().integer().min(1).max(100)
@@ -50,13 +50,13 @@ const SportsbooksRoutes = [
     },
   },
   {
-    path: '/v1/sportsbooks/{sportsbookslug}/reviews',
+    path: '/v1/bookmakers/{bookmakerslug}/reviews',
     method: 'POST',
-    handler: SportsbooksController.addSportsbookReview,
+    handler: bookmakersController.addSportsbookReview,
     config: {
       validate: {
         params: {
-          sportsbookslug: joi.string().required(),
+          bookmakerslug: joi.string().required(),
         },
         payload: joi.object().keys({
           rate: joi.number().min(0).max(5).required(),
@@ -68,4 +68,4 @@ const SportsbooksRoutes = [
   },
 ];
 
-export default SportsbooksRoutes;
+export default bookmakersRoutes;

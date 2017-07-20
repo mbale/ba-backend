@@ -1,80 +1,68 @@
 import {
   ObjectId,
 } from 'mongorito';
-import timestamps from 'mongorito-timestamps';
+// it will be removed by refactored steaam auth
 import Chance from 'chance';
 import axios from 'axios';
-import User from '~/models/userModel.js';
-import UsernameTakenError from '~/models/errors/usernameTakenError.js';
-import EmailTakenError from '~/models/errors/emailTakenError.js';
-import UsernameNotFoundError from '~/models/errors/usernameNotFoundError.js';
-import PasswordMismatchError from '~/models/errors/passwordMismatchError.js';
+import UsernameTakenError from '~/errors/usernameTakenError.js';
+import EmailTakenError from '~/errors/emailTakenError.js';
+// it will be obsolete by refactoring steaam auth
+import User from '~/models/user-model.js';
+import EntityNotFoundError from '~/errors/entity-not-found-error.js';
+import PasswordMismatchError from '~/errors/password-mismatch-error.js';
 
-export default {
-  /*
-    Testing token
-   */
-  async test(request, reply) {
-    const {
-      userId,
-      iat: issuedAt,
-      exp: expiresAt,
-    } = request.auth.credentials;
-
-    // token, user it's connected to
-    // token issued at
-    // token exp fin unix timestamp
+class AuthController {
+  static async getAccessTokenInformation(request, reply) {
     try {
-      reply({
+      const {
+        auth: {
+          credentials: {
+            decodedToken: {
+              userId,
+              iat: issuedAt,
+              exp: expiresAt,
+            },
+          },
+        },
+      } = request;
+
+      return reply({
         userId,
         issuedAt,
         expiresAt,
       });
     } catch (error) {
-      reply.badImplementation(error);
+      return reply.badImplementation(error);
     }
-  },
+  }
 
-  async revoke(request, reply) {
-    const userId = request.auth.credentials.userId;
-    const db = request.server.app.db;
-    /*
-      DB
-     */
-    db.register(User);
-
+  static async revokeAccessToken(request, reply) {
     try {
-      const user = await User.findById(new ObjectId(userId));
-      // setting token to empty
-      await user.revokeAccess();
-      reply();
-    } catch (error) {
-      reply.badImplementation(error);
-    }
-  },
-
-  async refreshAccessToken(request, reply) {
-    try {
-      let {
+      const {
         auth: {
           credentials: {
-            userId,
+            user,
           },
         },
       } = request;
 
+      // revoke access
+      await user.revokeAccess();
+      return reply();
+    } catch (error) {
+      return reply.badImplementation(error);
+    }
+  }
+
+  static async refreshAccessToken(request, reply) {
+    try {
       const {
-        server: {
-          app: {
-            db,
+        auth: {
+          credentials: {
+            user,
           },
         },
       } = request;
-
-      db.register(User);
-      userId = new ObjectId(userId);
-
-      const user = await User.findById(userId);
 
       const {
         rawToken: accessToken,
@@ -90,119 +78,103 @@ export default {
     } catch (error) {
       return reply.badImplementation(error);
     }
-  },
+  }
 
-  /*
-    Basic authentication
-   */
-  async basic(request, reply) {
-    /*
-    DB
-     */
-    const {
-      db,
-    } = request.server.app;
-
-    db.register(User);
-    db.use(timestamps());
-
-    /*
-    Data
-     */
-    const {
-      username,
-      password,
-    } = request.payload;
-
+  static async basicAuthentication(request, reply) {
     try {
-      // find user
-      const user = await User.findByUsername(username);
+      const {
+        payload: {
+          username,
+          password,
+        },
+      } = request;
+
+      const user = await User.findOne({
+        username,
+      });
+
+      if (!user) {
+        throw new EntityNotFoundError('User', 'name', username);
+      }
+
       // compare passwords
       await user.comparePassword(password);
+
       // issue request to get access, token
       await user.authorizeAccess();
 
       const {
-        rawToken: accessToken,
+        accessToken,
         issuedAt,
         expiresAt,
       } = await user.get('accessToken');
 
-      // sending
-      reply({
+      return reply({
         accessToken,
         issuedAt,
         expiresAt,
       });
     } catch (error) {
-      if (error instanceof UsernameNotFoundError) {
-        reply.unauthorized(error.message);
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error.message);
       } else if (error instanceof PasswordMismatchError) {
-        reply.unauthorized(error.message);
-      } else {
-        reply.badImplementation(error);
+        return reply.unauthorized(error.message);
       }
+      return reply.badImplementation(error);
     }
-  },
+  }
 
-  /*
-    Steam authentication
-   */
-  async steam(request, reply) {
-    // steamapi access
-    const steamAPIKey = process.env.STEAM_API_KEY;
-    const db = request.server.app.db;
-    db.register(User);
-    db.use(timestamps());
-
-    // isLoggedIn === true & auth != null => authenticate user
-    const {
-      auth,
-      auth: {
-        isAuthenticated: isLoggedIn,
-      },
-    } = request;
-
-    // for username generation
-    const chance = new Chance();
-
-    const {
-      steamId, // required
-      username = false, // only when user submits otherwise generate
-      password = false, // optional
-      email = false, // optional
-    } = request.payload;
-
-    // api url which can give us steam profile data
-    const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
-
-    // getting steam data
-    const {
-      data: {
-        response: {
-          players,
-        },
-      },
-    } = await axios.get(steamUserAPIUrl);
-
-    const steamData = players[0];
-
-    // check which fields we need to search for
-    const query = [];
-
-    query.push({
-      'steamProvider.steamId': steamData.steamid,
-    });
-
-    // if it's authenticated then get user based on token information
-    //  refresh steamProvider data when it's already steamprovided
-    if (isLoggedIn) {
-      query.push({
-        _id: new ObjectId(auth.credentials.userId),
-      });
-    }
-
+  static async steam(request, reply) {
     try {
+      // steamapi access
+      const steamAPIKey = process.env.STEAM_API_KEY;
+
+      // isLoggedIn === true & auth != null => authenticate user
+      const {
+        auth,
+        auth: {
+          isAuthenticated: isLoggedIn,
+        },
+      } = request;
+
+      // for username generation
+      const chance = new Chance();
+
+      const {
+        steamId, // required
+        username = false, // only when user submits otherwise generate
+        password = false, // optional
+        email = false, // optional
+      } = request.payload;
+
+      // api url which can give us steam profile data
+      const steamUserAPIUrl = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${steamAPIKey}&steamids=${steamId}`;
+
+      // getting steam data
+      const {
+        data: {
+          response: {
+            players,
+          },
+        },
+      } = await axios.get(steamUserAPIUrl);
+
+      const steamData = players[0];
+
+      // check which fields we need to search for
+      const query = [];
+
+      query.push({
+        'steamProvider.steamId': steamData.steamid,
+      });
+
+      // if it's authenticated then get user based on token information
+      //  refresh steamProvider data when it's already steamprovided
+      if (isLoggedIn) {
+        query.push({
+          _id: new ObjectId(auth.credentials.userId),
+        });
+      }
       // restruct steamdata
       const {
         communityvisibilitystate: communityVisibilityState,
@@ -302,7 +274,7 @@ export default {
         await user.authorizeAccess();
 
         const {
-          rawToken: accessToken,
+          accessToken,
           issuedAt,
           expiresAt,
         } = await user.get('accessToken');
@@ -322,5 +294,7 @@ export default {
         reply.badImplementation(error);
       }
     }
-  },
-};
+  }
+}
+
+export default AuthController;

@@ -1,12 +1,11 @@
 import {
   Model,
 } from 'mongorito';
-import UserPlugins from '~/models/plugins/userPlugins.js';
+import UserPlugins from '~/models/plugins/user-plugins.js';
 
 const {
   hashPassword,
   setDefaultFields,
-  // checkUniqueFieldsOnEdit,
   checkIfUserExists,
   extendUserModel,
 } = UserPlugins;

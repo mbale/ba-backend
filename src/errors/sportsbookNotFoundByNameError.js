@@ -1,4 +1,4 @@
-import AppError from '~/models/errors/appError.js';
+import AppError from '~/errors/appError.js';
 
 class SportsbookNotFoundByNameError extends AppError {
   constructor(sportsbookname = null) {

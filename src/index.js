@@ -1,14 +1,19 @@
 import Hapi from 'hapi';
+import Boom from 'boom';
 import Inert from 'inert';
 import Blipp from 'blipp';
 import Good from 'good';
 import HapiBoomDecorators from 'hapi-boom-decorators';
 import authJwt from 'hapi-auth-jwt2';
-import Mongorito, { ObjectId } from 'mongorito';
+import Mongorito, {
+  ObjectId,
+} from 'mongorito';
 import _ from 'lodash';
 import dotenv from 'dotenv';
+import timestamps from 'mongorito-timestamps';
 import Routes from '~/routes';
-import User from '~/models/userModel.js';
+import User from '~/models/user-model.js';
+import EntityNotFoundError from '~/errors/entity-not-found-error.js';
 
 dotenv.config();
 
@@ -55,19 +60,22 @@ const goodReporterOptions = {
   },
 };
 
-server.ext('onPreStart', async (server, next) => {
-  const db = new Mongorito(process.env.MONGO_URI);
-
-  // assign db instance to server
-  const serverInstance = server;
-  serverInstance.app.db = db;
-
+server.ext('onPreStart', async (serverInstance, next) => {
   try {
+    const db = new Mongorito(process.env.MONGO_URI);
     const connection = await db.connect(process.env.MONGO_URI);
-    server.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
+
+    /*
+      Dependency registration
+    */
+
+    db.use(timestamps());
+    db.register(User);
+
+    serverInstance.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
     return next();
   } catch (error) {
-    server.log(['error'], error);
+    serverInstance.log(['error'], error);
     throw error;
   }
 });
@@ -122,28 +130,54 @@ server.register(authJwt, (error) => {
 server.auth.strategy('accessToken', 'jwt', {
   key: process.env.JWT_KEY,
   async validateFunc(decoded, request, callback) {
-    server.app.db.register(User);
-
-    // encoded & decoded token
-    const userId = new ObjectId(decoded.userId);
-    const encodedToken = request.auth.token;
-
     try {
-      const user = await User.findById(userId);
+      // decoded token
+      let {
+        userId,
+      } = decoded;
 
+      // encoded token
       const {
-        rawToken,
-      } = await user.get('accessToken');
+        auth: {
+          token: accessToken,
+        },
+      } = request;
 
-      if (rawToken === encodedToken) {
-        // everything's ok
-        return callback(null, true);
+      userId = new ObjectId(userId);
+
+      const credentials = {
+        user: null,
+        decodedToken: decoded, // we might not need this but pass it anyways
+      };
+
+      // first we find by userid
+      const userById = await User.findById(userId);
+      // then by token
+      const userByToken = await User.findOne({
+        'accessToken.accessToken': accessToken,
+      });
+
+      // check each case
+      if (!userById) {
+        throw new EntityNotFoundError('User', 'id', userId);
       }
+
+      if (!userByToken) {
+        throw new EntityNotFoundError('User', 'accesstoken', accessToken);
+      }
+
+      // assign user entity to later usage in controller
+      credentials.user = userById;
+
+      // everything's ok
+      return callback(null, true, credentials);
     } catch (error) {
-      // check for "haxors"
-      return callback(false);
+      if (error instanceof EntityNotFoundError) {
+        const boomError = Boom.wrap(error, 401); // with unauthorized
+        return callback(boomError, false);
+      }
+      return callback(error, false);
     }
-    return callback(false);
   },
   verifyOptions: {
     algorithms: ['HS256'],

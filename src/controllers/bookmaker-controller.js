@@ -1,13 +1,13 @@
 import { ObjectId } from 'mongorito';
 import timestamps from 'mongorito-timestamps';
 import contentfulService from '~/services/contentfulService.js';
-import Review from '~/models/reviewModel.js';
-import User from '~/models/userModel.js';
-import SportsbookAlreadyReviewedError from '~/models/errors/sportsbookAlreadyReviewedError.js';
-import SportsbookNotFoundByNameError from '~/models/errors/sportsbookNotFoundByNameError.js';
+import Review from '~/models/review-model.js';
+import Utils from '~/utils.js';
+import SportsbookAlreadyReviewedError from '~/errors/sportsbookAlreadyReviewedError.js';
+import SportsbookNotFoundByNameError from '~/errors/sportsbookNotFoundByNameError.js';
 
 export default {
-  async getSportsbooks(request, reply) {
+  async getBookmakers(request, reply) {
     try {
       const {
         query: {
@@ -15,7 +15,7 @@ export default {
         },
       } = request;
 
-      const client = contentfulService;
+      const client = await Utils.getContentfulClient();
 
       const {
         items: sportsbookCollection,
