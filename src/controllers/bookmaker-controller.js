@@ -79,7 +79,7 @@ export default {
     }
   },
 
-  async getSportsbookByName(request, reply) {
+  async getSportsbookBySlug(request, reply) {
     try {
       const {
         params: {

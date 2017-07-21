@@ -11,7 +11,8 @@ const bookmakersRoutes = [
       auth: false,
       validate: {
         query: {
-          limit: joi.number().integer().min(1).max(100)
+          limit: joi.number().integer()
+            .min(1).max(100)
             .default(10),
         },
         failAction: failActions.sportsbooks.getAll,
@@ -21,7 +22,7 @@ const bookmakersRoutes = [
   {
     path: '/v1/bookmakers/{bookmakerslug}',
     method: 'GET',
-    handler: BookmakersController.getSportsbookByName,
+    handler: BookmakersController.getSportsbookBySlug,
     config: {
       auth: false,
       validate: {
