@@ -1,4 +1,4 @@
-import AppError from '~/errors/appError.js';
+import AppError from '~/errors/app-error.js';
 
 class EmailTakenError extends AppError {
   constructor(email = null) {

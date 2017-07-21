@@ -1,4 +1,4 @@
-import AppError from '~/errors/appError.js';
+import AppError from '~/errors/app-error.js';
 
 class PasswordMismatchError extends AppError {
   constructor(username = null, password = null) {

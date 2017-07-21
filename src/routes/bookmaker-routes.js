@@ -1,7 +1,6 @@
 import joi from 'joi';
 import BookmakersController from '~/controllers/bookmaker-controller.js';
 import Utils from '~/utils.js';
-import failActions from '~/helpers/failActions.js';
 
 const bookmakersRoutes = [
   {
@@ -16,7 +15,34 @@ const bookmakersRoutes = [
             .min(1).max(100)
             .default(10),
         },
-        failAction: failActions.sportsbooks.getAll,
+        failAction(request, reply, source, error) {
+          let joiError = Utils.refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+
+          switch (type) {
+          case 'number.base':
+            joiError = joiError(`${pathCapitalized}Invalid`, message);
+            break;
+          default:
+            joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
       },
     },
   },
