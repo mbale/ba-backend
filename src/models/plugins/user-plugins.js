@@ -6,6 +6,7 @@ import Templates from '~/templates.js';
 import server from '~/index.js';
 import {
   ActionTypes,
+  ObjectId,
 } from 'mongorito';
 import Utils from '~/utils.js';
 import bcrypt from 'bcrypt';
@@ -235,7 +236,8 @@ const extendUserModel = (userModel) => {
   UserModel.prototype.editProfile = async function editProfile(propsInObjToEdit) {
     try {
       const user = this; // current user
-      const userId = this.get('_id'); // his id to exlude him when we search for collision
+      let userId = await user.get('_id'); // his id to exlude him when we search for collision
+      userId = new ObjectId(userId);
       const propObj = propsInObjToEdit; // fields in profile to edit
       const query = []; // it contains all unique values he submitted and we search based on this
       let profileChanged = false; // indicate if we changed value
