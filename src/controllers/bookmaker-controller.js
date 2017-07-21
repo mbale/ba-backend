@@ -195,15 +195,13 @@ export default {
 
       // we strip out meta data
       bookmaker = bookmaker.fields;
-      let {
-        bonus,
-      } = bookmaker;
-
+      let { bonus } = bookmaker;
+      const bonusArray = []
       // few case it's undefined
       if (bonus && bonus instanceof Array) {
-        for (let b of bonus) { // eslint-disable-line
-          bonus = b.fields;
-        }
+        bonus.forEach((bonus) => {
+          bonusArray.push(bonus.fields)
+        })
       }
 
       const bm = {};
@@ -264,8 +262,8 @@ export default {
           value: bookmaker.icon.fields.file.url,
           enumerable: true,
         },
-        bonus: {
-          value: bonus,
+        bonuses: {
+          value: bonusArray,
           enumerable: true,
         },
         reviews: {
