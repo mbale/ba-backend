@@ -261,7 +261,7 @@ export default {
           enumerable: true,
         },
         icon: {
-          value: bookmaker.icon.fields,
+          value: bookmaker.icon.fields.file.url,
           enumerable: true,
         },
         bonus: {
