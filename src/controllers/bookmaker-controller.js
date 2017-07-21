@@ -240,8 +240,8 @@ export default {
           value: bookmaker.url,
           enumerable: true,
         },
-        headQuarters: {
-          value: bookmaker.headQuarters,
+        headquarters: {
+          value: bookmaker.headquarters,
           enumerable: true,
         },
         founded: {
