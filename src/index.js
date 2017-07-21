@@ -193,7 +193,6 @@ server.auth.default('accessToken');
   Registering routes
  */
 
-// add each route
 _.forEach(Routes, (route) => {
   server.route(route);
 });

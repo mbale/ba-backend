@@ -34,6 +34,7 @@ export default {
             logo,
             icon,
             themeColor,
+            depositMethods,
             restrictedCountries,
           },
           sys: {
@@ -102,6 +103,10 @@ export default {
           },
           restrictedCountries: {
             value: restrictedCountries,
+            enumerable: true,
+          },
+          depositMethods: {
+            value: depositMethods,
             enumerable: true,
           },
           reviews: {

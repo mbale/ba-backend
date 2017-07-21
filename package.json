@@ -60,7 +60,7 @@
     "joi-objectid": "^2.0.0",
     "jsonwebtoken": "^7.4.1",
     "lodash": "^4.15.0",
-    "mailgun.js": "^2.0.1",
+    "mailgun-js": "^0.11.3",
     "moment": "^2.18.1",
     "mongorito": "^3.0.1",
     "mongorito-timestamps": "^1.0.0",

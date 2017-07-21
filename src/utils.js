@@ -1,7 +1,7 @@
 import cloudinary from 'cloudinary';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import mailgun from 'mailgun.js';
+import mailgun from 'mailgun-js';
 import * as contentful from 'contentful';
 
 dotenv.config();
@@ -95,12 +95,12 @@ class Utils {
   */
   static async sendMail(email) {
     try {
-      const client = mailgun.client({
-        username: 'api',
-        key: process.env.MAILGUN_API_KEY,
+      const client = mailgun({
+        domain: process.env.MAILGUN_DOMAIN,
+        apiKey: process.env.MAILGUN_API_KEY,
       });
 
-      await client.messages.create(process.env.MAILGUN_DOMAIN, email);
+      await client.messages().send(email);
     } catch (error) {
       throw error;
     }
