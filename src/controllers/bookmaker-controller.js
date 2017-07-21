@@ -354,7 +354,7 @@ export default {
       // reply automaps entities in array to JSON
       return reply({
         avg,
-        reviews: reviewsBuffer,
+        items: reviewsBuffer,
       });
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
