@@ -1,12 +1,9 @@
 import { ObjectId } from 'mongorito';
-import timestamps from 'mongorito-timestamps';
-import contentfulService from '~/services/contentfulService.js';
 import Review from '~/models/review-model.js';
 import User from '~/models/user-model.js';
 import Utils from '~/utils.js';
+import EntityTakenError from '~/errors/entity-taken-error';
 import EntityNotFoundError from '~/errors/entity-not-found-error.js';
-import SportsbookAlreadyReviewedError from '~/errors/sportsbookAlreadyReviewedError.js';
-import SportsbookNotFoundByNameError from '~/errors/sportsbookNotFoundByNameError.js';
 
 export default {
   async getBookmakers(request, reply) {
@@ -20,15 +17,15 @@ export default {
       const client = await Utils.getContentfulClient();
 
       const {
-        items: sportsbookCollection,
+        items: bookmakerCollection,
       } = await client.getEntries({
         content_type: 'sportsbook',
         limit,
       });
 
-      const sportsbookCollectionBuffer = [];
+      const bookmakersBuffer = [];
 
-      for (let [index, sportsbook] of Object.entries(sportsbookCollection)) { // eslint-disable-line
+      for (let [index, bookmaker] of Object.entries(bookmakerCollection)) { // eslint-disable-line
         // parse data we need
         const {
           fields: {
@@ -39,11 +36,50 @@ export default {
             themeColor,
             restrictedCountries,
           },
-        } = sportsbook;
+          sys: {
+            id: bookmakerId,
+          },
+        } = bookmaker;
 
-        const sb = {};
+        // get reviews
+        const reviews = await Review.find({ // eslint-disable-line
+          bookmakerId,
+        });
 
-        Object.defineProperties(sb, {
+        const reviewsBuffer = [];
+
+        let sum = 0;
+
+        for (const review of reviews) { // eslint-disable-line
+          const {
+            rate,
+            text,
+            created_at: createdAt,
+          } = await review.get(); // eslint-disable-line
+
+          let userId = await review.get('userId'); // eslint-disable-line
+          userId = new ObjectId(userId);
+
+          const user = await User.findById(userId); // eslint-disable-line
+
+          const profile = await user.getProfile(); // eslint-disable-line
+
+          sum += parseInt(rate, 10);
+
+          reviewsBuffer.push({
+            user: profile,
+            rate,
+            text,
+            createdAt,
+          });
+        }
+
+        // it can be null if we do not have reviews
+        const avg = sum / reviewsBuffer.length;
+
+        const bm = {};
+
+        Object.defineProperties(bm, {
           name: {
             value: name,
             enumerable: true,
@@ -68,18 +104,25 @@ export default {
             value: restrictedCountries,
             enumerable: true,
           },
+          reviews: {
+            value: {
+              avg,
+              items: reviewsBuffer,
+            },
+            enumerable: true,
+          },
         });
 
-        sportsbookCollectionBuffer.push(sb);
+        bookmakersBuffer.push(bm);
       }
 
-      return reply(sportsbookCollectionBuffer);
+      return reply(bookmakersBuffer);
     } catch (error) {
       return reply.badImplementation(error);
     }
   },
 
-  async getSportsbookBySlug(request, reply) {
+  async getBookmakerBySlug(request, reply) {
     try {
       const {
         params: {
@@ -114,7 +157,9 @@ export default {
         bookmakerId,
       });
 
+      let sum = 0;
       const reviewsBuffer = [];
+
       for (const review of reviews) { // eslint-disable-line
         const {
           rate,
@@ -125,22 +170,23 @@ export default {
         let userId = await review.get('userId'); // eslint-disable-line
         userId = new ObjectId(userId);
 
-        let user  = await User.findById(userId) // eslint-disable-line
-        const {
-          username,
-          avatar,
-        } = await user.get(); // eslint-disable-line
+        const user = await User.findById(userId); // eslint-disable-line
+
+        const profile = await user.getProfile(); // eslint-disable-line
+
+        // we store it as int but we can't be sure enough
+        sum += parseInt(rate, 10);
 
         reviewsBuffer.push({
-          user: {
-            username,
-            avatar,
-          },
+          user: profile,
           rate,
           text,
           createdAt,
         });
       }
+
+      // it can be null if we do not have reviews
+      const avg = sum / reviewsBuffer.length;
 
       // we strip out meta data
       bookmaker = bookmaker.fields;
@@ -218,91 +264,87 @@ export default {
           enumerable: true,
         },
         reviews: {
-          value: reviewsBuffer,
+          value: {
+            avg,
+            items: reviewsBuffer,
+          },
           enumerable: true,
         },
       });
 
       return reply(bm);
     } catch (error) {
-      if (error instanceof SportsbookNotFoundByNameError) {
+      if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
       }
       return reply.badImplementation(error);
     }
   },
 
-  async getSportsbookReviews(request, reply) {
+  async getReviews(request, reply) {
     try {
-      let {
+      const {
         params: {
-          sportsbookslug,
-        },
-      } = request;
-      sportsbookslug = sportsbookslug.toLowerCase();
-
-      const {
-        server: {
-          app: {
-            db,
-          },
-        },
-        query: {
-          limit,
+          bookmakerslug: bookmakerSlug,
         },
       } = request;
 
-      const client = contentfulService;
-      db.register(Review);
+      const client = await Utils.getContentfulClient();
 
-      // find sportsbook
+      // get bookmaker
       const {
-        items: sportsbookCollection,
+        items: bookmakerCollection,
       } = await client.getEntries({
         content_type: 'sportsbook',
-        'fields.slug': sportsbookslug,
-        limit,
+        'fields.slug': bookmakerSlug, // by slug
       });
 
       // check if we've results
-      if (sportsbookCollection.length === 0) {
-        throw new SportsbookNotFoundByNameError(sportsbookslug);
+      if (bookmakerCollection.length === 0) {
+        throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
       }
 
       const {
         sys: {
-          id: sportsbookId,
+          id: bookmakerId,
         },
-      } = sportsbookCollection[0];
+      } = bookmakerCollection[0];
 
-      const reviews = await Review.limit().find({
-        sportsbookId,
+      const reviews = await Review.find({
+        bookmakerId,
       });
 
       let sum = 0;
       const reviewsBuffer = [];
+
       for (const review of reviews) { // eslint-disable-line
         const {
-          _id: reviewId,
-          userId,
+          _id: id,
           rate,
           text,
-          created_at: reviewCreatedAt,
+          created_at: createdAt,
         } = await review.get(); // eslint-disable-line
+
+        let userId = await review.get('userId'); // eslint-disable-line
+        userId = new ObjectId(userId);
+
+        const user = await User.findById(userId); // eslint-disable-line
+
+        const profile = await user.getProfile(); // eslint-disable-line
 
         // we store it as int but we can't be sure enough
         sum += parseInt(rate, 10);
         reviewsBuffer.push({
-          id: reviewId,
-          userId,
+          id,
+          user: profile,
           rate,
           text,
-          createdAt: reviewCreatedAt,
+          createdAt,
         });
       }
 
       // it can be null if we do not have reviews
-      const avg = sum / reviewsBuffer.length || false;
+      const avg = sum / reviewsBuffer.length;
 
       // reply automaps entities in array to JSON
       return reply({
@@ -310,27 +352,23 @@ export default {
         reviews: reviewsBuffer,
       });
     } catch (error) {
-      if (error instanceof SportsbookNotFoundByNameError) {
+      if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
       }
       return reply.badImplementation(error);
     }
   },
 
-  async addSportsbookReview(request, reply) {
+  async addReview(request, reply) {
     try {
-      let {
-        params: {
-          sportsbookslug,
-        },
-      } = request;
-      sportsbookslug = sportsbookslug.toLowerCase();
-
       const {
-        server: {
-          app: {
-            db,
+        auth: {
+          credentials: {
+            user,
           },
+        },
+        params: {
+          bookmakerslug: bookmakerSlug,
         },
         query: {
           limit,
@@ -341,58 +379,45 @@ export default {
         },
       } = request;
 
-      let {
-        auth: {
-          credentials: {
-            userId,
-          },
-        },
-      } = request;
-      // convert to objectid
+      let userId = await user.get('_id');
       userId = new ObjectId(userId);
 
-      const client = contentfulService;
-      db.use(timestamps());
-      db.register(User);
-      db.register(Review);
+      const client = await Utils.getContentfulClient();
 
-      // find user
-      const user = await User.findById(userId);
-
-      // find sportsbook
+      // first we find for bookmaker
       const {
-        items: sportsbookCollection,
+        items: bookmakerCollection,
       } = await client.getEntries({
         content_type: 'sportsbook',
-        'fields.slug': sportsbookslug,
+        'fields.slug': bookmakerSlug,
         limit,
       });
 
-      // check if we've results
-      if (sportsbookCollection.length === 0) {
-        throw new SportsbookNotFoundByNameError(sportsbookslug);
-      }
-
       const {
         sys: {
-          id: sportsbookId,
+          id: bookmakerId,
         },
-      } = sportsbookCollection[0];
+      } = bookmakerCollection[0];
 
-      // we allow one user review per each sportsbook so find
+      // check if we've results
+      if (bookmakerCollection.length === 0) {
+        throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
+      }
+
+      // we allow one review per bookmaker so find
       let review = await Review.findOne({
         userId,
-        sportsbookId,
+        bookmakerId,
       });
 
       // if we already have such review
       if (review) {
-        throw new SportsbookAlreadyReviewedError(sportsbookId);
+        throw new EntityTakenError('Review', 'userid', userId);
       }
 
       review = new Review({
         userId,
-        sportsbookId,
+        bookmakerId,
         rate,
         text,
       });
@@ -404,9 +429,9 @@ export default {
       await user.addReviewById(reviewId);
       return reply();
     } catch (error) {
-      if (error instanceof SportsbookNotFoundByNameError) {
+      if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
-      } else if (error instanceof SportsbookAlreadyReviewedError) {
+      } else if (error instanceof EntityTakenError) {
         return reply.conflict(error.message);
       }
       return reply.badImplementation(error);

@@ -469,16 +469,17 @@ const extendUserModel = (userModel) => {
     }
   };
 
+  /*
+    Assign a review to a user
+  */
   UserModel.prototype.addReviewById = async function addReviewById(reviewId) {
     try {
-      if (reviewId !== '') {
-        server.log(['info'], 'Adding a review for sportsbook to user');
-        const reviews = await this.get('reviews');
-        reviews.push(reviewId);
-        this.set('reviews', reviews);
+      server.log(['info'], 'Assign a bookmaker review to user');
+      const reviews = await this.get('reviews');
+      reviews.push(reviewId);
+      this.set('reviews', reviews);
 
-        await this.save();
-      }
+      await this.save();
     } catch (error) {
       throw error;
     }
