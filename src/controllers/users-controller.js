@@ -33,7 +33,7 @@ class UsersController {
       } = await user.save();
 
       const {
-        rawToken: accessToken,
+        accessToken,
         issuedAt,
         expiresAt,
       } = await user.authorizeAccess(id);
