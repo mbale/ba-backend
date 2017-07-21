@@ -90,11 +90,11 @@ export default {
             enumerable: true,
           },
           logo: {
-            value: logo.fields,
+            value: logo.fields.file.url,
             enumerable: true,
           },
           icon: {
-            value: icon.fields,
+            value: icon.fields.file.url,
             enumerable: true,
           },
           themeColor: {
