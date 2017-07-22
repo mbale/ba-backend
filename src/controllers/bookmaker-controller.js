@@ -210,6 +210,10 @@ export default {
       // so we redef props
       // note: defsetter's not the best way
       Object.defineProperties(bm, {
+        name: {
+          value: bookmaker.name,
+          enumerable: true,
+        },
         slug: {
           value: bookmaker.slug,
           enumerable: true,
