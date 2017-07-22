@@ -262,6 +262,10 @@ export default {
           value: bookmaker.supportEmail,
           enumerable: true,
         },
+        liveSupport: {
+          value: bookmaker.liveSupport,
+          enumerable: true,
+        },
         icon: {
           value: bookmaker.icon.fields.file.url,
           enumerable: true,
