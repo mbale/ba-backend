@@ -195,15 +195,13 @@ export default {
 
       // we strip out meta data
       bookmaker = bookmaker.fields;
-      let {
-        bonus,
-      } = bookmaker;
-
+      let { bonus } = bookmaker;
+      const bonusArray = []
       // few case it's undefined
       if (bonus && bonus instanceof Array) {
-        for (let b of bonus) { // eslint-disable-line
-          bonus = b.fields;
-        }
+        bonus.forEach((bonus) => {
+          bonusArray.push(bonus.fields)
+        })
       }
 
       const bm = {};
@@ -212,6 +210,10 @@ export default {
       // so we redef props
       // note: defsetter's not the best way
       Object.defineProperties(bm, {
+        name: {
+          value: bookmaker.name,
+          enumerable: true,
+        },
         slug: {
           value: bookmaker.slug,
           enumerable: true,
@@ -260,12 +262,16 @@ export default {
           value: bookmaker.supportEmail,
           enumerable: true,
         },
+        liveSupport: {
+          value: bookmaker.liveSupport,
+          enumerable: true,
+        },
         icon: {
           value: bookmaker.icon.fields.file.url,
           enumerable: true,
         },
-        bonus: {
-          value: bonus,
+        bonuses: {
+          value: bonusArray,
           enumerable: true,
         },
         reviews: {
