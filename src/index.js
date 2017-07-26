@@ -22,7 +22,7 @@ const server = new Hapi.Server();
 
 // set default server
 server.connection({
-  port: process.env.PORT || 3000,
+  port: process.env.API_PORT || 3000,
   routes: {
     cors: true,
   },
