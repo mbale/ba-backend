@@ -52,7 +52,6 @@ const goodReporterOptions = {
       args: [{
         dsn: process.env.SENTRY_DSN,
         config: {
-          environment: process.env.ENVIRONMENT,
           release: applicationVersion,
         },
         captureUncaught: true,
