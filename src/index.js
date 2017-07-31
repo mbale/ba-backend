@@ -15,6 +15,11 @@ import Routes from '~/routes';
 import User from '~/models/user-model.js';
 import Review from '~/models/review-model.js';
 import EntityNotFoundError from '~/errors/entity-not-found-error.js';
+import {
+  version,
+} from '../package.json';
+
+const applicationVersion = version;
 
 dotenv.config();
 
@@ -32,19 +37,23 @@ server.connection({
 // logger options
 const goodReporterOptions = {
   ops: {
-    interval: 15000, // ops refresh sequence
+    interval: 30000, // ops refresh sequence
   },
   reporters: {
     sentry: [{
       module: 'good-squeeze',
       name: 'Squeeze',
-      args: [{ response: '*', error: '*', request: '*' }],
+      args: [{
+        error: '*',
+        ops: '*',
+      }],
     }, {
       module: 'good-sentry',
       args: [{
         dsn: process.env.SENTRY_DSN,
         config: {
-          environment: 'dev',
+          environment: process.env.ENVIRONMENT,
+          release: applicationVersion,
         },
         captureUncaught: true,
       }],
@@ -53,7 +62,10 @@ const goodReporterOptions = {
       module: 'good-squeeze',
       name: 'Squeeze',
       args: [{
-        log: '*', response: '*', error: '*', request: '*',
+        log: '*',
+        response: '*',
+        error: '*',
+        request: '*',
       }],
     }, {
       module: 'good-console',
