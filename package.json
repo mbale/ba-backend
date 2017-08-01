@@ -1,7 +1,7 @@
 {
   "name": "ba-backend",
-  "version": "0.9.1",
-  "main": "dist/app.js",
+  "version": "0.9.2",
+  "main": "build/main.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MainBase/ba-backend.git"
@@ -9,22 +9,17 @@
   "author": "Balazs Mocsai <me@bael.me>",
   "license": "ISC",
   "scripts": {
-    "start": "node dist/app.js",
-    "dev": "nodemon src/index.js -V --exec babel-node",
-    "build": "webpack"
+    "start": "node build/main.js",
+    "dev": "backpack dev",
+    "build": "backpack build"
   },
   "bugs": {
     "url": "https://trello.com/b/cvCaCTeu/betacle"
   },
   "homepage": "https://github.com/MainBase/ba-backend#readme",
   "devDependencies": {
-    "babel-cli": "^6.24.0",
-    "babel-core": "^6.24.0",
     "babel-eslint": "^7.2.1",
-    "babel-loader": "^7.0.0",
-    "babel-plugin-root-import": "^5.1.0",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
-    "babel-preset-env": "^1.4.0",
+    "backpack-core": "^0.4.1",
     "code": "^4.0.0",
     "eslint": "^3.19.0",
     "eslint-config-airbnb": "^14.1.0",
@@ -33,9 +28,7 @@
     "eslint-plugin-jsx-a11y": "^4.0.0",
     "eslint-plugin-react": "^6.10.3",
     "lab": "^13.0.1",
-    "lab-babel": "^1.1.1",
-    "nodemon": "^1.7.3",
-    "webpack": "^2.6.1"
+    "lab-babel": "^1.1.1"
   },
   "dependencies": {
     "axios": "^0.16.2",
@@ -61,10 +54,8 @@
     "jsonwebtoken": "^7.4.1",
     "lodash": "^4.15.0",
     "mailgun-js": "^0.12.0",
-    "moment": "^2.18.1",
     "mongorito": "^3.0.1",
     "mongorito-timestamps": "^1.0.0",
-    "nodemailer": "^4.0.1",
     "thurston": "^3.0.1"
   },
   "directories": {
