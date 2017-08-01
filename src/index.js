@@ -11,10 +11,10 @@ import Mongorito, {
 import _ from 'lodash';
 import dotenv from 'dotenv';
 import timestamps from 'mongorito-timestamps';
-import Routes from '~/routes';
-import User from '~/models/user-model.js';
-import Review from '~/models/review-model.js';
-import EntityNotFoundError from '~/errors/entity-not-found-error.js';
+import Routes from './routes';
+import User from './models/user-model.js';
+import Review from './models/review-model.js';
+import EntityNotFoundError from './errors/entity-not-found-error.js';
 import {
   version,
 } from '../package.json';

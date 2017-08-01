@@ -1,8 +1,8 @@
-import Utils from '~/utils.js';
-import User from '~/models/user-model.js';
-import EntityTakenError from '~/errors/entity-taken-error.js';
-import EntityNotFoundError from '~/errors/entity-not-found-error.js';
-import PasswordMismatchError from '~/errors/password-mismatch-error.js';
+import Utils from '../utils.js';
+import User from '../models/user-model.js';
+import EntityTakenError from '../errors/entity-taken-error.js';
+import EntityNotFoundError from '../errors/entity-not-found-error.js';
+import PasswordMismatchError from '../errors/password-mismatch-error.js';
 
 export default {
   async getPrivateProfile(request, reply) {

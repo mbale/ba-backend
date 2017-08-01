@@ -1,4 +1,4 @@
-import AppError from '~/errors/app-error.js';
+import AppError from '../errors/app-error.js';
 
 class EntityNotFoundError extends AppError {
   constructor(entity = null, prop = null, value = null) {

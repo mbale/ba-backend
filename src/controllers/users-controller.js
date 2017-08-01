@@ -1,9 +1,9 @@
 import {
   ObjectId,
 } from 'mongorito';
-import User from '~/models/user-model.js';
-import EntityNotFoundError from '~/errors/entity-not-found-error.js';
-import EntityTakenError from '~/errors/entity-taken-error.js';
+import User from '../models/user-model.js';
+import EntityNotFoundError from '../errors/entity-not-found-error.js';
+import EntityTakenError from '../errors/entity-taken-error.js';
 
 class UsersController {
   static async createUser(request, reply) {

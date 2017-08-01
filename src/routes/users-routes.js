@@ -1,8 +1,8 @@
 import joi from 'joi';
 import joiObjectId from 'joi-objectid';
 
-import UsersController from '~/controllers/users-controller.js';
-import Utils from '~/utils.js';
+import UsersController from '../controllers/users-controller.js';
+import Utils from '../utils.js';
 
 joi.objectId = joiObjectId(joi);
 

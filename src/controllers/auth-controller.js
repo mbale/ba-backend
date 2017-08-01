@@ -4,12 +4,12 @@ import {
 // it will be removed by refactored steaam auth
 import Chance from 'chance';
 import axios from 'axios';
-import UsernameTakenError from '~/errors/usernameTakenError.js';
-import EmailTakenError from '~/errors/emailTakenError.js';
+import UsernameTakenError from '../errors/usernameTakenError.js';
+import EmailTakenError from '../errors/emailTakenError.js';
 // it will be obsolete by refactoring steaam auth
-import User from '~/models/user-model.js';
-import EntityNotFoundError from '~/errors/entity-not-found-error.js';
-import PasswordMismatchError from '~/errors/password-mismatch-error.js';
+import User from '../models/user-model.js';
+import EntityNotFoundError from '../errors/entity-not-found-error.js';
+import PasswordMismatchError from '../errors/password-mismatch-error.js';
 
 class AuthController {
   static async getAccessTokenInformation(request, reply) {

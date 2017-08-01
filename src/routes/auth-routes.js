@@ -1,6 +1,6 @@
 import joi from 'joi';
-import Utils from '~/utils.js';
-import AuthController from '~/controllers/auth-controller.js';
+import Utils from '../utils.js';
+import AuthController from '../controllers/auth-controller.js';
 
 const AuthRoutes = [
   {

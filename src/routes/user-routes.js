@@ -1,9 +1,9 @@
 import joi from 'joi';
 import joiObjectId from 'joi-objectid';
 import Thurston from 'thurston';
-import UserController from '~/controllers/user-controller.js';
-import Utils from '~/utils.js';
 import countryList from 'country-list';
+import UserController from '../controllers/user-controller.js';
+import Utils from '../utils.js';
 
 const countries = countryList();
 joi.objectId = joiObjectId(joi);

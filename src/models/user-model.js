@@ -4,11 +4,11 @@ import {
   ObjectId,
 } from 'mongorito';
 import bcrypt from 'bcrypt';
-import EntityTakenError from '~/errors/entity-taken-error.js';
-import PasswordMismatchError from '~/errors/password-mismatch-error.js';
-import Templates from '~/templates.js';
-import server from '~/index.js';
-import Utils from '~/utils.js';
+import EntityTakenError from '../errors/entity-taken-error.js';
+import PasswordMismatchError from '../errors/password-mismatch-error.js';
+import Templates from '../templates.js';
+import server from '../index.js';
+import Utils from '../utils.js';
 
 class User extends Model {
   static collection() {
