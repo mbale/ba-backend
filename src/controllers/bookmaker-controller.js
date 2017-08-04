@@ -75,8 +75,14 @@ export default {
           });
         }
 
+        let avg = null;
+
         // it can be null if we do not have reviews
-        const avg = sum / reviewsBuffer.length;
+        if (reviewsBuffer.length > 0) {
+          avg = sum / reviewsBuffer.length;
+        } else {
+          avg = sum;
+        }
 
         const bm = {};
 
@@ -190,8 +196,14 @@ export default {
         });
       }
 
+      let avg = null;
+
       // it can be null if we do not have reviews
-      const avg = sum / reviewsBuffer.length;
+      if (reviewsBuffer.length > 0) {
+        avg = sum / reviewsBuffer.length;
+      } else {
+        avg = sum;
+      }
 
       // we strip out meta data
       bookmaker = bookmaker.fields;
@@ -358,8 +370,14 @@ export default {
         });
       }
 
+      let avg = null;
+
       // it can be null if we do not have reviews
-      const avg = sum / reviewsBuffer.length;
+      if (reviewsBuffer.length > 0) {
+        avg = sum / reviewsBuffer.length;
+      } else {
+        avg = sum;
+      }
 
       // reply automaps entities in array to JSON
       return reply({
