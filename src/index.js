@@ -14,6 +14,10 @@ import timestamps from 'mongorito-timestamps';
 import Routes from './routes';
 import User from './models/user-model.js';
 import Review from './models/review-model.js';
+import Match from './models/match-model.js';
+import Game from './models/game-model.js';
+import League from './models/league-model.js';
+import Team from './models/team-model.js';
 import EntityNotFoundError from './errors/entity-not-found-error.js';
 import {
   version,
@@ -84,6 +88,10 @@ server.ext('onPreStart', async (serverInstance, next) => {
     db.use(timestamps());
     db.register(User);
     db.register(Review);
+    db.register(Match);
+    db.register(Team);
+    db.register(League);
+    db.register(Game);
 
     serverInstance.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
     return next();
