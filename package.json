@@ -52,7 +52,6 @@
     "joi": "^10.3.1",
     "joi-objectid": "^2.0.0",
     "jsonwebtoken": "^7.4.1",
-    "lodash": "^4.15.0",
     "mailgun-js": "^0.12.0",
     "mongorito": "^3.0.1",
     "mongorito-timestamps": "^1.0.0",

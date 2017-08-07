@@ -8,10 +8,9 @@ import authJwt from 'hapi-auth-jwt2';
 import Mongorito, {
   ObjectId,
 } from 'mongorito';
-import _ from 'lodash';
 import dotenv from 'dotenv';
 import timestamps from 'mongorito-timestamps';
-import Routes from './routes';
+import routes from './routes';
 import User from './models/user-model.js';
 import Review from './models/review-model.js';
 import Match from './models/match-model.js';
@@ -212,9 +211,10 @@ server.auth.default('accessToken');
   Registering routes
  */
 
-_.forEach(Routes, (route) => {
-  server.route(route);
-});
+
+for (const route in routes) { // eslint-disable-line
+  server.route(routes[route]);
+}
 
 /*
   Start server
