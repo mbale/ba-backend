@@ -5,7 +5,7 @@ class EntityNotFoundError extends AppError {
     super(`${entity}'s not found with "${prop}" ${value}`);
 
     this.entity = entity;
-    this.prop = entity;
+    this.prop = prop;
     this.value = value;
   }
 }

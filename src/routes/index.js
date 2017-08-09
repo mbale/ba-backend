@@ -3,6 +3,7 @@ import UserRoutes from '../routes/user-routes.js';
 import UsersRoutes from '../routes/users-routes.js';
 import BookmakerRoutes from '../routes/bookmaker-routes.js';
 import MatchRoutes from '../routes/match-routes.js';
+import TeamRoutes from '../routes/team-routes.js';
 
 export default {
   AuthRoutes,
@@ -10,4 +11,5 @@ export default {
   UsersRoutes,
   BookmakerRoutes,
   MatchRoutes,
+  TeamRoutes,
 };

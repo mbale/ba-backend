@@ -78,7 +78,7 @@ const goodReporterOptions = {
 server.ext('onPreStart', async (serverInstance, next) => {
   try {
     const db = new Mongorito(process.env.MONGO_URI);
-    const connection = await db.connect(process.env.MONGO_URI);
+    const connection = await db.connect();
 
     /*
       Dependency registration
