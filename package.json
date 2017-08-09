@@ -19,6 +19,8 @@
   "homepage": "https://github.com/MainBase/ba-backend#readme",
   "devDependencies": {
     "babel-eslint": "^7.2.1",
+    "babel-plugin-transform-builtin-extend": "^1.1.2",
+    "babel-preset-env": "^1.6.0",
     "backpack-core": "^0.4.1",
     "code": "^4.0.0",
     "eslint": "^3.19.0",
