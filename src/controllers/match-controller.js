@@ -113,6 +113,7 @@ class MatchController {
           homeTeamId: homeTeamId,
           awayTeamId,
           leagueId,
+          gameId,
           date,
         } = await match.get();
 
@@ -120,6 +121,7 @@ class MatchController {
           hometeam,
           awayteam,
           league,
+          game,
         ] = await Promise.all([
           Team.findOne({
             _id: new ObjectId(homeTeamId),
@@ -130,21 +132,22 @@ class MatchController {
           League.findOne({
             _id: new ObjectId(leagueId),
           }),
+          Game.findOne({
+            _id: new ObjectId(gameId),
+          }),
         ]);
 
         delete match.homeTeamId;
         delete match.awayTeamId;
         delete match.leagueId;
-
-        match.homeTeam = await hometeam.get('name');
-        match.awayTeam = await awayteam.get('name');
-        match.league = await league.get('name');
+        delete match.gameId;
 
         getPropsOfEachMatch.push({
           id,
           homeTeam: await hometeam.get('name'),
           awayTeam: await awayteam.get('name'),
           league: await league.get('name'),
+          game: await game.get('name'),
           date,
         });
       }
