@@ -26,7 +26,8 @@
     "indent": [
       "error",
       2
-    ]
+    ],
+    "no-restricted-syntax": ["error", "LabeledStatement", "WithStatement"],
   },
   "plugins": [
     "babel"
