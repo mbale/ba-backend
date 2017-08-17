@@ -40,6 +40,21 @@ const matchRoutes = [
       },
     },
   },
+  {
+    path: '/v1/matches/{matchId}/comments',
+    method: 'GET',
+    handler: MatchController.getMatchComments,
+    config: {
+      auth: false,
+    },
+  },
+  {
+    path: '/v1/matches/{matchId}/comments',
+    method: 'POST',
+    handler: MatchController.addMatchComment,
+    config: {
+    },
+  },
 ];
 
 export default matchRoutes;

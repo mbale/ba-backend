@@ -1,6 +1,8 @@
 import {
   Model,
 } from 'mongorito';
+import MatchComment from './match-comment-model.js';
+
 
 class Match extends Model {
   static collection() {
@@ -9,6 +11,7 @@ class Match extends Model {
 }
 
 function extend() {
+  Match.embeds('comments', MatchComment);
   return Match;
 }
 

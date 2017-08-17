@@ -2,7 +2,9 @@ import {
   ObjectId,
 } from 'mongorito';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
+import User from '../models/user-model.js';
 import Match from '../models/match-model.js';
+import MatchComment from '../models/match-comment-model.js';
 import League from '../models/league-model.js';
 import Team from '../models/team-model.js';
 import Game from '../models/game-model.js';
@@ -152,15 +154,100 @@ class MatchController {
         });
       }
 
-      //matches = await Promise.all([getPropsOfEachMatch]);
-
       return reply(getPropsOfEachMatch);
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
       }
 
-      console.log(error.message)
+      return reply.badImplementation(error);
+    }
+  }
+
+  static async getMatchComments(request, reply) {
+    try {
+      let {
+        params: {
+          matchId,
+        },
+      } = request;
+
+      matchId = new ObjectId(matchId);
+
+      const match = await Match.findOne({
+        _id: matchId,
+      });
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
+      }
+
+      const comments = await match.get('comments');
+
+      return reply(comments);
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
+    }
+  }
+
+  static async addMatchComment(request, reply) {
+    try {
+      const {
+        auth: {
+          credentials: {
+            user,
+          },
+        },
+      } = request;
+
+      const {
+        params: {
+          matchId,
+        },
+        payload: {
+          text,
+        },
+      } = request;
+
+      const createdAt = new Date();
+
+      const [
+        userId,
+        match,
+      ] = await Promise.all([
+        user.get('_id'),
+        Match.findOne({
+          _id: new ObjectId(matchId),
+        }),
+      ]);
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
+      }
+
+      const comments = await match.get('comments');
+
+      const comment = new MatchComment({
+        _id: new ObjectId(),
+        authorId: userId,
+        text,
+        createdAt,
+      });
+
+      comments.push(comment);
+
+      match.set('comments', comments);
+
+      await match.save();
+
+      return reply();
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error.message);
+      }
       return reply.badImplementation(error);
     }
   }
