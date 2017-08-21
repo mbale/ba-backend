@@ -1,8 +1,6 @@
 import {
   Model,
 } from 'mongorito';
-import MatchComment from './match-comment-model.js';
-
 
 class Match extends Model {
   static collection() {
@@ -10,8 +8,31 @@ class Match extends Model {
   }
 }
 
+const methods = (matchModel) => {
+  const MatchModel = matchModel;
+
+  MatchModel.prototype.getComments = async function getComments() {
+    try {
+      // get comments field
+      let comments = await this.get('comments');
+
+      // set to empty array if undefined
+      if (!comments) {
+        await this.set('comments', []);
+      }
+
+      comments = this.get('comments');
+
+      // return model back
+      return comments;
+    } catch (error) {
+      throw error;
+    }
+  };
+};
+
 function extend() {
-  Match.embeds('comments', MatchComment);
+  Match.use(methods);
   return Match;
 }
 

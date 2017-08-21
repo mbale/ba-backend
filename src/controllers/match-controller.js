@@ -4,7 +4,6 @@ import {
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import User from '../models/user-model.js';
 import Match from '../models/match-model.js';
-import MatchComment from '../models/match-comment-model.js';
 import League from '../models/league-model.js';
 import Team from '../models/team-model.js';
 import Game from '../models/game-model.js';
@@ -182,9 +181,46 @@ class MatchController {
         throw new EntityNotFoundError('Match', 'id', matchId);
       }
 
-      const comments = await match.get('comments');
+      const comments = await match.getComments();
 
-      return reply(comments);
+      // sort out all user info on comments
+      await Promise.all(comments.map(async (c) => {
+        const comment = c;
+
+        const {
+          authorId,
+        } = comment;
+
+        const user = await User.findOne({
+          _id: authorId,
+        });
+
+        const profile = await user.getProfile();
+        comment.author = profile;
+        delete comment.authorId;
+      }));
+
+      const commentsRestructured = [];
+
+      for (const comment of comments) {
+        // get fields
+        const {
+          _id: id,
+          author,
+          text,
+          _createdAt: createdAt,
+        } = comment;
+
+        // finale form
+        commentsRestructured.push({
+          id,
+          author,
+          text,
+          createdAt,
+        });
+      }
+
+      return reply(commentsRestructured);
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
@@ -201,26 +237,27 @@ class MatchController {
             user,
           },
         },
-      } = request;
-
-      const {
-        params: {
-          matchId,
-        },
         payload: {
           text,
         },
       } = request;
 
-      const createdAt = new Date();
+      let {
+        params: {
+          matchId,
+        },
+      } = request;
 
+      matchId = new ObjectId(matchId);
+
+      // get logged userid and the match as well
       const [
-        userId,
+        authorId,
         match,
       ] = await Promise.all([
         user.get('_id'),
         Match.findOne({
-          _id: new ObjectId(matchId),
+          _id: matchId,
         }),
       ]);
 
@@ -228,19 +265,61 @@ class MatchController {
         throw new EntityNotFoundError('Match', 'id', matchId);
       }
 
-      const comments = await match.get('comments');
+      const comments = await match.getComments();
 
-      const comment = new MatchComment({
-        _id: new ObjectId(),
-        authorId: userId,
+      // create comment
+      const comment = {
+        _id: new ObjectId(), // generate id
+        authorId,
         text,
-        createdAt,
-      });
+        _createdAt: new Date(),
+      };
 
       comments.push(comment);
+      await match.save();
 
-      match.set('comments', comments);
+      return reply();
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
+    }
+  }
 
+  static async removeMatchComment(request, reply) {
+    try {
+      let {
+        params: {
+          matchId,
+          commentId,
+        },
+      } = request;
+
+      matchId = new ObjectId(matchId);
+      commentId = new ObjectId(commentId);
+
+      const match = await Match.findOne({
+        _id: matchId,
+      });
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
+      }
+
+      const comments = await match.getComments();
+
+      // find the correct comment by id
+      const commentToDelete = comments.find(c => commentId.equals(c._id));
+
+      if (!commentToDelete) {
+        throw new EntityNotFoundError('Comment', 'id', commentId);
+      }
+
+      // we get index of comment to delete
+      const indexOfComment = comments.indexOf(commentToDelete);
+      // remove the comment
+      comments.splice(indexOfComment, 1);
       await match.save();
 
       return reply();

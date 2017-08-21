@@ -1,5 +1,9 @@
 import Joi from 'joi';
+import joiObjectId from 'joi-objectid';
 import MatchController from '../controllers/match-controller.js';
+import Utils from '../utils.js';
+
+Joi.objectId = joiObjectId(Joi);
 
 const matchRoutes = [
   {
@@ -53,6 +57,60 @@ const matchRoutes = [
     method: 'POST',
     handler: MatchController.addMatchComment,
     config: {
+      validate: {
+        params: {
+          matchId: Joi.objectId().required(),
+        },
+        payload: Joi.object().keys({
+          text: Joi.string().required()
+            .min(5)
+            .max(200),
+        }),
+      },
+    },
+  },
+  {
+    path: '/v1/matches/{matchId}/comments/{commentId}',
+    method: 'DELETE',
+    handler: MatchController.removeMatchComment,
+    config: {
+      validate: {
+        params: {
+          matchId: Joi.objectId().required(),
+          commentId: Joi.objectId().required(),
+        },
+        failAction(request, reply, source, error) {
+          let joiError = Utils.refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+
+          switch (type) {
+          case 'any.required':
+            joiError = joiError(`${pathCapitalized}Required`, message);
+            break;
+          case 'string.regex.base':
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${pathCapitalized}" contains special character'`);
+            break;
+          default:
+            joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
+      },
     },
   },
 ];
