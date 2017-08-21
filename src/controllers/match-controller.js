@@ -287,6 +287,70 @@ class MatchController {
     }
   }
 
+  static async editMatchComment(request, reply) {
+    try {
+      let {
+        params: {
+          matchId,
+          commentId,
+        },
+        payload: {
+          text,
+        },
+      } = request;
+
+      const {
+        auth: {
+          credentials: {
+            user,
+          },
+        },
+      } = request;
+
+      matchId = new ObjectId(matchId);
+      commentId = new ObjectId(commentId);
+
+      const [
+        authorId,
+        match,
+      ] = await Promise.all([
+        user.get('_id'),
+        Match.findOne({
+          _id: matchId,
+        }),
+      ]);
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
+      }
+
+      const comments = await match.getComments();
+
+      // find the correct comment by id
+      const commentToEdit = comments.find(c =>
+        // we get by comment id and author id equals to logged user's
+        commentId.equals(c._id) && authorId.equals(c.authorId));
+
+      if (!commentToEdit) {
+        throw new EntityNotFoundError('Comment', 'id', commentId);
+      }
+
+      const indexOfComment = comments.indexOf(commentToEdit);
+
+      // set new text
+      comments[indexOfComment].text = text;
+
+      await match.save();
+
+      return reply();
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error.message);
+      }
+      return reply.badImplementation(error);
+    }
+  }
+
   static async removeMatchComment(request, reply) {
     try {
       let {
@@ -296,6 +360,7 @@ class MatchController {
         },
       } = request;
 
+      // convert
       matchId = new ObjectId(matchId);
       commentId = new ObjectId(commentId);
 
