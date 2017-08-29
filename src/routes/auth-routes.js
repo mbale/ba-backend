@@ -69,7 +69,7 @@ const AuthRoutes = [
             joiError = joiError(`${pathCapitalized}Max`, message);
             break;
           case 'string.regex.base':
-            joiError = joiError(`${pathCapitalized}Invalid`, '"username" contains special character');
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${path}" contains special character`);
             break;
           default:
             joiError = joiError('UndefinedError', 'Undefined error', 400);

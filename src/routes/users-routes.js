@@ -67,7 +67,6 @@ const UsersRoutes = [
           username: joi
             .string().required()
             .regex(/^[a-zA-Z0-9_]+$/)
-            .lowercase()
             .min(2)
             .max(32),
           password: joi
@@ -75,7 +74,8 @@ const UsersRoutes = [
             .min(6).max(16),
           email: joi
             .string().optional()
-            .email(),
+            .email()
+            .trim(),
         }),
         failAction(request, reply, source, error) {
           let joiError = Utils.refactJoiError(error);

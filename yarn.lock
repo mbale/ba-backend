@@ -3199,28 +3199,28 @@ moment@2.x.x:
   version "2.18.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
 
-mongodb-core@2.1.14:
-  version "2.1.14"
-  resolved "https://registry.yarnpkg.com/mongodb-core/-/mongodb-core-2.1.14.tgz#13cba2764226b5be3d18992af0c963ce5ea0f0fd"
+mongodb-core@2.1.15:
+  version "2.1.15"
+  resolved "https://registry.yarnpkg.com/mongodb-core/-/mongodb-core-2.1.15.tgz#841f53b87ffff4c7458189c35c8ae827e1169764"
   dependencies:
     bson "~1.0.4"
     require_optional "~1.0.0"
 
 mongodb@^2.2.9:
-  version "2.2.30"
-  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.30.tgz#8ccd801f676c8172040c2f2b47e9602a0d5634ab"
+  version "2.2.31"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.31.tgz#1940445c661e19217bb3bf8245d9854aaef548db"
   dependencies:
     es6-promise "3.2.1"
-    mongodb-core "2.1.14"
+    mongodb-core "2.1.15"
     readable-stream "2.2.7"
 
 mongorito-timestamps@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/mongorito-timestamps/-/mongorito-timestamps-1.0.1.tgz#d9d6296818030bfad0f010ad7fbce977602aa07e"
 
-mongorito@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/mongorito/-/mongorito-3.0.3.tgz#cbd18b80249aea82441e271e6b254207da2382a0"
+mongorito@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/mongorito/-/mongorito-3.0.4.tgz#c5b4af198b05a5c2ff99b3bffbad6729fc81f637"
   dependencies:
     arrify "^1.0.1"
     dot-prop "^4.0.0"

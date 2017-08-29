@@ -26,7 +26,8 @@ const UserRoutes = [
             .min(2)
             .max(32),
           email: joi.string().optional()
-            .email(),
+            .email()
+            .trim(),
           countryCode: joi.string().optional()
             .valid(countries.getCodes())
             .uppercase(),

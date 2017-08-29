@@ -19,14 +19,12 @@ class User extends Model {
 const hashPassword = () => ({ model }) => next => async (action) => {
   const { fields } = action;
 
-  if (action.type === ActionTypes.CREATE) {
-    if (fields.password) {
-      server.log(['info'], 'Hashing newly created user\'s password');
-      const hashedPassword = await bcrypt.hash(fields.password, 10);
+  if (action.type === ActionTypes.CREATE && fields.password) {
+    server.log(['info'], 'Hashing newly created user\'s password');
+    const hashedPassword = await bcrypt.hash(fields.password, 10);
 
-      fields.password = hashedPassword;
-      model.set('password', hashedPassword);
-    }
+    fields.password = hashedPassword;
+    model.set('password', hashedPassword);
   }
   return next(action);
 };
@@ -38,9 +36,17 @@ const setDefaultFields = () => ({ model }) => next => async (action) => {
   if (action.type === ActionTypes.CREATE) {
     server.log(['info'], 'Setting newly created user\'s default fields');
 
-    /*
-    fieldset
-     */
+    if (fields.username) {
+      const username = fields.username.toLowerCase();
+      const displayname = fields.displayname || fields.username;
+
+      // we store username as lowercase and displayname as it was original as username
+      fields.username = username;
+      fields.displayname = displayname;
+      model.set('username', username);
+      model.set('displayname', displayname);
+    }
+
     if (typeof fields.accessToken === 'undefined') {
       fields.accessToken = false;
       model.set('accessToken', false);
@@ -153,6 +159,8 @@ const extendUserModel = (userModel) => {
       const {
         _id: id,
         username,
+        // we default use username as lowercase (instead of migration)
+        displayname = username,
         email,
         avatar: avatarPublicId,
         created_at: registeredOn,
@@ -162,7 +170,7 @@ const extendUserModel = (userModel) => {
 
       profile = {
         id,
-        username,
+        username: displayname,
         countryCode,
         registeredOn,
       };
@@ -204,22 +212,23 @@ const extendUserModel = (userModel) => {
   UserModel.prototype.editProfile = async function editProfile(propsInObjToEdit) {
     try {
       const user = this; // current user
-      let userId = await user.get('_id'); // his id to exlude him when we search for collision
+      let userId = await user.get('_id'); // his id to exclude him when we search for collision
       userId = new ObjectId(userId);
+
       const propObj = propsInObjToEdit; // fields in profile to edit
       const query = []; // it contains all unique values he submitted and we search based on this
       let profileChanged = false; // indicate if we changed value
 
       // we set here unique values to check for collision
       const {
-        username: usernameToChange,
         email: emailToChange,
+        username: usernameToChange,
       } = propsInObjToEdit;
 
       // we check for what unique value we need to search for
       if (usernameToChange) {
         query.push({
-          username: usernameToChange,
+          username: usernameToChange.toLowerCase(),
         });
       }
 
@@ -229,7 +238,7 @@ const extendUserModel = (userModel) => {
         });
       }
 
-      // we check if we need to check for unique data
+      // we check if we need to query for unique data
       if (query.length > 0) {
         const userWithCollision = await UserModel
           .where('_id')
@@ -249,26 +258,34 @@ const extendUserModel = (userModel) => {
             throw new EntityTakenError('User', 'email', emailToChange);
           }
 
-          if (usernameInDb === usernameToChange) {
+          if (usernameInDb === usernameToChange.toLowerCase()) {
             throw new EntityTakenError('User', 'username', usernameToChange);
           }
+
+          // we throw error anyway to not let flow go through
+          throw new EntityTakenError();
         }
       }
 
       // we iterate throuh without symbol (plain obj)
-      for (let [prop, value] of Object.entries(propObj)) { // eslint-disable-line
-        const valueInDb = await user.get(prop); // eslint-disable-line
+      for (const [prop, value] of Object.entries(propObj)) {
+        const valueInDb = await user.get(prop);
 
         // we only set prop if it's really different
         if (valueInDb !== value) {
-          user.set(prop, value);
-          profileChanged = true;
+          if (prop !== 'username') {
+            user.set(prop, value);
+            profileChanged = true;
+          } else {
+            user.set('username', value.toLowerCase());
+            user.set('displayname', value);
+          }
         }
       }
 
       // if something changed then we save
       if (profileChanged) {
-        await this.save();
+        await user.save();
       }
 
       return profileChanged;

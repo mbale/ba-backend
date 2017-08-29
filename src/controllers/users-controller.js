@@ -64,11 +64,11 @@ class UsersController {
         const users = await User.find();
         const usersMapped = [];
 
-        for (const user of users) { // eslint-disable-line
-          const profile = await user.getProfile(); // eslint-disable-line
+        for (const user of users) {
+          const profile = user.getProfile();
           usersMapped.push(profile);
         }
-        return reply(usersMapped);
+        return reply(await Promise.all(usersMapped));
       }
 
       let userIds = [];
@@ -81,30 +81,18 @@ class UsersController {
       }
 
       // convert each to objectid
-      const usersIdsMappedToObjectId = userIds.map(uid => new ObjectId(uid));
-      const usersRequested = [];
+      userIds = userIds.map(uid => new ObjectId(uid));
 
-      // find all user
-      for (let userIdRequested of usersIdsMappedToObjectId) { // eslint-disable-line
-        let user = await User.findById(userIdRequested);  // eslint-disable-line
+      let users = userIds.map(uid => User.findById(uid));
+      users = await Promise.all(users);
+      // filter out nulls
+      users = users.filter(user => user);
+      // get profiles
+      users = users.map(user => user.getProfile());
 
-        // check if we have user
-        if (user) {
-          const profile = await user.getProfile(); // eslint-disable-line
+      users = await Promise.all(users);
 
-          const {
-            username,
-          } = profile;
-
-          // check if we already have it queried
-          const alreadyQueried = usersRequested.find(u => u.username === username);
-
-          if (!alreadyQueried) {
-            usersRequested.push(profile);
-          }
-        }
-      }
-      return reply(usersRequested);
+      return reply(users);
     } catch (error) {
       return reply.badImplementation(error);
     }
