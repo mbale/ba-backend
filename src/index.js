@@ -211,9 +211,10 @@ server.auth.default('accessToken');
   Registering routes
  */
 
-
-for (const route in routes) { // eslint-disable-line
-  server.route(routes[route]);
+for (const route in routes) {
+  if (Object.prototype.hasOwnProperty.call(routes, route)) {
+    server.route(routes[route]);
+  }
 }
 
 /*

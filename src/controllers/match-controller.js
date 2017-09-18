@@ -3,6 +3,9 @@ import {
 } from 'mongorito';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import User from '../models/user-model.js';
+import League from '../models/league-model.js';
+import Game from '../models/game-model.js';
+import Team from '../models/team-model.js';
 import Match from '../models/match-model.js';
 
 class MatchController {
@@ -20,33 +23,37 @@ class MatchController {
         },
       } = request;
 
-      const andQuery = {};
+      // const andQuery = {};
 
-      if (gameSlug) {
-        andQuery.game.slug = gameSlug;
-      }
+      // if (gameSlug) {
+      //   andQuery.game.slug = gameSlug;
+      // }
 
-      if (homeTeamname) {
-        andQuery.homeTeam.name = homeTeamname;
-      }
+      // if (homeTeamname) {
+      //   andQuery.homeTeam.name = homeTeamname;
+      // }
 
-      if (awayTeamname) {
-        andQuery.awayTeam.name = awayTeamname;
-      }
+      // if (awayTeamname) {
+      //   andQuery.awayTeam.name = awayTeamname;
+      // }
 
-      if (leaguename) {
-        andQuery.league.name = leaguename;
-      }
+      // if (leaguename) {
+      //   andQuery.league.name = leaguename;
+      // }
 
-      const matches = await Match
-        .limit(limit)
-        .where({
-          date: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-        })
-        .find(andQuery);
+      // const matches = await Match
+      //   .limit(limit)
+      //   .where({
+      //     date: {
+      //       $gte: startDate,
+      //       $lte: endDate,
+      //     },
+      //   })
+      //   .find(andQuery);
+
+      let matches = await Match.limit(limit).find();
+
+      matches = await Promise.all(matches.map(match => match.get()));
 
       return reply(matches);
     } catch (error) {
