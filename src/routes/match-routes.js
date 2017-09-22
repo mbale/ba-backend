@@ -23,10 +23,10 @@ const matchRoutes = [
           awayteam: Joi.string()
             .optional()
             .max(30),
-          datefrom: Joi.date().iso()
+          startdate: Joi.date().iso()
             .optional()
             .default(new Date(), 'current time with date'),
-          dateto: Joi.date().iso()
+          enddate: Joi.date().iso()
             .optional()
             .default(() => {
               const date = new Date();

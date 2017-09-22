@@ -3,9 +3,6 @@ import {
 } from 'mongorito';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import User from '../models/user-model.js';
-import League from '../models/league-model.js';
-import Game from '../models/game-model.js';
-import Team from '../models/team-model.js';
 import Match from '../models/match-model.js';
 
 class MatchController {
@@ -14,46 +11,69 @@ class MatchController {
       const {
         query: {
           limit,
-          game: gameSlug,
-          hometeam: homeTeamname,
-          awayteam: awayTeamname,
-          league: leaguename,
-          datefrom: startDate,
-          dateto: endDate,
+          game,
+          hometeam,
+          awayteam,
+          league,
+          startdate,
+          enddate,
         },
       } = request;
 
-      // const andQuery = {};
+      const andQuery = {};
 
-      // if (gameSlug) {
-      //   andQuery.game.slug = gameSlug;
-      // }
+      // default ones
+      andQuery.date = {
+        $gte: startdate,
+        $lte: enddate,
+      };
 
-      // if (homeTeamname) {
-      //   andQuery.homeTeam.name = homeTeamname;
-      // }
+      if (game) {
+        andQuery['game.slug'] = game; // notation is imoportant
+      } else {
+        andQuery['game.slug'] = {
+          $ne: '', // we filter out unnamed games = unofficial we don't support them
+        };
+      }
 
-      // if (awayTeamname) {
-      //   andQuery.awayTeam.name = awayTeamname;
-      // }
+      if (hometeam) {
+        andQuery.homeTeam = {};
+        andQuery.homeTeam.name = hometeam;
+      }
 
-      // if (leaguename) {
-      //   andQuery.league.name = leaguename;
-      // }
+      if (awayteam) {
+        andQuery.awayTeam = {};
+        andQuery.awayTeam.name = awayteam;
+      }
 
-      // const matches = await Match
-      //   .limit(limit)
-      //   .where({
-      //     date: {
-      //       $gte: startDate,
-      //       $lte: endDate,
-      //     },
-      //   })
-      //   .find(andQuery);
+      if (league) {
+        andQuery.league = {};
+        andQuery.league.name = league;
+      }
 
-      let matches = await Match.limit(limit).find();
+      let matches = await Match
+        .limit(limit)
+        .where(andQuery)
+        .find();
 
       matches = await Promise.all(matches.map(match => match.get()));
+      // add islive prop
+      const now = new Date();
+
+      for (const match of matches) {
+        const {
+          date,
+        } = match;
+        const dateOfMatch = new Date(date);
+
+        // 1.) calculate islive
+        if (dateOfMatch.getTime() === now.getTime()) {
+          // in playing
+          match.isLive = true;
+        } else {
+          match.isLive = false;
+        }
+      }
 
       return reply(matches);
     } catch (error) {

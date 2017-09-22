@@ -64,6 +64,7 @@ const goodReporterOptions = {
       module: 'good-squeeze',
       name: 'Squeeze',
       args: [{
+        ops: '*',
         log: '*',
         response: '*',
         error: '*',
