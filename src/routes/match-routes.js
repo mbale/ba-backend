@@ -15,8 +15,7 @@ const matchRoutes = [
       validate: {
         query: Joi.object().keys({
           game: Joi.string()
-            .optional()
-            .allow(['csgo', 'overwatch', 'lol', 'hots', 'hs', 'dota2']),
+            .optional(),
           hometeam: Joi.string()
             .optional()
             .max(30),

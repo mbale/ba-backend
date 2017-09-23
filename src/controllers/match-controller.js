@@ -29,7 +29,7 @@ class MatchController {
       };
 
       if (game) {
-        andQuery['game.slug'] = game; // notation is imoportant
+        andQuery['game.slug'] = game; // notation is important
       } else {
         andQuery['game.slug'] = {
           $ne: '', // we filter out unnamed games = unofficial we don't support them
