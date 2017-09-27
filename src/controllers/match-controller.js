@@ -4,6 +4,9 @@ import {
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import User from '../models/user-model.js';
 import Match from '../models/match-model.js';
+import Game from '../models/game-model.js';
+import League from '../models/league-model.js';
+import Team from '../models/team-model.js';
 
 class MatchController {
   static async getMatches(request, reply) {
@@ -11,45 +14,93 @@ class MatchController {
       const {
         query: {
           limit,
-          game,
-          hometeam,
-          awayteam,
-          league,
+          game: gameQueryParameter,
+          hometeam: homeTeamQueryParameter,
+          awayteam: awayTeamQueryParameter,
+          league: leagueQueryParameter,
           startdate,
           enddate,
         },
       } = request;
 
-      const andQuery = {};
-
       // default ones
-      andQuery.date = {
-        $gte: startdate,
-        $lte: enddate,
+      const andQuery = {
+        date: {
+          $gte: new Date(startdate),
+          $lte: new Date(enddate),
+        },
       };
 
+      let game = null;
+      let league = null;
+      let homeTeam = null;
+      let awayTeam = null;
+
+      if (gameQueryParameter) {
+        game = await Game.findOne({
+          slug: gameQueryParameter,
+        });
+
+        if (!game) {
+          throw new EntityNotFoundError('Match', 'game', gameQueryParameter);
+        }
+      }
+
+      if (leagueQueryParameter) {
+        league = await League.findOne({
+          name: leagueQueryParameter,
+        });
+
+        if (!league) {
+          throw new EntityNotFoundError('Match', 'league', leagueQueryParameter);
+        }
+      }
+
+      if (homeTeamQueryParameter) {
+        homeTeam = await Team.findOne({
+          name: homeTeamQueryParameter,
+        });
+
+        if (!homeTeam) {
+          throw new EntityNotFoundError('Match', 'homeTeam', homeTeamQueryParameter);
+        }
+      }
+
+      if (awayTeamQueryParameter) {
+        awayTeam = await Team.findOne({
+          name: awayTeamQueryParameter,
+        });
+
+        if (!awayTeam) {
+          throw new EntityNotFoundError('Match', 'awayTeam', awayTeamQueryParameter);
+        }
+      }
+
       if (game) {
-        andQuery['game.slug'] = game; // notation is important
-      } else {
-        andQuery['game.slug'] = {
-          $ne: '', // we filter out unnamed games = unofficial we don't support them
+        andQuery.gameId = await game.get('_id');
+      } else { // we sort out unsupported games (slug === '')
+        let gameIdsToExclude = await Game.find({
+          slug: '',
+        });
+        gameIdsToExclude = await Promise.all(gameIdsToExclude.map(gameindb => gameindb.get('_id')));
+        andQuery.gameId = {
+          $nin: gameIdsToExclude,
         };
       }
 
-      if (hometeam) {
-        andQuery.homeTeam = {};
-        andQuery.homeTeam.name = hometeam;
+      if (homeTeam) {
+        andQuery.homeTeamId = new ObjectId(homeTeam.get('_id'));
       }
 
-      if (awayteam) {
-        andQuery.awayTeam = {};
-        andQuery.awayTeam.name = awayteam;
+      if (awayTeam) {
+        andQuery.awayTeamId = new ObjectId(await awayTeam.get('_id'));
       }
 
       if (league) {
-        andQuery.league = {};
-        andQuery.league.name = league;
+        andQuery.leagueId = new ObjectId(await league.get('_id'));
       }
+
+      console.log(andQuery)
 
       let matches = await Match
         .limit(limit)
@@ -57,25 +108,55 @@ class MatchController {
         .find();
 
       matches = await Promise.all(matches.map(match => match.get()));
-      // add islive prop
-      const now = new Date();
+      let matchesAsPromised = [];
 
       for (const match of matches) {
-        const {
-          date,
-        } = match;
-        const dateOfMatch = new Date(date);
+        const m = [];
+        // order is strictly important
+        m.push(League.findOne({
+          _id: match.leagueId,
+        }), Game.findOne({
+          _id: match.gameId,
+        }), Team.findOne({
+          _id: match.homeTeamId,
+        }), Team.findOne({
+          _id: match.awayTeamId,
+        }),
+          match.date,
+          match.odds,
+          match._id);
+
+        // // add islive prop
+        const now = new Date();
+        const dateOfMatch = new Date(match.date);
 
         // 1.) calculate islive
         if (dateOfMatch.getTime() === now.getTime()) {
           // in playing
-          match.isLive = true;
+          m.push(match.isLive = true);
         } else {
-          match.isLive = false;
+          m.push(match.isLive = false);
         }
+
+        matchesAsPromised.push(m);
       }
 
-      return reply(matches);
+
+      matchesAsPromised = await Promise.all(matchesAsPromised.map((match => Promise.all(match))));
+      matchesAsPromised = matchesAsPromised.map((matchesFragment) => {
+        return {
+          league: matchesFragment[0],
+          game: matchesFragment[1],
+          homeTeam: matchesFragment[2],
+          awayTeam: matchesFragment[3],
+          date: matchesFragment[4],
+          odds: matchesFragment[5],
+          id: matchesFragment[6],
+          isLive: matchesFragment[7],
+        };
+      });
+
+      return reply(matchesAsPromised);
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error.message);
