@@ -29,6 +29,9 @@ class MatchController {
           $gte: new Date(startdate),
           $lte: new Date(enddate),
         },
+        // 'updates.0': {
+        //   $exists: true,
+        // },
       };
 
       let game = null;
@@ -100,8 +103,6 @@ class MatchController {
         andQuery.leagueId = new ObjectId(await league.get('_id'));
       }
 
-      console.log(andQuery)
-
       let matches = await Match
         .limit(limit)
         .where(andQuery)
@@ -124,37 +125,68 @@ class MatchController {
         }),
           match.date,
           match.odds,
-          match._id);
+          match._id,
+        );
 
-        // // add islive prop
+        // parse date to calculate islive
         const now = new Date();
         const dateOfMatch = new Date(match.date);
 
-        // 1.) calculate islive
+        // calculate islive
+        let isLive = null;
+
         if (dateOfMatch.getTime() === now.getTime()) {
           // in playing
-          m.push(match.isLive = true);
+          isLive = true;
         } else {
-          m.push(match.isLive = false);
+          isLive = false;
         }
+
+        m.push(match.isLive = isLive);
+
+        // add latest known state
+        const {
+          updates,
+        } = match;
+
+        // default state
+        const state = {
+          scores: null,
+          type: null,
+        };
+
+        // it can be empty
+        if (updates.length !== 0) {
+          // order by date
+          const orderedUpdates = updates.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+          // then assign state type
+          state.type = orderedUpdates[0].statusType;
+          if (orderedUpdates[0].statusType === 'Settled') {
+            // set scores
+            state.scores = {};
+            state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
+            state.scores.awayTeam = orderedUpdates[0].awayTeamScore;
+          }
+        }
+
+        m.push(state);
 
         matchesAsPromised.push(m);
       }
 
 
       matchesAsPromised = await Promise.all(matchesAsPromised.map((match => Promise.all(match))));
-      matchesAsPromised = matchesAsPromised.map((matchesFragment) => {
-        return {
-          league: matchesFragment[0],
-          game: matchesFragment[1],
-          homeTeam: matchesFragment[2],
-          awayTeam: matchesFragment[3],
-          date: matchesFragment[4],
-          odds: matchesFragment[5],
-          id: matchesFragment[6],
-          isLive: matchesFragment[7],
-        };
-      });
+      matchesAsPromised = matchesAsPromised.map(matchesFragment => ({
+        id: matchesFragment[6],
+        league: matchesFragment[0].get('name'),
+        game: matchesFragment[1].get('name'),
+        homeTeam: matchesFragment[2].get('name'),
+        awayTeam: matchesFragment[3].get('name'),
+        date: matchesFragment[4],
+        isLive: matchesFragment[7],
+        // odds: matchesFragment[5],
+        state: matchesFragment[8],
+      }));
 
       return reply(matchesAsPromised);
     } catch (error) {
