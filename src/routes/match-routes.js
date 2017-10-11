@@ -44,15 +44,13 @@ const matchRoutes = [
     },
   },
   {
-    path: '/v1/matches/{homeTeam}-{awayTeam}-{matchId}',
+    path: '/v1/matches/{matchId}',
     method: 'GET',
     handler: MatchController.getMatchDetails,
     config: {
       auth: false,
       validate: {
         params: {
-          homeTeam: Joi.string().required(),
-          awayTeam: Joi.string().required(),
           matchId: Joi.objectId().required(),
         },
       },

@@ -211,46 +211,6 @@ class MatchController {
       let matchId = request.params.matchId;
       matchId = new ObjectId(matchId);
 
-      const requestedEntities = [
-        Team.findOne({
-          name: homeTeamParam,
-        }),
-        Team.findOne({
-          name: awayTeamParam,
-        }),
-      ];
-
-      // get all once
-      let [homeTeam, awayTeam] = await Promise.all(requestedEntities);
-
-      // validate
-      if (!homeTeam) {
-        throw new EntityNotFoundError('team', 'name', homeTeamParam);
-      }
-
-      if (!awayTeam) {
-        throw new EntityNotFoundError('team', 'name', awayTeamParam);
-      }
-
-      [
-        homeTeam,
-        awayTeam,
-      ] = await Promise.all([
-        homeTeam.get(),
-        awayTeam.get(),
-      ]);
-
-      let {
-        _id: homeTeamId,
-      } = homeTeam;
-
-      let {
-        _id: awayTeamId,
-      } = awayTeam;
-
-      homeTeamId = new ObjectId(homeTeamId);
-      awayTeamId = new ObjectId(awayTeamId);
-
       // console.log(matchId);
       // console.log(homeTeamParam);
       // console.log(homeTeamId);
@@ -259,8 +219,6 @@ class MatchController {
 
       const match = await Match.findOne({
         _id: matchId,
-        homeTeamId,
-        awayTeamId,
       });
 
       if (!match) {
@@ -271,13 +229,35 @@ class MatchController {
         updates,
         date,
         odds,
+        homeTeamId,
+        awayTeamId,
         gameId,
       } = await match.get();
 
       // get team details
-      const game = await Game.findOne({
-        _id: new ObjectId(gameId),
-      });
+      const [
+        homeTeam,
+        awayTeam,
+        game,
+      ] = await Promise.all([
+        Team.findOne({
+          _id: homeTeamId,
+        }),
+        Team.findOne({
+          _id: awayTeamId,
+        }),
+        Game.findOne({
+          _id: new ObjectId(gameId),
+        }),
+      ]);
+
+      const {
+        name: homeTeamname,
+      } = await homeTeam.get();
+
+      const {
+        name: awayTeamname,
+      } = await awayTeam.get();
 
       const {
         slug,
@@ -320,7 +300,7 @@ class MatchController {
 
       if (apiUrl) {
         try {
-          const homeTeamPage = await wClient.page(homeTeamParam.replace(' ', '_'));
+          const homeTeamPage = await wClient.page(homeTeamname.replace(' ', '_'));
           const {
             location = '',
             image = '',
@@ -335,7 +315,7 @@ class MatchController {
           console.log(error);
         }
         try {
-          const awayTeamPage = await wClient.page(awayTeamParam.replace(' ', '_'));
+          const awayTeamPage = await wClient.page(awayTeamname.replace(' ', '_'));
           const {
             location = '',
             image = '',
@@ -349,18 +329,7 @@ class MatchController {
         } catch (error) {
           console.log(error);
         }
-        const wikiPage = await wClient.page(homeTeamParam);
-        const info = await wikiPage.info();
-        console.log(info);
       }
-
-      const {
-        name: homeTeamname,
-      } = homeTeam;
-
-      const {
-        name: awayTeamname,
-      } = awayTeam;
 
       // get odds
       const moneyLineOdds = odds.moneyLine;
