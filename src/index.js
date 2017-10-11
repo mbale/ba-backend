@@ -48,7 +48,7 @@ const goodReporterOptions = {
       name: 'Squeeze',
       args: [{
         error: '*',
-        ops: '*',
+        // ops: '*',
       }],
     }, {
       module: 'good-sentry',
@@ -64,7 +64,7 @@ const goodReporterOptions = {
       module: 'good-squeeze',
       name: 'Squeeze',
       args: [{
-        ops: '*',
+        // ops: '*',
         log: '*',
         response: '*',
         error: '*',

@@ -44,6 +44,21 @@ const matchRoutes = [
     },
   },
   {
+    path: '/v1/matches/{homeTeam}-{awayTeam}-{matchId}',
+    method: 'GET',
+    handler: MatchController.getMatchDetails,
+    config: {
+      auth: false,
+      validate: {
+        params: {
+          homeTeam: Joi.string().required(),
+          awayTeam: Joi.string().required(),
+          matchId: Joi.objectId().required(),
+        },
+      },
+    },
+  },
+  {
     path: '/v1/matches/{matchId}/comments',
     method: 'GET',
     handler: MatchController.getMatchComments,

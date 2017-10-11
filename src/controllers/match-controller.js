@@ -198,6 +198,146 @@ class MatchController {
     }
   }
 
+  static async getMatchDetails(request, reply) {
+    try {
+      const {
+        params: {
+          homeTeam: homeTeamParam,
+          awayTeam: awayTeamParam,
+        },
+      } = request;
+
+      let matchId = request.params.matchId;
+      matchId = new ObjectId(matchId);
+
+      const requestedEntities = [
+        Team.findOne({
+          name: homeTeamParam,
+        }),
+        Team.findOne({
+          name: awayTeamParam,
+        }),
+      ];
+
+      // get all once
+      let [homeTeam, awayTeam] = await Promise.all(requestedEntities);
+
+      // validate
+      if (!homeTeam) {
+        throw new EntityNotFoundError('team', 'name', homeTeamParam);
+      }
+
+      if (!awayTeam) {
+        throw new EntityNotFoundError('team', 'name', awayTeamParam);
+      }
+
+      [
+        homeTeam,
+        awayTeam,
+      ] = await Promise.all([
+        homeTeam.get(),
+        awayTeam.get(),
+      ]);
+
+      let {
+        _id: homeTeamId,
+      } = homeTeam;
+
+      let {
+        _id: awayTeamId,
+      } = awayTeam;
+
+      homeTeamId = new ObjectId(homeTeamId);
+      awayTeamId = new ObjectId(awayTeamId);
+
+      const match = await Match.findOne({
+        _id: matchId,
+        homeTeamId,
+        awayTeamId,
+      });
+
+      if (!match) {
+        throw new EntityNotFoundError('match', 'matchId', matchId);
+      }
+
+      const {
+        updates,
+        date,
+        odds,
+      } = await match.get();
+
+      // get team details
+      const {
+        name: homeTeamname,
+        logo: homeTeamLogo = '',
+        country: homeTeamCountry = '',
+        members: homeTeamMembers = [],
+      } = homeTeam;
+
+      const {
+        name: awayTeamname,
+        logo: awayTeamLogo = '',
+        country: awayTeamCountry = '',
+        members: awayTeamMembers = [],
+      } = awayTeam;
+
+      // get odds
+      const moneyLineOdds = odds.moneyLine;
+
+      if (moneyLineOdds.length !== 0) {
+        const sortedMOdds = moneyLineOdds
+          .sort((a, b) => new Date(b.fetchedAt) - new Date(a.fetchedAt));
+        odds.moneyLine = sortedMOdds[0];
+      }
+
+      const matchDetails = {
+        date: new Date(date),
+        homeTeam: {
+          name: homeTeamname,
+          logo: homeTeamLogo,
+          country: homeTeamCountry,
+          members: homeTeamMembers,
+        },
+        awayTeam: {
+          name: awayTeamname,
+          logo: awayTeamLogo,
+          country: awayTeamCountry,
+          members: awayTeamMembers,
+        },
+        odds,
+      };
+
+      // default state
+      const state = {
+        scores: null,
+        type: null,
+      };
+
+      // it can be empty
+      if (updates.length !== 0) {
+        // order by date
+        const orderedUpdates = updates.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+        // then assign state type
+        state.type = orderedUpdates[0].statusType;
+        if (orderedUpdates[0].statusType === 'Settled') {
+          // set scores
+          state.scores = {};
+          state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
+          state.scores.awayTeam = orderedUpdates[0].awayTeamScore;
+        }
+      }
+
+      matchDetails.state = state;
+
+      return reply(matchDetails);
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error);
+      }
+      return reply.badImplementation();
+    }
+  }
+
   static async getMatchComments(request, reply) {
     try {
       let {
