@@ -1,6 +1,7 @@
 import {
   ObjectId,
 } from 'mongorito';
+import wiki from 'wikijs';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import User from '../models/user-model.js';
 import Match from '../models/match-model.js';
@@ -250,6 +251,12 @@ class MatchController {
       homeTeamId = new ObjectId(homeTeamId);
       awayTeamId = new ObjectId(awayTeamId);
 
+      // console.log(matchId);
+      // console.log(homeTeamParam);
+      // console.log(homeTeamId);
+      // console.log(awayTeamParam);
+      // console.log(awayTeamId);
+
       const match = await Match.findOne({
         _id: matchId,
         homeTeamId,
@@ -264,21 +271,95 @@ class MatchController {
         updates,
         date,
         odds,
+        gameId,
       } = await match.get();
 
       // get team details
+      const game = await Game.findOne({
+        _id: new ObjectId(gameId),
+      });
+
+      const {
+        slug,
+      } = await game.get();
+
+      const wClient = wiki({
+        apiUrl: 'https://lol.gamepedia.com/api.php',
+      });
+
+      let apiUrl = null;
+      const imageBaseURL = '';
+
+      switch (slug) {
+      // case 'starcraft-2':
+      //   apiUrl = 'http://wiki.teamliquid.net/starcraft2/api.php';
+      //   break;
+      case 'rocket-league':
+        break;
+      case 'overwatch':
+        break;
+      case 'lol':
+        break;
+      case 'dota-2':
+        apiUrl = 'https://dota2.gamepedia.com/api.php';
+        break;
+      case 'csgo':
+        break;
+      default:
+        break;
+      }
+
+      let homeTeamLogo = '';
+      let homeTeamLocation = '';
+      let homeTeamWebsite = '';
+      let homeTeamFacebook = '';
+      let awayTeamLogo = '';
+      let awayTeamLocation = '';
+      let awayTeamWebsite = '';
+      let awayTeamFacebook = '';
+
+      if (apiUrl) {
+        try {
+          const homeTeamPage = await wClient.page(homeTeamParam.replace(' ', '_'));
+          const {
+            location = '',
+            image = '',
+            website = '',
+            facebook = '',
+          } = await homeTeamPage.info();
+          homeTeamLocation = location;
+          homeTeamWebsite = website;
+          homeTeamFacebook = facebook;
+          homeTeamLogo = image;
+        } catch (error) {
+          console.log(error);
+        }
+        try {
+          const awayTeamPage = await wClient.page(awayTeamParam.replace(' ', '_'));
+          const {
+            location = '',
+            image = '',
+            website = '',
+            facebook = '',
+          } = await awayTeamPage.info();
+          awayTeamLocation = location;
+          awayTeamWebsite = website;
+          awayTeamFacebook = facebook;
+          awayTeamLogo = image;
+        } catch (error) {
+          console.log(error);
+        }
+        const wikiPage = await wClient.page(homeTeamParam);
+        const info = await wikiPage.info();
+        console.log(info);
+      }
+
       const {
         name: homeTeamname,
-        logo: homeTeamLogo = '',
-        country: homeTeamCountry = '',
-        members: homeTeamMembers = [],
       } = homeTeam;
 
       const {
         name: awayTeamname,
-        logo: awayTeamLogo = '',
-        country: awayTeamCountry = '',
-        members: awayTeamMembers = [],
       } = awayTeam;
 
       // get odds
@@ -295,14 +376,18 @@ class MatchController {
         homeTeam: {
           name: homeTeamname,
           logo: homeTeamLogo,
-          country: homeTeamCountry,
-          members: homeTeamMembers,
+          location: homeTeamLocation,
+          website: homeTeamWebsite,
+          facebook: homeTeamFacebook,
+          members: [],
         },
         awayTeam: {
           name: awayTeamname,
           logo: awayTeamLogo,
-          country: awayTeamCountry,
-          members: awayTeamMembers,
+          location: awayTeamLocation,
+          website: awayTeamWebsite,
+          facebook: awayTeamFacebook,
+          members: [],
         },
         odds,
       };
@@ -331,6 +416,7 @@ class MatchController {
 
       return reply(matchDetails);
     } catch (error) {
+      console.log(error);
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
       }
