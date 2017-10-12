@@ -393,6 +393,14 @@ class MatchController {
     }
   }
 
+  static async getPredictions(request, reply) {
+    try {
+
+    } catch (error) {
+
+    }
+  }
+
   static async getMatchComments(request, reply) {
     try {
       let {

@@ -53,6 +53,81 @@ const matchRoutes = [
         params: {
           matchId: Joi.objectId().required(),
         },
+        failAction(request, reply, source, error) {
+          let joiError = Utils.refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+
+          switch (type) {
+          case 'any.required':
+            joiError = joiError(`${pathCapitalized}Required`, message);
+            break;
+          case 'string.regex.base':
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${pathCapitalized}" contains special character'`);
+            break;
+          default:
+            joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
+      },
+    },
+  },
+  {
+    path: '/v1/matches/{matchId}/predictions',
+    method: 'GET',
+    handler: MatchController.getPredictions,
+    config: {
+      auth: false,
+      validate: {
+        params: {
+          matchId: Joi.objectId().required(),
+        },
+        failAction(request, reply, source, error) {
+          let joiError = Utils.refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+
+          switch (type) {
+          case 'any.required':
+            joiError = joiError(`${pathCapitalized}Required`, message);
+            break;
+          case 'string.regex.base':
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${pathCapitalized}" contains special character'`);
+            break;
+          default:
+            joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
       },
     },
   },
