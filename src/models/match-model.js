@@ -29,6 +29,16 @@ const methods = (matchModel) => {
       throw error;
     }
   };
+
+  MatchModel.prototype.getPredictions = async function getPredictions() {
+    try {
+      const predictions = await this.get('predictions') || [];
+
+      return predictions;
+    } catch (error) {
+      throw error;
+    }
+  };
 };
 
 function extend() {

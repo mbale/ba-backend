@@ -395,9 +395,33 @@ class MatchController {
 
   static async getPredictions(request, reply) {
     try {
+      let {
+        params: {
+          matchId,
+        },
+      } = request;
 
+      matchId = new ObjectId(matchId);
+
+      const match = await Match.findOne({
+        _id: matchId,
+      });
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'matchId', matchId);
+      }
+
+      const predictions = await match.getPredictions();
+
+      return reply({
+        count: predictions.length,
+        predictions,
+      });
     } catch (error) {
-
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error);
+      }
+      return reply.badImplementation(error);
     }
   }
 
