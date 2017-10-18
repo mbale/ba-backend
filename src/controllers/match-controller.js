@@ -332,13 +332,14 @@ class MatchController {
         }
       }
 
-      // get odds
-      const moneyLineOdds = odds.moneyLine;
+      const latestOdds = [];
 
-      if (moneyLineOdds.length !== 0) {
-        const sortedMOdds = moneyLineOdds
+      // get odds
+      if (odds.length !== 0) {
+        const sortedMOdds = odds
+          .filter(o => o.type === 'moneyLine')
           .sort((a, b) => new Date(b.fetchedAt) - new Date(a.fetchedAt));
-        odds.moneyLine = sortedMOdds[0];
+        latestOdds.push(sortedMOdds[0]);
       }
 
       const matchDetails = {
@@ -359,7 +360,7 @@ class MatchController {
           facebook: awayTeamFacebook,
           members: [],
         },
-        odds,
+        odds: latestOdds,
       };
 
       // default state
