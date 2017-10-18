@@ -55,7 +55,7 @@ export default {
           const {
             rate,
             text,
-            created_at: createdAt,
+            _createdAt: createdAt,
           } = await review.get(); // eslint-disable-line
 
           let userId = await review.get('userId'); // eslint-disable-line
@@ -175,7 +175,7 @@ export default {
         const {
           rate,
           text,
-          created_at: createdAt,
+          _createdAt: createdAt,
         } = await review.get(); // eslint-disable-line
 
         let userId = await review.get('userId'); // eslint-disable-line
@@ -207,13 +207,13 @@ export default {
 
       // we strip out meta data
       bookmaker = bookmaker.fields;
-      let { bonus } = bookmaker;
-      const bonusArray = []
+      const { bonus } = bookmaker;
+      const bonusArray = [];
       // few case it's undefined
       if (bonus && bonus instanceof Array) {
         bonus.forEach((bonus) => {
-          bonusArray.push(bonus.fields)
-        })
+          bonusArray.push(bonus.fields);
+        });
       }
 
       const bm = {};
@@ -349,7 +349,7 @@ export default {
           _id: id,
           rate,
           text,
-          created_at: createdAt,
+          _created_at: createdAt,
         } = await review.get(); // eslint-disable-line
 
         let userId = await review.get('userId'); // eslint-disable-line

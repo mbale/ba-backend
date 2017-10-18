@@ -85,7 +85,10 @@ server.ext('onPreStart', async (serverInstance, next) => {
       Dependency registration
     */
 
-    db.use(timestamps());
+    db.use(timestamps({
+      createdAt: '_createdAt',
+      updatedAt: '_updatedAt',
+    }));
     db.register(User);
     db.register(Review);
     db.register(Match);
