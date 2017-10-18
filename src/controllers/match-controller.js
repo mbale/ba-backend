@@ -187,6 +187,7 @@ class MatchController {
         isLive: matchesFragment[7],
         // odds: matchesFragment[5],
         state: matchesFragment[8],
+        gameSlug: matchesFragment[1].get('slug'),
       }));
 
       return reply(matchesAsPromised);
@@ -421,6 +422,19 @@ class MatchController {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
       }
+      return reply.badImplementation(error);
+    }
+  }
+
+  static async addPrediction(request, reply) {
+    try {
+      const {
+        payload: {
+          odds,
+          stake,
+        },
+      } = request;
+    } catch (error) {
       return reply.badImplementation(error);
     }
   }
