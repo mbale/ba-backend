@@ -88,14 +88,15 @@ const matchRoutes = [
     },
   },
   {
-    path: '/v1/matches/{matchId}/predictions',
+    path: '/v1/matches/{matchId}/predictions/{predictionId}',
     method: 'GET',
-    handler: MatchController.getPredictions,
+    handler: MatchController.getPredictionById,
     config: {
       auth: false,
       validate: {
         params: {
           matchId: Joi.objectId().required(),
+          predictionId: Joi.objectId().required(),
         },
         failAction(request, reply, source, error) {
           let joiError = Utils.refactJoiError(error);
@@ -127,6 +128,20 @@ const matchRoutes = [
             joiError = joiError('UndefinedError', 'Undefined error', 400);
           }
           return reply(joiError).code(joiError.statusCode);
+        },
+      },
+    },
+  },
+  {
+    path: '/v1/matches/{matchId}/predictions',
+    method: 'POST',
+    handler: MatchController.addPrediction,
+    config: {
+      validate: {
+        payload: {
+          oddsId: Joi.objectId().required(),
+          stake: Joi.number().valid([1, 2, 3]),
+          text: Joi.string().optional(),
         },
       },
     },

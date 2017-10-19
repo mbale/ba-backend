@@ -202,21 +202,8 @@ class MatchController {
 
   static async getMatchDetails(request, reply) {
     try {
-      const {
-        params: {
-          homeTeam: homeTeamParam,
-          awayTeam: awayTeamParam,
-        },
-      } = request;
-
       let matchId = request.params.matchId;
       matchId = new ObjectId(matchId);
-
-      // console.log(matchId);
-      // console.log(homeTeamParam);
-      // console.log(homeTeamId);
-      // console.log(awayTeamParam);
-      // console.log(awayTeamId);
 
       const match = await Match.findOne({
         _id: matchId,
@@ -233,9 +220,10 @@ class MatchController {
         homeTeamId,
         awayTeamId,
         gameId,
+        predictions: _predictions,
       } = await match.get();
 
-      // get team details
+      // get team and game details
       const [
         homeTeam,
         awayTeam,
@@ -250,7 +238,32 @@ class MatchController {
         Game.findOne({
           _id: new ObjectId(gameId),
         }),
+        Promise.all(
+          _predictions.map(p => User.findOne({
+            _id: p.userId,
+          })),
+        ),
       ]);
+
+      // get predictions
+      const predictions = [];
+
+      for (const _prediction of _predictions) {
+        let user = await User.findOne({
+          _id: _prediction.userId,
+        });
+
+        user = await user.getProfile();
+        const _odds = odds.find(o => o._id.equals(_prediction.oddsId));
+
+        predictions.push({
+          user,
+          odds: _odds,
+          text: _prediction.text,
+          stake: _prediction.stake,
+          comments: _prediction.comments,
+        });
+      }
 
       const {
         name: homeTeamname,
@@ -263,74 +276,6 @@ class MatchController {
       const {
         slug,
       } = await game.get();
-
-      const wClient = wiki({
-        apiUrl: 'https://lol.gamepedia.com/api.php',
-      });
-
-      let apiUrl = null;
-      const imageBaseURL = '';
-
-      switch (slug) {
-      // case 'starcraft-2':
-      //   apiUrl = 'http://wiki.teamliquid.net/starcraft2/api.php';
-      //   break;
-      case 'rocket-league':
-        break;
-      case 'overwatch':
-        break;
-      case 'lol':
-        break;
-      case 'dota-2':
-        apiUrl = 'https://dota2.gamepedia.com/api.php';
-        break;
-      case 'csgo':
-        break;
-      default:
-        break;
-      }
-
-      let homeTeamLogo = '';
-      let homeTeamLocation = '';
-      let homeTeamWebsite = '';
-      let homeTeamFacebook = '';
-      let awayTeamLogo = '';
-      let awayTeamLocation = '';
-      let awayTeamWebsite = '';
-      let awayTeamFacebook = '';
-
-      if (apiUrl) {
-        try {
-          const homeTeamPage = await wClient.page(homeTeamname.replace(' ', '_'));
-          const {
-            location = '',
-            image = '',
-            website = '',
-            facebook = '',
-          } = await homeTeamPage.info();
-          homeTeamLocation = location;
-          homeTeamWebsite = website;
-          homeTeamFacebook = facebook;
-          homeTeamLogo = image;
-        } catch (error) {
-          console.log(error);
-        }
-        try {
-          const awayTeamPage = await wClient.page(awayTeamname.replace(' ', '_'));
-          const {
-            location = '',
-            image = '',
-            website = '',
-            facebook = '',
-          } = await awayTeamPage.info();
-          awayTeamLocation = location;
-          awayTeamWebsite = website;
-          awayTeamFacebook = facebook;
-          awayTeamLogo = image;
-        } catch (error) {
-          console.log(error);
-        }
-      }
 
       const latestOdds = [];
 
@@ -346,19 +291,9 @@ class MatchController {
         date: new Date(date),
         homeTeam: {
           name: homeTeamname,
-          logo: homeTeamLogo,
-          location: homeTeamLocation,
-          website: homeTeamWebsite,
-          facebook: homeTeamFacebook,
-          members: [],
         },
         awayTeam: {
           name: awayTeamname,
-          logo: awayTeamLogo,
-          location: awayTeamLocation,
-          website: awayTeamWebsite,
-          facebook: awayTeamFacebook,
-          members: [],
         },
         odds: latestOdds,
       };
@@ -385,9 +320,10 @@ class MatchController {
 
       matchDetails.state = state;
 
+      matchDetails.predictions = predictions;
+
       return reply(matchDetails);
     } catch (error) {
-      console.log(error);
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
       }
@@ -395,7 +331,7 @@ class MatchController {
     }
   }
 
-  static async getPredictions(request, reply) {
+  static async getPredictionById(request, reply) {
     try {
       let {
         params: {
@@ -431,11 +367,46 @@ class MatchController {
     try {
       const {
         payload: {
-          odds,
           stake,
+          text,
+        },
+        auth: {
+          credentials: {
+            user,
+          },
         },
       } = request;
+
+      const oddsId = new ObjectId(request.payload.oddsId);
+
+      // validate oddsid
+      const match = await Match
+        .elemMatch('odds', (odds) => {
+          odds.where('_id').equals(oddsId);
+        })
+        .findOne();
+
+      if (!match) {
+        throw new EntityNotFoundError('Odds', 'id', oddsId);
+      }
+
+      const userId = await user.get('_id');
+
+      const prediction = {
+        userId,
+        oddsId,
+        stake,
+        text,
+        comments: [],
+      };
+
+      await match.addPrediction(prediction);
+
+      return reply();
     } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error);
+      }
       return reply.badImplementation(error);
     }
   }

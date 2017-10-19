@@ -14,14 +14,7 @@ const methods = (matchModel) => {
   MatchModel.prototype.getComments = async function getComments() {
     try {
       // get comments field
-      let comments = await this.get('comments');
-
-      // set to empty array if undefined
-      if (!comments) {
-        await this.set('comments', []);
-      }
-
-      comments = this.get('comments');
+      const comments = await this.get('comments') || [];
 
       // return model back
       return comments;
@@ -30,11 +23,14 @@ const methods = (matchModel) => {
     }
   };
 
-  MatchModel.prototype.getPredictions = async function getPredictions() {
+  MatchModel.prototype.addPrediction = async function addPrediction(prediction) {
     try {
       const predictions = await this.get('predictions') || [];
 
-      return predictions;
+      predictions.push(prediction);
+      await this.set('predictions', predictions);
+
+      await this.save();
     } catch (error) {
       throw error;
     }
