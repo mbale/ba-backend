@@ -327,7 +327,7 @@ class MatchController {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
       }
-      return reply.badImplementation();
+      return reply.badImplementation(error);
     }
   }
 
