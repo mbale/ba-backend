@@ -1,5 +1,6 @@
 import {
   Model,
+  ObjectId,
 } from 'mongorito';
 
 class Match extends Model {
@@ -14,6 +15,8 @@ const methods = (matchModel) => {
   MatchModel.prototype.addPrediction = async function addPrediction(prediction) {
     try {
       const predictions = await this.get('predictions') || [];
+
+      prediction._id = new ObjectId();
 
       predictions.push(prediction);
       await this.set('predictions', predictions);
