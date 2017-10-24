@@ -1,8 +1,8 @@
 import {
   ObjectId,
 } from 'mongorito';
-import wiki from 'wikijs';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
+import StakeNotInRageError from '../errors/stake-not-in-range-error.js';
 import User from '../models/user-model.js';
 import Match from '../models/match-model.js';
 import Game from '../models/game-model.js';
@@ -369,6 +369,7 @@ class MatchController {
         payload: {
           stake,
           text,
+          team,
         },
         auth: {
           credentials: {
@@ -390,6 +391,47 @@ class MatchController {
         throw new EntityNotFoundError('Odds', 'id', oddsId);
       }
 
+      const {
+        odds,
+      } = await match.get();
+
+      const {
+        home: homeOdds,
+        away: awayOdds,
+      } = odds.find(o => o._id.equals(oddsId));
+
+      // make sure we have stake in range
+      if (team === 'home' && homeOdds < 2.5) {
+        throw new StakeNotInRageError(stake, homeOdds);
+      }
+
+      const isStakeInvalid = (_odds, _stake) => {
+        if (_odds < 2.5 && _stake > 3) {
+          return true;
+        }
+
+        if (_odds >= 2.5 && _odds < 5 && _stake > 2) {
+          return true;
+        }
+
+        if (_odds >= 5 && _odds < 7.5 && _stake > 1) {
+          return true;
+        }
+
+        return false;
+      };
+
+      const stakeToHomeOddsInvalid = isStakeInvalid(homeOdds, stake);
+      const stakeToAwayOddsInvalid = isStakeInvalid(awayOdds, stake);
+
+      if (team === 'home' && stakeToHomeOddsInvalid) {
+        throw new StakeNotInRageError(stake, homeOdds);
+      }
+
+      if (team === 'away' && stakeToAwayOddsInvalid) {
+        throw new StakeNotInRageError(stake, awayOdds);
+      }
+
       const userId = await user.get('_id');
 
       const prediction = {
@@ -406,6 +448,9 @@ class MatchController {
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
+      }
+      if (error instanceof StakeNotInRageError) {
+        return reply.badData(error);
       }
       return reply.badImplementation(error);
     }

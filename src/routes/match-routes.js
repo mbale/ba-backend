@@ -142,6 +142,41 @@ const matchRoutes = [
           oddsId: Joi.objectId().required(),
           stake: Joi.number().valid([1, 2, 3]),
           text: Joi.string().optional(),
+          team: Joi.string().valid(['home', 'away']),
+        },
+        failAction(request, reply, source, error) {
+          let joiError = Utils.refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+
+          switch (type) {
+          case 'any.required':
+            joiError = joiError(`${pathCapitalized}Required`, message);
+            break;
+          case 'any.allowOnly':
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${pathCapitalized}" must be a valid ${pathCapitalized}`);
+            break;
+          case 'string.regex.base':
+            joiError = joiError(`${pathCapitalized}Invalid`, `"${pathCapitalized}" contains special character'`);
+            break;
+          default:
+            joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
         },
       },
     },
