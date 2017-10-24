@@ -11,18 +11,6 @@ class Match extends Model {
 const methods = (matchModel) => {
   const MatchModel = matchModel;
 
-  MatchModel.prototype.getComments = async function getComments() {
-    try {
-      // get comments field
-      const comments = await this.get('comments') || [];
-
-      // return model back
-      return comments;
-    } catch (error) {
-      throw error;
-    }
-  };
-
   MatchModel.prototype.addPrediction = async function addPrediction(prediction) {
     try {
       const predictions = await this.get('predictions') || [];
