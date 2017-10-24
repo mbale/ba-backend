@@ -336,6 +336,7 @@ class MatchController {
       let {
         params: {
           matchId,
+          predictionId,
         },
       } = request;
 
@@ -349,12 +350,39 @@ class MatchController {
         throw new EntityNotFoundError('Match', 'matchId', matchId);
       }
 
-      const predictions = await match.getPredictions();
+      const {
+        predictions = [],
+        odds,
+      } = await match.get();
 
-      return reply({
-        count: predictions.length,
-        predictions,
-      });
+      const prediction = predictions.find(p => p._id.equals(predictionId));
+
+      if (!prediction) {
+        throw new EntityNotFoundError('Prediction', 'predictionId', predictionId);
+      }
+
+      const {
+        userId,
+        oddsId,
+        text,
+        stake,
+      } = prediction;
+
+      const correspondingOdds = odds.find(o => o._id.equals(oddsId));
+
+      const user = await User
+        .findOne({
+          _id: new ObjectId(userId),
+        });
+
+      const predictionPopulated = {
+        user: await user.getProfile(),
+        odds: correspondingOdds,
+        stake,
+        text,
+      };
+
+      return reply(predictionPopulated);
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply.notFound(error);
