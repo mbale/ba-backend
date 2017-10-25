@@ -479,6 +479,7 @@ class MatchController {
         oddsId,
         stake,
         text,
+        selectedTeam: team,
         comments: [],
       };
 
