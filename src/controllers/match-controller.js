@@ -256,12 +256,24 @@ class MatchController {
         user = await user.getProfile();
         const _odds = odds.find(o => o._id.equals(_prediction.oddsId));
 
+        const comments = [];
+
+        for (const comment of _prediction.comments) {
+          const writer = await User.findOne({
+            _id: new ObjectId(comment.userId),
+          });
+          comments.push({
+            user: await writer.getProfile(),
+            text: comment.text,
+          });
+        }
+
         predictions.push({
           user,
           odds: _odds,
           text: _prediction.text,
           stake: _prediction.stake,
-          comments: _prediction.comments,
+          comments,
         });
       }
 
