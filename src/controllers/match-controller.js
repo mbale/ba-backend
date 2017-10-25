@@ -483,6 +483,65 @@ class MatchController {
       return reply.badImplementation(error);
     }
   }
+
+  static async addPredictionComment(request, reply) {
+    try {
+      const {
+        auth: {
+          credentials: {
+            user,
+          },
+        },
+        payload: {
+          text,
+        },
+        params: {
+          matchId,
+          predictionId,
+        },
+      } = request;
+
+      // validate
+      const match = await Match
+        .where({
+          _id: new ObjectId(matchId),
+        })
+        .elemMatch('predictions', (p) => {
+          p.where('_id').equals(new ObjectId(predictionId));
+        })
+        .findOne();
+
+      if (!match) {
+        throw new EntityNotFoundError('Prediction', 'predictionId', predictionId);
+      }
+
+      const predictions = await match.get('predictions') || [];
+
+      const pIndex = predictions.findIndex(p => p._id.equals(new ObjectId(predictionId)));
+
+      const {
+        comments,
+      } = predictions[pIndex];
+
+      const comment = {
+        userId: await user.get('_id'),
+        text,
+      };
+
+      comments.push(comment);
+
+      match.set('predictions', predictions);
+
+      await match.save();
+
+      return reply();
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply.notFound(error);
+      }
+      return reply.badImplementation(error);
+    }
+  }
 }
 
 export default MatchController;

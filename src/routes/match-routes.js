@@ -181,6 +181,22 @@ const matchRoutes = [
       },
     },
   },
+  {
+    path: '/v1/matches/{matchId}/predictions/{predictionId}/comments',
+    method: 'POST',
+    handler: MatchController.addPredictionComment,
+    config: {
+      validate: {
+        params: {
+          matchId: Joi.objectId().required(),
+          predictionId: Joi.objectId().required(),
+        },
+        payload: {
+          text: Joi.string().required(),
+        },
+      },
+    },
+  },
 ];
 
 export default matchRoutes;
