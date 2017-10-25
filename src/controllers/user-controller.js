@@ -1,5 +1,9 @@
+import {
+  ObjectId,
+} from 'mongorito';
 import Utils from '../utils.js';
 import User from '../models/user-model.js';
+import Match from '../models/match-model.js';
 import EntityTakenError from '../errors/entity-taken-error.js';
 import EntityNotFoundError from '../errors/entity-not-found-error.js';
 import PasswordMismatchError from '../errors/password-mismatch-error.js';
@@ -18,6 +22,46 @@ export default {
       const profile = await user.getProfile({
         privateProfile: true,
       });
+
+      const userId = await user.get('_id');
+
+      let matches = await Match.elemMatch('predictions', (p) => {
+        p.where('userId').equals(userId);
+      }).find();
+
+      matches = await Promise.all(matches.map(m => m.get()));
+      // filter predictions
+
+      const predictions = [];
+
+      for (const match of matches) {
+        const {
+          predictions: predictionsOfMatch,
+          odds,
+          _id: matchId,
+        } = match;
+
+        const usersPredictions = predictionsOfMatch.filter(p => p.userId.equals(new ObjectId(userId)));
+
+        for (const userPrediction of usersPredictions) {
+          const {
+            oddsId,
+            stake,
+            text,
+            selectedTeam,
+          } = userPrediction;
+          const usersOdds = odds.find(o => o._id.equals(new ObjectId(oddsId)));
+          predictions.push({
+            odds: usersOdds,
+            stake,
+            text,
+            selectedTeam,
+            matchId,
+          });
+        }
+      }
+
+      profile.predictions = predictions;
 
       // send back
       return reply(profile);
