@@ -42,6 +42,9 @@ class UsersController {
         accessToken,
         issuedAt,
         expiresAt,
+        user: await user.getProfile({
+          privateProfile: true,
+        }),
       });
     } catch (error) {
       if (error instanceof EntityTakenError) {
