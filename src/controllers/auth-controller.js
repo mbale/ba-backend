@@ -113,6 +113,9 @@ class AuthController {
         accessToken,
         issuedAt,
         expiresAt,
+        user: await user.getProfile({
+          privateProfile: true,
+        }),
       });
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
@@ -232,6 +235,9 @@ class AuthController {
           accessToken,
           issuedAt,
           expiresAt,
+          user: await userInDb.getProfile({
+            privateProfile: true,
+          }),
         });
       } else {
         const userData = {
@@ -283,6 +289,9 @@ class AuthController {
           accessToken,
           issuedAt,
           expiresAt,
+          user: await user.getProfile({
+            privateProfile: true,
+          }),
         });
       }
     } catch (error) {
