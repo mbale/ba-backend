@@ -1,17 +1,82 @@
+import User from '../entity/user';
+import { getContentfulClient } from '../utils';
 import { Request, ReplyNoContinue, Response } from 'hapi';
 import { badImplementation } from 'boom';
+import { ObjectID, getConnection } from 'typeorm';
+import BookmakerReview from '../entity/bookmaker-reviews';
 
-// import Review from '../models/review-model.js';
-// import User from '../models/user-model.js';
-// import Utils from '../utils';
-// import EntityTakenError from '../errors/entity-taken-error';
-// import EntityNotFoundError from '../errors/entity-not-found-error.js';
+interface ReviewsMeta {
+  avg : number;
+  items : BookmakerReview[];
+}
+
+interface Bookmaker {
+  name : string;
+  slug : string;
+  logo : string;
+  icon : string;
+  themeColor : string;
+  restrictedCountries : string[];
+  depositMethods : string[];
+  reviews : ReviewsMeta;
+}
 
 class BookmakerController {
   static async getBookmakers(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
-     
-      return reply();
+      const limit = request.query.limit;
+  
+      const bookmakerReviewsRepository = getConnection()
+        .getMongoRepository<BookmakerReview>(BookmakerReview);
+      const userRepository = getConnection().getMongoRepository<User>(User);
+
+      const client = await getContentfulClient();
+
+      const {
+        items,
+      } = await client.getEntries({
+        limit,
+        content_type: 'sportsbook',
+      });
+
+      const bookmakers : Bookmaker[] = [];
+
+      for (const item of items) {
+        const bookmakerId = item.sys.id;
+        const reviews : BookmakerReview[] = await bookmakerReviewsRepository.find({
+          bookmakerId,
+        });
+
+        const rates = reviews.map(review => review.rate);
+
+        let avg = null;
+        const sum = rates.reduce((sum, rate) => sum += rate, 0); // can be empty initial walue = 0
+        
+        // it can be empty
+        if (reviews.length > 0) {
+          avg = sum / reviews.length;
+        } else {
+          avg = sum;
+        }
+
+        const bookmaker : Bookmaker = {
+          name: item.fields.name,
+          slug: item.fields.slug,
+          logo: item.fields.logo.fields.file.url,
+          icon: item.fields.icon.fields.file.url,
+          themeColor: item.fields.themeColor,
+          depositMethods: item.fields.depositMethods.map(x => x.fields.slug),
+          restrictedCountries: item.fields.restrictedCountries,
+          reviews: {
+            avg,
+            items: reviews,
+          },
+        };
+
+        bookmakers.push(bookmaker);
+      }
+  
+      return reply(bookmakers);
     } catch (error) {
       return reply(badImplementation(error));
     }

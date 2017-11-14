@@ -17,6 +17,7 @@ import * as dotenv from 'dotenv';
 import routes from './routes';
 import User from './entity/user';
 import Match from './entity/match';
+import BookmakerReview from './entity/bookmaker-reviews';
 import { EntityNotFoundError } from './errors';
 import * as cloudinary from 'cloudinary';
 // import {
@@ -92,7 +93,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
       type: 'mongodb',
       url: MONGODB_URL,
       logging: ['query', 'error'],
-      entities: [User, Prediction, Match],
+      entities: [User, Prediction, Match, BookmakerReview],
     };
 
     cloudinary.config({

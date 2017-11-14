@@ -2,7 +2,7 @@ import { ValidationError } from 'joi';
 import * as cloudinary from 'cloudinary';
 import * as dotenv from 'dotenv';
 import * as mailgun from 'mailgun-js';
-import * as contentful from 'contentful';
+import { createClient, ContentfulClientApi } from 'contentful';
 import { SignOptions, sign, verify } from 'jsonwebtoken';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { SteamProvider } from './entity/user';
@@ -15,6 +15,7 @@ const JWT_DURATION = process.env.BACKEND_JWT_DURATION;
 const MAILGUN_DOMAIN = process.env.BACKEND_MAILGUN_DOMAIN;
 const MAILGUN_API_KEY = process.env.BACKEND_MAILGUN_API_KEY;
 const CONTENTFUL_SPACE_ID = process.env.BACKEND_CONTENTFUL_SPACE_ID;
+const CONTENTFUL_DELIVERY_ACCESS_TOKEN = process.env.BACKEND_CONTENTFUL_DELIVERY_ACCESS_TOKEN;
 
 /**
  * Email declaration
@@ -210,16 +211,17 @@ export function refactJoiError(parserError : any) {
   };
 }
 
-export async function getContentfulClient() {
-  try {
-    const client = contentful.createClient({
-      space: process.env.CONTENTFUL_SPACE_ID,
-      accessToken: process.env.CONTENTFUL_DELIVERY_ACCESS_TOKEN,
-    });
-    return client;
-  } catch (error) {
-    throw error;
-  }
+/**
+ * Returns connected contentful client
+ * 
+ * @export
+ * @returns {Promise<ContentfulClientApi>} 
+ */
+export async function getContentfulClient() : Promise<ContentfulClientApi> {
+  return await createClient({
+    space: CONTENTFUL_SPACE_ID,
+    accessToken: CONTENTFUL_DELIVERY_ACCESS_TOKEN,
+  });
 }
 
 class Utils {
@@ -229,21 +231,6 @@ class Utils {
   */
   static async deleteContentFromCloudinary(publicId, options) {
     await cloudinary.uploader.destroy(publicId, options);
-  }
-
-  /*
-    Get contentful client
-  */
-  static async getContentfulClient() {
-    try {
-      const client = contentful.createClient({
-        space: process.env.CONTENTFUL_SPACE_ID,
-        accessToken: process.env.CONTENTFUL_DELIVERY_ACCESS_TOKEN,
-      });
-      return client;
-    } catch (error) {
-      throw error;
-    }
   }
 }
 
