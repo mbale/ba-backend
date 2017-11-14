@@ -2,7 +2,7 @@ import {
   Model,
   ActionTypes,
 } from 'mongorito';
-import server from '../index.js';
+import server from '../index';
 
 class Review extends Model {
   static collection() {

@@ -1,36 +1,42 @@
-import Hapi from 'hapi';
-import Boom from 'boom';
-import Inert from 'inert';
-import Blipp from 'blipp';
-import Good from 'good';
-import HapiBoomDecorators from 'hapi-boom-decorators';
-import authJwt from 'hapi-auth-jwt2';
-import Mongorito, {
-  ObjectId,
-} from 'mongorito';
-import dotenv from 'dotenv';
-import timestamps from 'mongorito-timestamps';
-import routes from './routes';
-import User from './models/user-model.js';
-import Review from './models/review-model.js';
-import Match from './models/match-model.js';
-import Game from './models/game-model.js';
-import League from './models/league-model.js';
-import Team from './models/team-model.js';
-import EntityNotFoundError from './errors/entity-not-found-error.js';
+import TeamService from './service/team';
+import Prediction from './entity/prediction';
+import 'reflect-metadata';
+import * as Hapi from 'hapi';
+import * as Boom from 'boom';
+import * as Inert from 'inert';
+import * as Blipp from 'blipp';
+import * as Good from 'good';
+import * as HapiBoomDecorators from 'hapi-boom-decorators';
+import * as authJwt from 'hapi-auth-jwt2';
+import * as Henning from 'henning';
 import {
-  version,
-} from '../package.json';
+  createConnection, ConnectionOptions, getConnection,
+} from 'typeorm';
+import { ObjectID } from 'mongodb';
+import * as dotenv from 'dotenv';
+import routes from './routes';
+import User from './entity/user';
+import Match from './entity/match';
+import { EntityNotFoundError } from './errors/errors';
+// import {
+//   version,
+// } from '../package.json';
 
-const applicationVersion = version;
+// const applicationVersion = version;s
 
 dotenv.config();
+
+const TEAM_SERVICE_URL = process.env.TEAM_SERVICE_URL;
+const HTTP_PORT = process.env.BACKEND_HTTP_PORT;
+const SENTRY_DNS = process.env.BACKEND_SENTRY_DNS;
+const MONGODB_URL = process.env.BACKEND_MONGODB_URL;
+const JWT_KEY = process.env.BACKEND_JWT_KEY;
 
 const server = new Hapi.Server();
 
 // set default server
 server.connection({
-  port: process.env.API_PORT || 3000,
+  port: HTTP_PORT || 3000,
   routes: {
     cors: true,
   },
@@ -53,9 +59,9 @@ const goodReporterOptions = {
     }, {
       module: 'good-sentry',
       args: [{
-        dsn: process.env.SENTRY_DSN,
+        dsn: SENTRY_DNS,
         config: {
-          release: applicationVersion,
+          // release: applicationVersion,
         },
         captureUncaught: true,
       }],
@@ -78,25 +84,22 @@ const goodReporterOptions = {
 
 server.ext('onPreStart', async (serverInstance, next) => {
   try {
-    const db = new Mongorito(process.env.MONGO_URI);
-    const connection = await db.connect();
+    const dbOptions : ConnectionOptions = {
+      type: 'mongodb',
+      url: MONGODB_URL,
+      logging: ['query', 'error'],
+      entities: [User, Prediction, Match],
+    };
+
+    const connection = await createConnection(dbOptions);
 
     /*
-      Dependency registration
+      Service gateway health check
     */
 
-    db.use(timestamps({
-      createdAt: '_createdAt',
-      updatedAt: '_updatedAt',
-    }));
-    db.register(User);
-    db.register(Review);
-    db.register(Match);
-    db.register(Team);
-    db.register(League);
-    db.register(Game);
+    TeamService.initialize(TEAM_SERVICE_URL);
 
-    serverInstance.log(['info'], `DB's connected to ${connection.databaseName} at ${connection.serverConfig.host}:${connection.serverConfig.port}`);
+    serverInstance.log(['info'], `DB's connected to ${connection.options.database}`);
     return next();
   } catch (error) {
     serverInstance.log(['error'], error);
@@ -108,20 +111,25 @@ server.ext('onPreStart', async (serverInstance, next) => {
   Plugin registration
  */
 
+server.register({ 
+  register: Henning, 
+  options: {
+    whitelist: ['image/png', 'image/jpg', 'image/jpeg'],
+}}, (error) => { 
+  if (error) {
+    throw error;
+  }
+});
+
 // boom decorator
-server.register({
-  register: HapiBoomDecorators,
-}, (error) => {
+server.register({ register: HapiBoomDecorators }, (error) => { 
   if (error) {
     throw error;
   }
 });
 
 // logger
-server.register({
-  register: Good,
-  options: goodReporterOptions,
-}, (error) => {
+server.register({ register: Good, options: goodReporterOptions }, (error) => {
   if (error) {
     throw error;
   }
@@ -152,14 +160,9 @@ server.register(authJwt, (error) => {
 
 // declare accesstoken validation logic for routes
 server.auth.strategy('accessToken', 'jwt', {
-  key: process.env.JWT_KEY,
+  key: JWT_KEY,
   async validateFunc(decoded, request, callback) {
     try {
-      // decoded token
-      let {
-        userId,
-      } = decoded;
-
       // encoded token
       const {
         auth: {
@@ -167,31 +170,25 @@ server.auth.strategy('accessToken', 'jwt', {
         },
       } = request;
 
-      userId = new ObjectId(userId);
-
       const credentials = {
         user: null,
         decodedToken: decoded, // we might not need this but pass it anyways
       };
 
-      // first we find by userid
-      const userById = await User.findById(userId);
-      // then by token
-      const userByToken = await User.findOne({
-        'accessToken.accessToken': accessToken,
+      const repository = getConnection()
+        .getMongoRepository<User>(User);
+
+      // locate him by token
+      const user = await repository.findOne({
+        accessToken,
       });
 
-      // check each case
-      if (!userById) {
-        throw new EntityNotFoundError('User', 'id', userId);
-      }
-
-      if (!userByToken) {
+      if (!user) {
         throw new EntityNotFoundError('User', 'accesstoken', accessToken);
       }
 
       // assign user entity to later usage in controller
-      credentials.user = userById;
+      credentials.user = user;
 
       // everything's ok
       return callback(null, true, credentials);

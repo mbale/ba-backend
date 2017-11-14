@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import joiObjectId from 'joi-objectid';
 import MatchController from '../controllers/match-controller.js';
-import Utils from '../utils.js';
+import Utils from '../utils';
 
 Joi.objectId = joiObjectId(Joi);
 

@@ -1,6 +1,6 @@
 import joi from 'joi';
 import BookmakersController from '../controllers/bookmaker-controller.js';
-import Utils from '../utils.js';
+import Utils from '../utils';
 
 const bookmakersRoutes = [
   {
