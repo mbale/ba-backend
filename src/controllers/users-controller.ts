@@ -2,7 +2,7 @@ import Match from '../entity/match';
 import { EntityTakenError, EntityNotFoundError } from '../errors/errors';
 import { Request, Response, ReplyNoContinue } from 'hapi';
 import User, { Profile, SteamProvider } from '../entity/user';
-import { getConnection, ObjectID } from 'typeorm';
+import { getConnection, ObjectID, MongoRepository } from 'typeorm';
 import Prediction, { SelectedTeam } from '../entity/prediction';
 import { List } from 'immutable';
 import { badImplementation, conflict, notFound } from 'boom';
@@ -11,24 +11,6 @@ import TeamService from '../service/team';
 import { ObjectId } from 'bson';
 import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
-
-/**
- * ProfileResponse
- * 
- * @interface ProfileResponse
- * @extends {Profile}
- */
-interface ProfileResponse extends Profile {}
-
-/**
- * Reply interface for @getLoggedUserProfile
- * 
- * @interface GetLoggedUserProfileResponse
- */
-interface GetLoggedUserProfileResponse {
-  profile : ProfileResponse;
-  predictions : PredictionResponse[];
-}
 
 /**
  * PredictionResponse
@@ -46,6 +28,64 @@ interface PredictionResponse {
   odds : number;
   stake : number;
   comments : number;
+}
+
+/**
+ * Aggregate predictions of user into an array
+ * 
+ * @param {MongoRepository<Match>} matchRepository 
+ * @param {Prediction[]} predictionsOfUser 
+ * @returns {Promise<PredictionResponse[]>} 
+ */
+async function aggregatePredictions(
+  matchRepository : MongoRepository<Match>, predictionsOfUser : Prediction[]) 
+  : Promise<PredictionResponse[]> {
+  const predictions : PredictionResponse[] = [];
+    // populate it
+  for (const { 
+    _id, text, matchId, comments, selectedTeam, stake, oddsId,
+  } of predictionsOfUser) {
+
+    const match = await matchRepository.findOneById(matchId);
+    const teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
+    
+    /*
+      Find out which odds he put on
+    */
+    const odds = match.odds.find(o => o._id.equals(oddsId));
+    let selectedOdds = odds.home;
+
+    if (selectedTeam === SelectedTeam.Away) {
+      selectedOdds = odds.away;
+    }
+
+    /*
+      Getting team names
+    */
+
+    let homeTeam = '';
+    let awayTeam = '';
+
+    if (teams.length > 0) {
+      homeTeam = teams[0].name;
+      awayTeam = teams[1].name;
+    }
+
+    const prediction : PredictionResponse = {
+      _id,
+      text,
+      stake,
+      match: {
+        homeTeam,
+        awayTeam,
+        _id: matchId,
+      },
+      odds: selectedOdds,
+      comments: comments.length,
+    };
+    predictions.push(prediction);
+  }
+  return predictions;
 }
 
 class UsersController {
@@ -66,64 +106,15 @@ class UsersController {
       const predictionRepository = connection.getMongoRepository<Prediction>(Prediction);
       const matchRepository = connection.getMongoRepository<Match>(Match);
 
-      const profileOfUser = user.getProfile(true);
-
-      const userId = user._id;
-
       const predictionsOfUser = await predictionRepository.find({
-        userId,
+        userId : user._id,
       });
 
       // construct base response object
-      const response : GetLoggedUserProfileResponse = {
-        profile: profileOfUser,
-        predictions: [],
+      const response = {
+        profile: user.getProfile(true),
+        predictions: await aggregatePredictions(matchRepository, predictionsOfUser),
       };
-
-      // populate it
-      for (const { 
-        _id, text, matchId, comments, selectedTeam, stake, oddsId,
-      } of predictionsOfUser) {
-  
-        const match = await matchRepository.findOneById(matchId);
-        const teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
-        
-        /*
-          Find out which odds he put on
-        */
-        const odds = match.odds.find(o => o._id.equals(oddsId));
-        let selectedOdds = odds.home;
-
-        if (selectedTeam === SelectedTeam.Away) {
-          selectedOdds = odds.away;
-        }
-
-        /*
-          Getting team names
-        */
-
-        let homeTeam = '';
-        let awayTeam = '';
-    
-        if (teams.length > 0) {
-          homeTeam = teams[0].name;
-          awayTeam = teams[1].name;
-        }
-  
-        const prediction : PredictionResponse = {
-          _id,
-          text,
-          stake,
-          match: {
-            homeTeam,
-            awayTeam,
-            _id: matchId,
-          },
-          odds: selectedOdds,
-          comments: comments.length,
-        };
-        response.predictions.push(prediction);
-      }
 
       return reply(response);
     } catch (error) {
@@ -325,6 +316,15 @@ class UsersController {
     }
   }
 
+  /**
+   * Get user by username
+   * 
+   * @static
+   * @param {Request} request 
+   * @param {ReplyNoContinue} reply 
+   * @returns {Promise<Response>} 
+   * @memberof UsersController
+   */
   static async getUserByUsername(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const userRepository = getConnection().getMongoRepository<User>(User);
@@ -345,59 +345,10 @@ class UsersController {
         userId: user._id,
       });
 
-      const profile = user.getProfile();
-
-      const predictions : PredictionResponse[] = [];
-
       const response = {
-        profile,
-        predictions,
+        profile : user.getProfile(),
+        predictions: await aggregatePredictions(matchRepository, predictionsOfUser),
       };
-
-      // populate it
-      for (const { 
-        _id, text, matchId, comments, selectedTeam, stake, oddsId,
-      } of predictionsOfUser) {
-  
-        const match = await matchRepository.findOneById(matchId);
-        const teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
-        
-        /*
-          Find out which odds he put on
-        */
-        const odds = match.odds.find(o => o._id.equals(oddsId));
-        let selectedOdds = odds.home;
-
-        if (selectedTeam === SelectedTeam.Away) {
-          selectedOdds = odds.away;
-        }
-
-        /*
-          Getting team names
-        */
-
-        let homeTeam = '';
-        let awayTeam = '';
-    
-        if (teams.length > 0) {
-          homeTeam = teams[0].name;
-          awayTeam = teams[1].name;
-        }
-  
-        const prediction : PredictionResponse = {
-          _id,
-          text,
-          stake,
-          match: {
-            homeTeam,
-            awayTeam,
-            _id: matchId,
-          },
-          odds: selectedOdds,
-          comments: comments.length,
-        };
-        response.predictions.push(prediction);
-      }
 
       return reply(response);
     } catch (error) {
