@@ -17,7 +17,7 @@ import * as dotenv from 'dotenv';
 import routes from './routes';
 import User from './entity/user';
 import Match from './entity/match';
-import { EntityNotFoundError } from './errors/errors';
+import { EntityNotFoundError } from './errors';
 // import {
 //   version,
 // } from '../package.json';

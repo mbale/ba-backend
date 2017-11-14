@@ -10,7 +10,7 @@ import {
   EntityTakenError,
   PasswordMismatchError,
   InvalidSteamIdError,
-} from '../errors/errors';
+} from '../errors';
 import User, {
   SteamProvider,
 } from '../entity/user';

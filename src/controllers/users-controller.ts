@@ -1,5 +1,5 @@
 import Match from '../entity/match';
-import { EntityTakenError, EntityNotFoundError } from '../errors/errors';
+import { EntityTakenError, EntityNotFoundError } from '../errors';
 import { Request, Response, ReplyNoContinue } from 'hapi';
 import User, { Profile, SteamProvider } from '../entity/user';
 import { getConnection, ObjectID, MongoRepository } from 'typeorm';
