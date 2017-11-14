@@ -10,17 +10,11 @@ import { Stream } from 'stream';
 
 dotenv.config();
 
-// global // move to prestart
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 const JWT_KEY = process.env.BACKEND_JWT_KEY;
 const JWT_DURATION = process.env.BACKEND_JWT_DURATION;
 const MAILGUN_DOMAIN = process.env.BACKEND_MAILGUN_DOMAIN;
 const MAILGUN_API_KEY = process.env.BACKEND_MAILGUN_API_KEY;
+const CONTENTFUL_SPACE_ID = process.env.BACKEND_CONTENTFUL_SPACE_ID;
 
 /**
  * Email declaration
@@ -199,7 +193,6 @@ export async function streamToCloudinary(fromStream : Stream, options : Object)
  * @returns 
  */
 export function refactJoiError(parserError : any) {
-  
   const {
     output,
   } = parserError;
@@ -215,6 +208,18 @@ export function refactJoiError(parserError : any) {
       message,
     };
   };
+}
+
+export async function getContentfulClient() {
+  try {
+    const client = contentful.createClient({
+      space: process.env.CONTENTFUL_SPACE_ID,
+      accessToken: process.env.CONTENTFUL_DELIVERY_ACCESS_TOKEN,
+    });
+    return client;
+  } catch (error) {
+    throw error;
+  }
 }
 
 class Utils {

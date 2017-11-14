@@ -18,6 +18,7 @@ import routes from './routes';
 import User from './entity/user';
 import Match from './entity/match';
 import { EntityNotFoundError } from './errors';
+import * as cloudinary from 'cloudinary';
 // import {
 //   version,
 // } from '../package.json';
@@ -31,6 +32,9 @@ const HTTP_PORT = process.env.BACKEND_HTTP_PORT;
 const SENTRY_DNS = process.env.BACKEND_SENTRY_DNS;
 const MONGODB_URL = process.env.BACKEND_MONGODB_URL;
 const JWT_KEY = process.env.BACKEND_JWT_KEY;
+const CLOUDINARY_CLOUD_NAME = process.env.BACKEND_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.BACKEND_CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.BACKEND_CLOUDINARY_API_SECRET;
 
 const server = new Hapi.Server();
 
@@ -91,6 +95,12 @@ server.ext('onPreStart', async (serverInstance, next) => {
       entities: [User, Prediction, Match],
     };
 
+    cloudinary.config({
+      cloud_name: CLOUDINARY_CLOUD_NAME,
+      api_key: CLOUDINARY_API_KEY,
+      api_secret: CLOUDINARY_API_SECRET,
+    });
+
     const connection = await createConnection(dbOptions);
 
     /*
@@ -99,7 +109,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
 
     TeamService.initialize(TEAM_SERVICE_URL);
 
-    serverInstance.log(['info'], `DB's connected to ${connection.options.database}`);
+    serverInstance.log(['info'], `DB's connected to ${connection.options.type}`);
     return next();
   } catch (error) {
     serverInstance.log(['error'], error);
