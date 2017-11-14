@@ -1,5 +1,4 @@
 import AuthRoutes from '../routes/auth-routes';
-// import UserRoutes from '../routes/user-routes';
 // import BookmakerRoutes from '../routes/bookmaker-routes';
 // import MatchRoutes from '../routes/match-routes';
 // import TeamRoutes from '../routes/team-routes';
