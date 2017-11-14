@@ -47,49 +47,49 @@ const bookmakersRoutes : RouteConfiguration[] = [
       },
     },
   },
-  // {
-  //   path: '/v1/bookmakers/{bookmakerslug}',
-  //   method: 'GET',
-  //   handler: BookmakersController.getBookmakerBySlug,
-  //   config: {
-  //     auth: false,
-  //     validate: {
-  //       params: {
-  //         bookmakerslug: joi.string().required()
-  //           .trim()
-  //           .lowercase(),
-  //       },
-  //       failAction(request, reply, source, error) {
-  //         let joiError = Utils.refactJoiError(error);
+  {
+    path: '/v1/bookmakers/{bookmakerSlug}',
+    method: 'GET',
+    handler: BookmakersController.getBookmakerBySlug,
+    config: {
+      auth: false,
+      validate: {
+        params: {
+          bookmakerSlug: Joi.string().required()
+            .trim()
+            .lowercase(),
+        },
+        failAction(request, reply, source, error) {
+          let joiError : any = refactJoiError(error);
 
-  //         let {
-  //           data: {
-  //             details,
-  //           },
-  //         } = error;
+          let {
+            data: {
+              details,
+            },
+          } = error;
 
-  //         details = details[0];
+          details = details[0];
 
-  //         const {
-  //           message,
-  //           type,
-  //           path,
-  //         } = details;
+          const {
+            message,
+            type,
+            path,
+          } = details;
 
-  //         const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
 
-  //         switch (type) {
-  //         case 'any.required':
-  //           joiError = joiError(`${pathCapitalized}Required`, message);
-  //           break;
-  //         default:
-  //           joiError = joiError('UndefinedError', 'Undefined error', 400);
-  //         }
-  //         return reply(joiError).code(joiError.statusCode);
-  //       },
-  //     },
-  //   },
-  // },
+          switch (type) {
+            case 'any.required':
+              joiError = joiError(`${pathCapitalized}Required`, message);
+              break;
+            default:
+              joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
+      },
+    },
+  },
   // {
   //   path: '/v1/bookmakers/{bookmakerslug}/reviews',
   //   method: 'GET',
