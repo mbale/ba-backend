@@ -5,12 +5,7 @@ import { badImplementation } from 'boom';
 import { ObjectID, getConnection } from 'typeorm';
 import BookmakerReview from '../entity/bookmaker-reviews';
 
-interface ReviewsMeta {
-  avg : number;
-  items : BookmakerReview[];
-}
-
-interface Bookmaker {
+interface BookmakerResponse {
   name : string;
   slug : string;
   logo : string;
@@ -18,10 +13,22 @@ interface Bookmaker {
   themeColor : string;
   restrictedCountries : string[];
   depositMethods : string[];
-  reviews : ReviewsMeta;
+  reviews : {
+    avg : number;
+    items : object[],
+  };
 }
 
 class BookmakerController {
+  /**
+   * List all bookmakers
+   * 
+   * @static
+   * @param {Request} request 
+   * @param {ReplyNoContinue} reply 
+   * @returns {Promise<Response>} 
+   * @memberof BookmakerController
+   */
   static async getBookmakers(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const limit = request.query.limit;
@@ -39,7 +46,7 @@ class BookmakerController {
         content_type: 'sportsbook',
       });
 
-      const bookmakers : Bookmaker[] = [];
+      const bookmakers : BookmakerResponse[] = [];
 
       for (const item of items) {
         const bookmakerId = item.sys.id;
@@ -59,7 +66,23 @@ class BookmakerController {
           avg = sum;
         }
 
-        const bookmaker : Bookmaker = {
+        const reviewsResponse = [];
+
+        const reviewResponse = {
+          avg,
+          items: reviewsResponse,
+        };
+
+        for (const review of reviews) {
+          const user = await userRepository.findOneById(review.userId);
+          reviewResponse.items.push({
+            rate: review.rate,
+            text: review.text,
+            user: user.getProfile(),
+          });
+        }
+
+        const bookmaker : BookmakerResponse = {
           name: item.fields.name,
           slug: item.fields.slug,
           logo: item.fields.logo.fields.file.url,
@@ -67,10 +90,7 @@ class BookmakerController {
           themeColor: item.fields.themeColor,
           depositMethods: item.fields.depositMethods.map(x => x.fields.slug),
           restrictedCountries: item.fields.restrictedCountries,
-          reviews: {
-            avg,
-            items: reviews,
-          },
+          reviews: reviewResponse,
         };
 
         bookmakers.push(bookmaker);
