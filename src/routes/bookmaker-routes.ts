@@ -90,110 +90,67 @@ const bookmakersRoutes : RouteConfiguration[] = [
       },
     },
   },
-  // {
-  //   path: '/v1/bookmakers/{bookmakerslug}/reviews',
-  //   method: 'GET',
-  //   handler: BookmakersController.getReviews,
-  //   config: {
-  //     auth: false,
-  //     validate: {
-  //       params: {
-  //         bookmakerslug: joi.string().required()
-  //           .lowercase()
-  //           .trim(),
-  //       },
-  //       failAction(request, reply, source, error) {
-  //         let joiError = Utils.refactJoiError(error);
+  {
+    path: '/v1/bookmakers/{bookmakerSlug}/reviews',
+    method: 'POST',
+    handler: BookmakersController.createReview,
+    config: {
+      validate: {
+        params: {
+          bookmakerSlug: Joi.string().required()
+            .lowercase()
+            .trim(),
+        },
+        payload: Joi.object().keys({
+          rate: Joi.number().required()
+            .min(0)
+            .max(5),
+          text: Joi.string().optional()
+            .max(3000),
+        }),
+        failAction(request, reply, source, error) {
+          let joiError : any = refactJoiError(error);
 
-  //         let {
-  //           data: {
-  //             details,
-  //           },
-  //         } = error;
+          let {
+            data: {
+              details,
+            },
+          } = error;
 
-  //         details = details[0];
+          details = details[0];
 
-  //         const {
-  //           message,
-  //           type,
-  //           path,
-  //         } = details;
+          const {
+            message,
+            type,
+            path,
+          } = details;
 
-  //         const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
 
-  //         switch (type) {
-  //         case 'any.required':
-  //           joiError = joiError(`${pathCapitalized}Required`, message);
-  //           break;
-  //         default:
-  //           joiError = joiError('UndefinedError', 'Undefined error', 400);
-  //         }
-  //         return reply(joiError).code(joiError.statusCode);
-  //       },
-  //     },
-  //   },
-  // },
-  // {
-  //   path: '/v1/bookmakers/{bookmakerslug}/reviews',
-  //   method: 'POST',
-  //   handler: BookmakersController.addReview,
-  //   config: {
-  //     validate: {
-  //       params: {
-  //         bookmakerslug: joi.string().required()
-  //           .lowercase()
-  //           .trim(),
-  //       },
-  //       payload: joi.object().keys({
-  //         rate: joi.number().required()
-  //           .min(0)
-  //           .max(5),
-  //         text: joi.string().optional()
-  //           .max(3000),
-  //       }),
-  //       failAction(request, reply, source, error) {
-  //         let joiError = Utils.refactJoiError(error);
-
-  //         let {
-  //           data: {
-  //             details,
-  //           },
-  //         } = error;
-
-  //         details = details[0];
-
-  //         const {
-  //           message,
-  //           type,
-  //           path,
-  //         } = details;
-
-  //         const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
-
-  //         switch (type) {
-  //         case 'any.required':
-  //           joiError = joiError(`${pathCapitalized}Required`, message);
-  //           break;
-  //         case 'number.base':
-  //           joiError = joiError(`${pathCapitalized}Invalid`, message);
-  //           break;
-  //         case 'number.min':
-  //           joiError = joiError(`${pathCapitalized}Min`, message);
-  //           break;
-  //         case 'number.max':
-  //           joiError = joiError(`${pathCapitalized}Max`, message);
-  //           break;
-  //         case 'string.max':
-  //           joiError = joiError(`${pathCapitalized}Max`, message);
-  //           break;
-  //         default:
-  //           joiError = joiError('UndefinedError', 'Undefined error', 400);
-  //         }
-  //         return reply(joiError).code(joiError.statusCode);
-  //       },
-  //     },
-  //   },
-  // },
+          switch (type) {
+            case 'any.required':
+              joiError = joiError(`${pathCapitalized}Required`, message);
+              break;
+            case 'number.base':
+              joiError = joiError(`${pathCapitalized}Invalid`, message);
+              break;
+            case 'number.min':
+              joiError = joiError(`${pathCapitalized}Min`, message);
+              break;
+            case 'number.max':
+              joiError = joiError(`${pathCapitalized}Max`, message);
+              break;
+            case 'string.max':
+              joiError = joiError(`${pathCapitalized}Max`, message);
+              break;
+            default:
+              joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
+      },
+    },
+  },
 ];
 
 export default bookmakersRoutes;

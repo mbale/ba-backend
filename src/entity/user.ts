@@ -96,9 +96,6 @@ class User {
   email : string = '';
 
   @Column()
-  reviews : ObjectID[] = [];
-
-  @Column()
   steamProvider : object | SteamProvider = {};
 
   @Column()

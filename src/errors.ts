@@ -69,7 +69,7 @@ export class EntityTakenError extends ExtendoError {
    * @memberof EntityTakenError
    */
   constructor(entityName : string, prop : string, value : string) {
-    super(`${entityName}'s already taken with "${prop}" ${value}`);
+    super(`We already have ${entityName}'s with "${prop}" ${value}`);
     this.entity = entityName;
     this.prop = prop;
     this.value = value;

@@ -1,11 +1,10 @@
 import User from '../entity/user';
 import { getContentfulClient } from '../utils';
 import { Request, ReplyNoContinue, Response } from 'hapi';
-import { badImplementation } from 'boom';
-import { badImplementation, notFound } from 'boom';
+import { badImplementation, notFound, conflict } from 'boom';
 import { ObjectID, getConnection } from 'typeorm';
 import BookmakerReview from '../entity/bookmaker-reviews';
-import { EntityNotFoundError } from '../errors';
+import { EntityNotFoundError, EntityTakenError } from '../errors';
 import { Entry } from 'contentful';
 import { MongoRepository } from 'typeorm/repository/MongoRepository';
 
@@ -83,6 +82,7 @@ async function aggregateBookmakers(
     };
 
     for (const review of reviewsOfBookmaker) {
+      console.log(review.userId);
       const user = await userRepository.findOneById(review.userId);
       reviewResponse.items.push({
         rate: review.rate,
@@ -204,271 +204,70 @@ class BookmakerController {
       return reply(badImplementation(error));
     }
   }
+
+  static async createReview(request : Request, reply : ReplyNoContinue) : Promise<Response> {
+    try {
+      const bookmakerSlug = request.params.bookmakerSlug;
+      const {
+        rate,
+        text,
+      } = request.payload;
+      const user : User = request.auth.credentials.user;
+
+      const client = await getContentfulClient();
+      const bookmakerReviewRepository = getConnection()
+        .getMongoRepository<BookmakerReview>(BookmakerReview);
+      const userRepository = getConnection().getMongoRepository<User>(User);
+
+      const {
+        items,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        'fields.slug': bookmakerSlug,
+      });
+      
+      // correct bookmakerId?
+      if (items.length === 0) {
+        throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
+      }
+
+      const bookmakerId = items[0].sys.id;
+
+      // user already has review for bookmaker?
+      let review = await bookmakerReviewRepository.findOne({
+        bookmakerId,
+        userId: user._id,
+      });
+
+      if (review) {
+        throw new EntityTakenError('BookmakerReview', 'userId', user._id.toString());
+      }
+
+      review = new BookmakerReview();
+
+      review.bookmakerId = bookmakerId;
+      review.userId = user._id;
+      review.rate = rate;
+      review.text = text;
+
+      await bookmakerReviewRepository.save(review);
+      
+      return reply();
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply(notFound(error.message));
+      }
+      if (error instanceof EntityTakenError) {
+        return reply(conflict(error.message));
+      }
+      return reply(badImplementation(error));
+    }
+  }
 }
 
 export default BookmakerController;
 
 // export default {
-
-
-//   async getBookmakerBySlug(request, reply) {
-//     try {
-//       const {
-//         params: {
-//           bookmakerslug: bookmakerSlug,
-//         },
-//       } = request;
-
-
-//       const client = await Utils.getContentfulClient();
-
-//       const {
-//         items: bookmakers,
-//       } = await client.getEntries({
-//         content_type: 'sportsbook',
-//         'fields.slug': bookmakerSlug,
-//       });
-
-//       // check if we have results
-//       if (bookmakers.length === 0) {
-//         throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
-//       }
-
-//       let bookmaker = bookmakers[0];
-
-//       const {
-//         sys: {
-//           id: bookmakerId,
-//         },
-//       } = bookmaker;
-
-//       const reviews = await Review.find({
-//         bookmakerId,
-//       });
-
-//       let sum = 0;
-//       const reviewsBuffer = [];
-
-//       for (const review of reviews) { // eslint-disable-line
-//         const {
-//           rate,
-//           text,
-//           _createdAt: createdAt,
-//         } = await review.get(); // eslint-disable-line
-
-//         let userId = await review.get('userId'); // eslint-disable-line
-//         userId = new ObjectId(userId);
-
-//         const user = await User.findById(userId); // eslint-disable-line
-
-//         const profile = await user.getProfile(); // eslint-disable-line
-
-//         // we store it as int but we can't be sure enough
-//         sum += parseInt(rate, 10);
-
-//         reviewsBuffer.push({
-//           user: profile,
-//           rate,
-//           text,
-//           createdAt,
-//         });
-//       }
-
-//       let avg = null;
-
-//       // it can be null if we do not have reviews
-//       if (reviewsBuffer.length > 0) {
-//         avg = sum / reviewsBuffer.length;
-//       } else {
-//         avg = sum;
-//       }
-
-//       // we strip out meta data
-//       bookmaker = bookmaker.fields;
-//       const { bonus } = bookmaker;
-//       const bonusArray = [];
-//       // few case it's undefined
-//       if (bonus && bonus instanceof Array) {
-//         bonus.forEach((bonus) => {
-//           bonusArray.push(bonus.fields);
-//         });
-//       }
-
-//       const bm = {};
-
-//       // yeah, there's no setter on obj
-//       // so we redef props
-//       // note: defsetter's not the best way
-//       Object.defineProperties(bm, {
-//         name: {
-//           value: bookmaker.name,
-//           enumerable: true,
-//         },
-//         slug: {
-//           value: bookmaker.slug,
-//           enumerable: true,
-//         },
-//         logo: {
-//           value: bookmaker.logo.fields.file.url,
-//           enumerable: true,
-//         },
-//         restrictedCountries: {
-//           value: bookmaker.restrictedCountries,
-//           enumerable: true,
-//         },
-//         description: {
-//           value: bookmaker.description,
-//           enumerable: true,
-//         },
-//         themeColor: {
-//           value: bookmaker.themeColor,
-//           enumerable: true,
-//         },
-//         esportsExclusive: {
-//           value: bookmaker.esportsExclusive,
-//           enumerable: true,
-//         },
-//         url: {
-//           value: bookmaker.url,
-//           enumerable: true,
-//         },
-//         headquarters: {
-//           value: bookmaker.headquarters,
-//           enumerable: true,
-//         },
-//         founded: {
-//           value: bookmaker.founded,
-//           enumerable: true,
-//         },
-//         licenses: {
-//           value: bookmaker.licenses,
-//           enumerable: true,
-//         },
-//         depositMethods: {
-//           value: bookmaker.depositMethods,
-//           enumerable: true,
-//         },
-//         supportEmail: {
-//           value: bookmaker.supportEmail,
-//           enumerable: true,
-//         },
-//         liveSupport: {
-//           value: bookmaker.liveSupport,
-//           enumerable: true,
-//         },
-//         exclusive: {
-//           value: bookmaker.exclusive,
-//           enumerable: true,
-//         },
-//         icon: {
-//           value: bookmaker.icon.fields.file.url,
-//           enumerable: true,
-//         },
-//         bonuses: {
-//           value: bonusArray,
-//           enumerable: true,
-//         },
-//         reviews: {
-//           value: {
-//             avg,
-//             items: reviewsBuffer,
-//           },
-//           enumerable: true,
-//         },
-//       });
-
-//       return reply(bm);
-//     } catch (error) {
-//       if (error instanceof EntityNotFoundError) {
-//         return reply.notFound(error.message);
-//       }
-//       return reply.badImplementation(error);
-//     }
-//   },
-
-//   async getReviews(request, reply) {
-//     try {
-//       const {
-//         params: {
-//           bookmakerslug: bookmakerSlug,
-//         },
-//       } = request;
-
-//       const client = await Utils.getContentfulClient();
-
-//       // get bookmaker
-//       const {
-//         items: bookmakerCollection,
-//       } = await client.getEntries({
-//         content_type: 'sportsbook',
-//         'fields.slug': bookmakerSlug, // by slug
-//       });
-
-//       // check if we've results
-//       if (bookmakerCollection.length === 0) {
-//         throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
-//       }
-
-//       const {
-//         sys: {
-//           id: bookmakerId,
-//         },
-//       } = bookmakerCollection[0];
-
-//       const reviews = await Review.find({
-//         bookmakerId,
-//       });
-
-//       let sum = 0;
-//       const reviewsBuffer = [];
-
-//       for (const review of reviews) { // eslint-disable-line
-//         const {
-//           _id: id,
-//           rate,
-//           text,
-//           _created_at: createdAt,
-//         } = await review.get(); // eslint-disable-line
-
-//         let userId = await review.get('userId'); // eslint-disable-line
-//         userId = new ObjectId(userId);
-
-//         const user = await User.findById(userId); // eslint-disable-line
-
-//         const profile = await user.getProfile(); // eslint-disable-line
-
-//         // we store it as int but we can't be sure enough
-//         sum += parseInt(rate, 10);
-//         reviewsBuffer.push({
-//           id,
-//           user: profile,
-//           rate,
-//           text,
-//           createdAt,
-//         });
-//       }
-
-//       let avg = null;
-
-//       // it can be null if we do not have reviews
-//       if (reviewsBuffer.length > 0) {
-//         avg = sum / reviewsBuffer.length;
-//       } else {
-//         avg = sum;
-//       }
-
-//       // reply automaps entities in array to JSON
-//       return reply({
-//         avg,
-//         items: reviewsBuffer,
-//       });
-//     } catch (error) {
-//       if (error instanceof EntityNotFoundError) {
-//         return reply.notFound(error.message);
-//       }
-//       return reply.badImplementation(error);
-//     }
-//   },
 
 //   async addReview(request, reply) {
 //     try {
