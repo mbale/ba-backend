@@ -4,13 +4,115 @@ import { Request, ReplyNoContinue, Response } from 'hapi';
 import { badImplementation } from 'boom';
 import { ObjectID, getConnection } from 'typeorm';
 import BookmakerReview from '../entity/bookmaker-reviews';
+import { EntityNotFoundError } from '../errors';
+import { Entry } from 'contentful';
+import { MongoRepository } from 'typeorm/repository/MongoRepository';
+
+/**
+ * Serialize JSON of bookmaker from contentful to object
+ * 
+ * @param {Entry<any>} contentfulItem 
+ * @returns {BookmakerResponse} 
+ */
+function serializeBookmakerResponse(contentfulItem : Entry<any>) : BookmakerResponse {
+  return {
+    name: contentfulItem.fields.name,
+    slug: contentfulItem.fields.slug,
+    logo: contentfulItem.fields.logo.fields.file.url,
+    icon: contentfulItem.fields.icon.fields.file.url,
+    url: contentfulItem.fields.url,
+    affiliateUrl: contentfulItem.fields.affiliateUrl,
+    description: contentfulItem.fields.description,
+    founded: contentfulItem.fields.founded,
+    headquarters: contentfulItem.fields.headquarters,
+    licenses: contentfulItem.fields.licenses[0],
+    exclusive: contentfulItem.fields.exclusive,
+    supportEmail: contentfulItem.fields.supportEmail,
+    themeColor: contentfulItem.fields.themeColor,
+    depositMethods: contentfulItem.fields.depositMethods.map(x => x.fields.slug),
+    restrictedCountries: contentfulItem.fields.restrictedCountries,
+    reviews: {
+      avg: 0,
+      items: [],
+    },
+  };
+}
+
+/**
+ * Aggregate bookmakers from contentful
+ * 
+ * @param {MongoRepository<BookmakerReview>} bookmakerReviewsRepository 
+ * @param {MongoRepository<User>} userRepository 
+ * @param {Entry<any>[]} items 
+ * @returns {Promise<BookmakerResponse[]>} 
+ */
+async function aggregateBookmakers(
+  bookmakerReviewsRepository : MongoRepository<BookmakerReview>,
+  userRepository : MongoRepository<User>,  
+  items : Entry<any>[]) 
+  : Promise<BookmakerResponse[]> {
+  const bookmakers : BookmakerResponse[] = [];
+
+  for (const item of items) {
+    const bookmakerId = item.sys.id;
+    const reviewsOfBookmaker : BookmakerReview[] = await bookmakerReviewsRepository.find({
+      bookmakerId,
+    });
+
+    // return all rate into single array
+    const rates = reviewsOfBookmaker.map(review => review.rate);
+
+    let avg = null;
+    // sum all of them
+    const sum = rates.reduce((sum, rate) => sum += rate, 0); // can be empty initial walue = 0
+    
+    // it can be empty
+    if (reviewsOfBookmaker.length > 0) {
+      avg = sum / reviewsOfBookmaker.length;
+    } else {
+      avg = sum;
+    }
+
+    const reviews = [];
+
+    // partial object construction
+    const reviewResponse = {
+      avg,
+      items: reviews,
+    };
+
+    for (const review of reviewsOfBookmaker) {
+      const user = await userRepository.findOneById(review.userId);
+      reviewResponse.items.push({
+        rate: review.rate,
+        text: review.text,
+        user: user.getProfile(),
+      });
+    }
+
+    const bookmaker : BookmakerResponse = serializeBookmakerResponse(item);
+    
+    bookmaker.reviews = reviewResponse,
+
+    bookmakers.push(bookmaker);
+  }
+  return bookmakers;
+}
 
 interface BookmakerResponse {
   name : string;
   slug : string;
   logo : string;
   icon : string;
+  url : string;
+  affiliateUrl : string;
+  description : string;
+  founded : Date;
+  headquarters : string;
+  licenses : string;
+  exclusive : boolean;
   themeColor : string;
+  supportEmail : string;
   restrictedCountries : string[];
   depositMethods : string[];
   reviews : {
@@ -46,57 +148,54 @@ class BookmakerController {
         content_type: 'sportsbook',
       });
 
-      const bookmakers : BookmakerResponse[] = [];
-
-      for (const item of items) {
-        const bookmakerId = item.sys.id;
-        const reviews : BookmakerReview[] = await bookmakerReviewsRepository.find({
-          bookmakerId,
-        });
-
-        const rates = reviews.map(review => review.rate);
-
-        let avg = null;
-        const sum = rates.reduce((sum, rate) => sum += rate, 0); // can be empty initial walue = 0
-        
-        // it can be empty
-        if (reviews.length > 0) {
-          avg = sum / reviews.length;
-        } else {
-          avg = sum;
-        }
-
-        const reviewsResponse = [];
-
-        const reviewResponse = {
-          avg,
-          items: reviewsResponse,
-        };
-
-        for (const review of reviews) {
-          const user = await userRepository.findOneById(review.userId);
-          reviewResponse.items.push({
-            rate: review.rate,
-            text: review.text,
-            user: user.getProfile(),
-          });
-        }
-
-        const bookmaker : BookmakerResponse = {
-          name: item.fields.name,
-          slug: item.fields.slug,
-          logo: item.fields.logo.fields.file.url,
-          icon: item.fields.icon.fields.file.url,
-          themeColor: item.fields.themeColor,
-          depositMethods: item.fields.depositMethods.map(x => x.fields.slug),
-          restrictedCountries: item.fields.restrictedCountries,
-          reviews: reviewResponse,
-        };
-
-        bookmakers.push(bookmaker);
-      }
+      const bookmakers = await aggregateBookmakers(
+        bookmakerReviewsRepository, 
+        userRepository, 
+        items,
+      );
   
       return reply(bookmakers);
+    } catch (error) {
+      return reply(badImplementation(error));
+    }
+  }
+
+  /**
+   * Get a bookmaker by slug (from contentful)
+   * 
+   * @static
+   * @param {Request} request 
+   * @param {ReplyNoContinue} reply 
+   * @returns {Promise<Response>} 
+   * @memberof BookmakerController
+   */
+  static async getBookmakerBySlug(request : Request, reply : ReplyNoContinue) : Promise<Response> {
+    try {
+      const bookmakerSlug = request.params.bookmakerSlug;
+      const bookmakerReviewRepository = getConnection()
+        .getMongoRepository<BookmakerReview>(BookmakerReview);
+      const userRepository = getConnection().getMongoRepository<User>(User);
+      
+      const client = await getContentfulClient();
+
+      const {
+        items,
+      } = await client.getEntries({
+        content_type: 'sportsbook',
+        'fields.slug': bookmakerSlug,
+      });
+
+      if (items.length === 0) {
+        throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
+      }
+
+      const bookmakers = await aggregateBookmakers(
+        bookmakerReviewRepository, 
+        userRepository, 
+        items,
+      );
+
+      return reply(bookmakers[0]);
     } catch (error) {
       return reply(badImplementation(error));
     }
@@ -106,132 +205,7 @@ class BookmakerController {
 export default BookmakerController;
 
 // export default {
-//   async getBookmakers(request, reply) {
-//     try {
-//       const {
-//         query: {
-//           limit,
-//         },
-//       } = request;
 
-//       const client = await Utils.getContentfulClient();
-
-//       const {
-//         items: bookmakerCollection,
-//       } = await client.getEntries({
-//         content_type: 'sportsbook',
-//         limit,
-//       });
-
-//       const bookmakersBuffer = [];
-
-//       for (let [index, bookmaker] of Object.entries(bookmakerCollection)) { // eslint-disable-line
-//         // parse data we need
-//         const {
-//           fields: {
-//             name,
-//             slug,
-//             logo,
-//             icon,
-//             themeColor,
-//             depositMethods,
-//             restrictedCountries,
-//           },
-//           sys: {
-//             id: bookmakerId,
-//           },
-//         } = bookmaker;
-
-//         // get reviews
-//         const reviews = await Review.find({ // eslint-disable-line
-//           bookmakerId,
-//         });
-
-//         const reviewsBuffer = [];
-
-//         let sum = 0;
-
-//         for (const review of reviews) { // eslint-disable-line
-//           const {
-//             rate,
-//             text,
-//             _createdAt: createdAt,
-//           } = await review.get(); // eslint-disable-line
-
-//           let userId = await review.get('userId'); // eslint-disable-line
-//           userId = new ObjectId(userId);
-
-//           const user = await User.findById(userId); // eslint-disable-line
-
-//           const profile = await user.getProfile(); // eslint-disable-line
-
-//           sum += parseInt(rate, 10);
-
-//           reviewsBuffer.push({
-//             user: profile,
-//             rate,
-//             text,
-//             createdAt,
-//           });
-//         }
-
-//         let avg = null;
-
-//         // it can be null if we do not have reviews
-//         if (reviewsBuffer.length > 0) {
-//           avg = sum / reviewsBuffer.length;
-//         } else {
-//           avg = sum;
-//         }
-
-//         const bm = {};
-
-//         Object.defineProperties(bm, {
-//           name: {
-//             value: name,
-//             enumerable: true,
-//           },
-//           slug: {
-//             value: slug,
-//             enumerable: true,
-//           },
-//           logo: {
-//             value: logo.fields.file.url,
-//             enumerable: true,
-//           },
-//           icon: {
-//             value: icon.fields.file.url,
-//             enumerable: true,
-//           },
-//           themeColor: {
-//             value: themeColor,
-//             enumerable: true,
-//           },
-//           restrictedCountries: {
-//             value: restrictedCountries,
-//             enumerable: true,
-//           },
-//           depositMethods: {
-//             value: depositMethods,
-//             enumerable: true,
-//           },
-//           reviews: {
-//             value: {
-//               avg,
-//               items: reviewsBuffer,
-//             },
-//             enumerable: true,
-//           },
-//         });
-
-//         bookmakersBuffer.push(bm);
-//       }
-
-//       return reply(bookmakersBuffer);
-//     } catch (error) {
-//       return reply.badImplementation(error);
-//     }
-//   },
 
 //   async getBookmakerBySlug(request, reply) {
 //     try {
