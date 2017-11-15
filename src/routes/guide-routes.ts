@@ -20,7 +20,7 @@ const GuideRoutes : RouteConfiguration[] = [
       auth: false,
       validate: {
         params: {
-          gameSlug: Joi.string().required()
+          guideSlug: Joi.string().required()
             .trim()
             .lowercase(),
         },
