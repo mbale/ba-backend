@@ -1,12 +1,12 @@
-import User from '../entity/user';
-import { getContentfulClient } from '../utils';
 import { Request, ReplyNoContinue, Response } from 'hapi';
 import { badImplementation, notFound, conflict } from 'boom';
 import { ObjectID, getConnection } from 'typeorm';
-import BookmakerReview from '../entity/bookmaker-reviews';
-import { EntityNotFoundError, EntityTakenError } from '../errors';
 import { Entry } from 'contentful';
 import { MongoRepository } from 'typeorm/repository/MongoRepository';
+import User from '../entity/user';
+import { getContentfulClient } from '../utils';
+import BookmakerReview from '../entity/bookmaker-reviews';
+import { EntityNotFoundError, EntityTakenError } from '../errors';
 
 /**
  * Serialize JSON of bookmaker from contentful to object
@@ -99,6 +99,11 @@ async function aggregateBookmakers(
   return bookmakers;
 }
 
+/**
+ * Interface for bookmaker from contentful
+ * 
+ * @interface BookmakerResponse
+ */
 interface BookmakerResponse {
   name : string;
   slug : string;
@@ -204,6 +209,15 @@ class BookmakerController {
     }
   }
 
+  /**
+   * Create review for a bookmaker
+   * 
+   * @static
+   * @param {Request} request 
+   * @param {ReplyNoContinue} reply 
+   * @returns {Promise<Response>} 
+   * @memberof BookmakerController
+   */
   static async createReview(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const bookmakerSlug = request.params.bookmakerSlug;
@@ -265,85 +279,3 @@ class BookmakerController {
 }
 
 export default BookmakerController;
-
-// export default {
-
-//   async addReview(request, reply) {
-//     try {
-//       const {
-//         auth: {
-//           credentials: {
-//             user,
-//           },
-//         },
-//         params: {
-//           bookmakerslug: bookmakerSlug,
-//         },
-//         query: {
-//           limit,
-//         },
-//         payload: {
-//           rate,
-//           text,
-//         },
-//       } = request;
-
-//       let userId = await user.get('_id');
-//       userId = new ObjectId(userId);
-
-//       const client = await Utils.getContentfulClient();
-
-//       // first we find for bookmaker
-//       const {
-//         items: bookmakerCollection,
-//       } = await client.getEntries({
-//         content_type: 'sportsbook',
-//         'fields.slug': bookmakerSlug,
-//         limit,
-//       });
-
-//       const {
-//         sys: {
-//           id: bookmakerId,
-//         },
-//       } = bookmakerCollection[0];
-
-//       // check if we've results
-//       if (bookmakerCollection.length === 0) {
-//         throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
-//       }
-
-//       // we allow one review per bookmaker so find
-//       let review = await Review.findOne({
-//         userId,
-//         bookmakerId,
-//       });
-
-//       // if we already have such review
-//       if (review) {
-//         throw new EntityTakenError('Review', 'userid', userId);
-//       }
-
-//       review = new Review({
-//         userId,
-//         bookmakerId,
-//         rate,
-//         text,
-//       });
-
-//       const {
-//         id: reviewId, // get saved review from collection
-//       } = await review.save();
-//       // save on user too
-//       await user.addReviewById(reviewId);
-//       return reply();
-//     } catch (error) {
-//       if (error instanceof EntityNotFoundError) {
-//         return reply.notFound(error.message);
-//       } else if (error instanceof EntityTakenError) {
-//         return reply.conflict(error.message);
-//       }
-//       return reply.badImplementation(error);
-//     }
-//   },
-// };
