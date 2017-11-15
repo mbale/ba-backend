@@ -5,15 +5,6 @@ import { Entry } from 'contentful';
 import { EntityNotFoundError } from '../errors';
 
 /**
- * Interface for guide in contentful
- * 
- * @interface GuideResponse
- */
-interface GuideResponse {
-
-}
-
-/**
  * Interface for game in contentful
  * 
  * @interface GameResponse
