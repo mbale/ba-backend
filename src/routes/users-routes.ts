@@ -117,9 +117,8 @@ const UsersRoutes : RouteConfiguration[] = [
             .string().required()
             .regex(/^[a-zA-Z0-9_]+$/)
             .lowercase()
-            .min(2)
-            .max(32)
-            .disallow(['me']),
+            .min(4)
+            .max(32),
           password: Joi
             .string().required()
             .min(6).max(16),
@@ -153,9 +152,6 @@ const UsersRoutes : RouteConfiguration[] = [
               break;
             case 'any.empty':
               JoiError = JoiError(`${pathCapitalized}Empty`, message);
-              break;
-            case 'any.invalid':
-              JoiError = JoiError(`${pathCapitalized}Invalid`, message);
               break;
             case 'string.min':
               JoiError = JoiError(`${pathCapitalized}Min`, message);

@@ -82,7 +82,6 @@ async function aggregateBookmakers(
     };
 
     for (const review of reviewsOfBookmaker) {
-      console.log(review.userId);
       const user = await userRepository.findOneById(review.userId);
       reviewResponse.items.push({
         rate: review.rate,
