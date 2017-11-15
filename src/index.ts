@@ -3,10 +3,8 @@ import Prediction from './entity/prediction';
 import 'reflect-metadata';
 import * as Hapi from 'hapi';
 import * as Boom from 'boom';
-import * as Inert from 'inert';
 import * as Blipp from 'blipp';
 import * as Good from 'good';
-import * as HapiBoomDecorators from 'hapi-boom-decorators';
 import * as authJwt from 'hapi-auth-jwt2';
 import * as Henning from 'henning';
 import {
@@ -132,13 +130,6 @@ server.register({
   }
 });
 
-// boom decorator
-server.register({ register: HapiBoomDecorators }, (error) => { 
-  if (error) {
-    throw error;
-  }
-});
-
 // logger
 server.register({ register: Good, options: goodReporterOptions }, (error) => {
   if (error) {
@@ -148,13 +139,6 @@ server.register({ register: Good, options: goodReporterOptions }, (error) => {
 
 // show route table at startup
 server.register(Blipp, (error) => {
-  if (error) {
-    throw error;
-  }
-});
-
-// static file / directory handler
-server.register(Inert, (error) => {
   if (error) {
     throw error;
   }

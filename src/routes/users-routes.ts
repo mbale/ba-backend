@@ -1,10 +1,8 @@
 import * as Joi from 'joi';
-import JoiObjectId from 'joi-objectid';
 import { RouteConfiguration } from 'hapi';
 import { refactJoiError } from '../utils';
 import UsersController from '../controllers/users-controller';
 import countryList from 'country-list';
-// Joi.objectId = JoiObjectId(Joi);
 
 const UsersRoutes : RouteConfiguration[] = [
   {
