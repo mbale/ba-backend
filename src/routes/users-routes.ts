@@ -1,4 +1,4 @@
-import * as Joi from 'Joi';
+import * as Joi from 'joi';
 import JoiObjectId from 'Joi-objectid';
 import { RouteConfiguration } from 'hapi';
 import { refactJoiError } from '../utils';
