@@ -10,11 +10,19 @@ import { EntityNotFoundError, EntityTakenError } from '../errors';
 
 /**
  * Serialize JSON of bookmaker from contentful to object
- * 
- * @param {Entry<any>} contentfulItem 
- * @returns {BookmakerResponse} 
+ *
+ * @param {Entry<any>} contentfulItem
+ * @returns {BookmakerResponse}
  */
 function serializeBookmakerResponse(contentfulItem : Entry<any>) : BookmakerResponse {
+  let { bonus } = contentfulItem.fields
+  const bonusArray = []
+  if (bonus && bonus instanceof Array) {
+    bonus.forEach((bonus) => {
+      bonusArray.push(bonus.fields)
+    })
+  }
+
   return {
     name: contentfulItem.fields.name,
     slug: contentfulItem.fields.slug,
@@ -25,12 +33,13 @@ function serializeBookmakerResponse(contentfulItem : Entry<any>) : BookmakerResp
     description: contentfulItem.fields.description,
     founded: contentfulItem.fields.founded,
     headquarters: contentfulItem.fields.headquarters,
-    licenses: contentfulItem.fields.licenses[0],
+    licenses: contentfulItem.fields.licenses,
     exclusive: contentfulItem.fields.exclusive,
     supportEmail: contentfulItem.fields.supportEmail,
     themeColor: contentfulItem.fields.themeColor,
-    depositMethods: contentfulItem.fields.depositMethods.map(x => x.fields.slug),
+    depositMethods: contentfulItem.fields.depositMethods.map(x => x.fields),
     restrictedCountries: contentfulItem.fields.restrictedCountries,
+    bonuses: bonusArray,
     reviews: {
       avg: 0,
       items: [],
@@ -40,16 +49,16 @@ function serializeBookmakerResponse(contentfulItem : Entry<any>) : BookmakerResp
 
 /**
  * Aggregate bookmakers from contentful
- * 
- * @param {MongoRepository<BookmakerReview>} bookmakerReviewsRepository 
- * @param {MongoRepository<User>} userRepository 
- * @param {Entry<any>[]} items 
- * @returns {Promise<BookmakerResponse[]>} 
+ *
+ * @param {MongoRepository<BookmakerReview>} bookmakerReviewsRepository
+ * @param {MongoRepository<User>} userRepository
+ * @param {Entry<any>[]} items
+ * @returns {Promise<BookmakerResponse[]>}
  */
 async function aggregateBookmakers(
   bookmakerReviewsRepository : MongoRepository<BookmakerReview>,
-  userRepository : MongoRepository<User>,  
-  items : Entry<any>[]) 
+  userRepository : MongoRepository<User>,
+  items : Entry<any>[])
   : Promise<BookmakerResponse[]> {
   const bookmakers : BookmakerResponse[] = [];
 
@@ -65,7 +74,7 @@ async function aggregateBookmakers(
     let avg = null;
     // sum all of them
     const sum = rates.reduce((sum, rate) => sum += rate, 0); // can be empty initial walue = 0
-    
+
     // it can be empty
     if (reviewsOfBookmaker.length > 0) {
       avg = sum / reviewsOfBookmaker.length;
@@ -91,7 +100,7 @@ async function aggregateBookmakers(
     }
 
     const bookmaker : BookmakerResponse = serializeBookmakerResponse(item);
-    
+
     bookmaker.reviews = reviewResponse,
 
     bookmakers.push(bookmaker);
@@ -101,7 +110,7 @@ async function aggregateBookmakers(
 
 /**
  * Interface for bookmaker from contentful
- * 
+ *
  * @interface BookmakerResponse
  */
 interface BookmakerResponse {
@@ -120,6 +129,7 @@ interface BookmakerResponse {
   supportEmail : string;
   restrictedCountries : string[];
   depositMethods : string[];
+  bonuses : string [];
   reviews : {
     avg : number;
     items : object[],
@@ -129,17 +139,17 @@ interface BookmakerResponse {
 class BookmakerController {
   /**
    * List all bookmakers
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof BookmakerController
    */
   static async getBookmakers(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const limit = request.query.limit;
-  
+
       const bookmakerReviewsRepository = getConnection()
         .getMongoRepository<BookmakerReview>(BookmakerReview);
       const userRepository = getConnection().getMongoRepository<User>(User);
@@ -154,11 +164,11 @@ class BookmakerController {
       });
 
       const bookmakers = await aggregateBookmakers(
-        bookmakerReviewsRepository, 
-        userRepository, 
+        bookmakerReviewsRepository,
+        userRepository,
         items,
       );
-  
+
       return reply(bookmakers);
     } catch (error) {
       return reply(badImplementation(error));
@@ -167,11 +177,11 @@ class BookmakerController {
 
   /**
    * Get a bookmaker by slug (from contentful)
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof BookmakerController
    */
   static async getBookmakerBySlug(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -180,7 +190,7 @@ class BookmakerController {
       const bookmakerReviewRepository = getConnection()
         .getMongoRepository<BookmakerReview>(BookmakerReview);
       const userRepository = getConnection().getMongoRepository<User>(User);
-      
+
       const client = await getContentfulClient();
 
       const {
@@ -195,8 +205,8 @@ class BookmakerController {
       }
 
       const bookmakers = await aggregateBookmakers(
-        bookmakerReviewRepository, 
-        userRepository, 
+        bookmakerReviewRepository,
+        userRepository,
         items,
       );
 
@@ -211,11 +221,11 @@ class BookmakerController {
 
   /**
    * Create review for a bookmaker
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof BookmakerController
    */
   static async createReview(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -238,7 +248,7 @@ class BookmakerController {
         content_type: 'sportsbook',
         'fields.slug': bookmakerSlug,
       });
-      
+
       // correct bookmakerId?
       if (items.length === 0) {
         throw new EntityNotFoundError('Bookmaker', 'slug', bookmakerSlug);
@@ -264,7 +274,7 @@ class BookmakerController {
       review.text = text;
 
       await bookmakerReviewRepository.save(review);
-      
+
       return reply();
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
