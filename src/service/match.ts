@@ -12,19 +12,22 @@ import { Match } from '../../../ba_matchservice/src/entity/match';
  */
 class MatchService extends BaseService {
   /**
-   * Get matches by Id
+   * Get matches (or by id - optional)
    * 
    * @static
    * @param {ObjectID[]} ids 
    * @returns {Promise<any[]>} 
    * @memberof MatchService
    */
-  static async getMatchesById(ids : ObjectID[]) : Promise<Match[]> {
+  static async getMatches(ids? : ObjectID[]) : Promise<Match[]> {
     try {
+      const params : any = {};
+
+      if (ids) {
+        params.id = ids.map(id => id.toString());
+      }
       const { data } = await this.axiosInstance.get('matches', {
-        params: {
-          id: ids.map(id => id.toString()),
-        },
+        params,
       });
       return data;
     } catch (error) {

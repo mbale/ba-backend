@@ -44,7 +44,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     _id, text, matchId, comments, selectedTeam, stake, oddsId,
   } of predictionsOfUser) {
 
-    const matches = await MatchService.getMatchesById([matchId]);
+    const matches = await MatchService.getMatches([matchId]);
     const match = matches[0];
 
     let teams = [];
