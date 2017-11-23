@@ -1,4 +1,3 @@
-import Match from '../entity/match';
 import { EntityTakenError, EntityNotFoundError } from '../errors';
 import { Request, Response, ReplyNoContinue } from 'hapi';
 import User, { Profile, SteamProvider } from '../entity/user';
@@ -10,6 +9,8 @@ import TeamService from '../service/team';
 import { ObjectId } from 'bson';
 import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
+import Match from '../../../ba_matchservice/src/entity/match';
+import MatchService from '../service/match';
 
 /**
  * PredictionResponse
@@ -17,7 +18,7 @@ import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
  * @interface PredictionResponse
  */
 interface PredictionResponse {
-  _id : ObjectID;
+  id : ObjectID;
   text : string;
   match : {
     _id : ObjectID;
@@ -31,31 +32,41 @@ interface PredictionResponse {
 
 /**
  * Aggregate predictions of user into an array
- * 
- * @param {MongoRepository<Match>} matchRepository 
+ *  
  * @param {Prediction[]} predictionsOfUser 
  * @returns {Promise<PredictionResponse[]>} 
  */
-async function aggregatePredictions(
-  matchRepository : MongoRepository<Match>, predictionsOfUser : Prediction[]) 
+async function aggregatePredictions(predictionsOfUser : Prediction[]) 
   : Promise<PredictionResponse[]> {
   const predictions : PredictionResponse[] = [];
     // populate it
-  for (const { 
+  for (const {
     _id, text, matchId, comments, selectedTeam, stake, oddsId,
   } of predictionsOfUser) {
 
-    const match = await matchRepository.findOneById(matchId);
-    const teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
+    const matches = await MatchService.getMatchesById([matchId]);
+    const match = matches[0];
+
+    let teams = [];
+
+    if (matches.length > 0) {
+      teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
+    }
     
     /*
       Find out which odds he put on
     */
-    const odds = match.odds.find(o => o._id.equals(oddsId));
-    let selectedOdds = odds.home;
+  
+    let selectedOdds = 0;
 
-    if (selectedTeam === SelectedTeam.Away) {
-      selectedOdds = odds.away;
+    if (matches.length > 0) {
+      const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
+
+      selectedOdds = odds.home;
+      
+      if (selectedTeam === SelectedTeam.Away) {
+        selectedOdds = odds.away;
+      }
     }
 
     /*
@@ -71,7 +82,7 @@ async function aggregatePredictions(
     }
 
     const prediction : PredictionResponse = {
-      _id,
+      id: _id,
       text,
       stake,
       match: {
@@ -103,7 +114,6 @@ class UsersController {
       const user : User = request.auth.credentials.user;
       const connection = getConnection();
       const predictionRepository = connection.getMongoRepository<Prediction>(Prediction);
-      const matchRepository = connection.getMongoRepository<Match>(Match);
 
       const predictionsOfUser = await predictionRepository.find({
         userId : user._id,
@@ -112,7 +122,7 @@ class UsersController {
       // construct base response object
       const response = {
         profile: user.getProfile(true),
-        predictions: await aggregatePredictions(matchRepository, predictionsOfUser),
+        predictions: await aggregatePredictions(predictionsOfUser),
       };
 
       return reply(response);
@@ -327,7 +337,6 @@ class UsersController {
   static async getUserByUsername(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const userRepository = getConnection().getMongoRepository<User>(User);
-      const matchRepository = getConnection().getMongoRepository<Match>(Match);
       const predictionRepository = getConnection().getMongoRepository<Prediction>(Prediction);
   
       const username = request.params.username;
@@ -346,7 +355,7 @@ class UsersController {
 
       const response = {
         profile : user.getProfile(),
-        predictions: await aggregatePredictions(matchRepository, predictionsOfUser),
+        predictions: await aggregatePredictions(predictionsOfUser),
       };
 
       return reply(response);

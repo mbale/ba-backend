@@ -2,7 +2,6 @@ import { Request, Response, ReplyNoContinue } from 'hapi';
 import { badImplementation } from 'boom';
 import { getConnection } from 'typeorm';
 import { ObjectId } from 'bson';
-import Match from '../entity/match';
 
 interface MatchResponse {
   id : ObjectId;

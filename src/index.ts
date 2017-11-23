@@ -1,3 +1,4 @@
+import MatchService from './service/match';
 import TeamService from './service/team';
 import Prediction from './entity/prediction';
 import 'reflect-metadata';
@@ -14,7 +15,6 @@ import { ObjectID } from 'mongodb';
 import * as dotenv from 'dotenv';
 import routes from './routes';
 import User from './entity/user';
-import Match from './entity/match';
 import BookmakerReview from './entity/bookmaker-reviews';
 import { EntityNotFoundError } from './errors';
 import * as cloudinary from 'cloudinary';
@@ -27,6 +27,7 @@ import * as cloudinary from 'cloudinary';
 dotenv.config();
 
 const TEAM_SERVICE_URL = process.env.TEAM_SERVICE_URL;
+const MATCH_SERVICE_URL = process.env.MATCH_SERVICE_URL;
 const HTTP_PORT = process.env.BACKEND_HTTP_PORT;
 const SENTRY_DNS = process.env.BACKEND_SENTRY_DNS;
 const MONGODB_URL = process.env.BACKEND_MONGODB_URL;
@@ -91,7 +92,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
       type: 'mongodb',
       url: MONGODB_URL,
       logging: ['query', 'error'],
-      entities: [User, Prediction, Match, BookmakerReview],
+      entities: [User, Prediction, BookmakerReview],
     };
 
     cloudinary.config({
@@ -107,6 +108,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
     */
 
     TeamService.initialize(TEAM_SERVICE_URL);
+    MatchService.initialize(MATCH_SERVICE_URL);
 
     serverInstance.log(['info'], `DB's connected to ${connection.options.type}`);
     return next();
