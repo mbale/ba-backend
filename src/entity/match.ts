@@ -50,14 +50,14 @@ interface Odds {
   _id: ObjectID;
 }
 
-enum SourceType {
+enum MatchSourceType {
   Pinnacle = 'pinnacle',
   Oddsgg = 'oddsgg',
 }
 
-interface Source {
-  type: SourceType;
-  leagueId: number,
+interface MatchSource {
+  type: MatchSourceType;
+  leagueId: number;
   matchId: number;
   fetchedAt: Date;
 }

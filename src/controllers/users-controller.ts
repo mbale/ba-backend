@@ -4,7 +4,6 @@ import { Request, Response, ReplyNoContinue } from 'hapi';
 import User, { Profile, SteamProvider } from '../entity/user';
 import { getConnection, ObjectID, MongoRepository } from 'typeorm';
 import Prediction, { SelectedTeam } from '../entity/prediction';
-import { List } from 'immutable';
 import { badImplementation, conflict, notFound } from 'boom';
 import axios from 'axios';
 import TeamService from '../service/team';
