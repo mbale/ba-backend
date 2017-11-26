@@ -9,7 +9,7 @@ import TeamService from '../service/team';
 import { ObjectId } from 'bson';
 import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
-import Match from '../../../ba_matchservice/src/entity/match';
+
 import MatchService from '../service/match';
 
 /**

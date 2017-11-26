@@ -43,6 +43,7 @@
   "dependencies": {
     "@wegolook/joi-objectid": "^2.1.0",
     "axios": "^0.16.2",
+    "ba-common": "../ba-common",
     "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
     "chance": "^1.0.9",

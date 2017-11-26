@@ -30,6 +30,22 @@ class TeamService extends BaseService {
       return [];
     }
   }
+
+  // static async getGame(id : ObjectID[]) : Promise<Game[]> {
+  //   try {
+  //     const params : any = {};
+
+  //     if (ids) {
+  //       params.id = ids.map(id => id.toString());
+  //     }
+  //     const { data } = await this.axiosInstance.get('matches', {
+  //       params,
+  //     });
+  //     return data;
+  //   } catch (error) {
+  //     return [];
+  //   }
+  // }
 }
 
 export default TeamService;

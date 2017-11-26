@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
-import { Match } from '../../../ba_matchservice/src/entity/match';
+import { Match } from 'ba-common';
 
 /**
  * Contains all interaction to MatchService
