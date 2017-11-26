@@ -11,6 +11,7 @@ import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
 
 import MatchService from '../service/match';
+import { Team } from 'ba-common';
 
 /**
  * PredictionResponse
@@ -47,7 +48,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     const matches = await MatchService.getMatches([matchId]);
     const match = matches[0];
 
-    let teams = [];
+    let teams : Team[] = [];
 
     if (matches.length > 0) {
       teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);

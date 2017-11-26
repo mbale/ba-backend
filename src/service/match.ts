@@ -26,9 +26,11 @@ class MatchService extends BaseService {
       if (ids) {
         params.id = ids.map(id => id.toString());
       }
+
       const { data } = await this.axiosInstance.get('matches', {
         params,
       });
+  
       return data;
     } catch (error) {
       return [];

@@ -30,7 +30,6 @@ class TeamService extends BaseService {
         params,
       });
       return data;
-
     } catch (error) {
       return [];
     }
