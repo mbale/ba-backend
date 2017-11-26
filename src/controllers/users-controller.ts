@@ -50,7 +50,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     let teams = [];
 
     if (matches.length > 0) {
-      teams = await TeamService.getTeamsById([match.homeTeamId, match.awayTeamId]);
+      teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
     }
     
     /*

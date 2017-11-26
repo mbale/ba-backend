@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
+import { Team } from 'ba-common';
 
 /**
  * Contains all interaction to Teamservice
@@ -18,14 +19,18 @@ class TeamService extends BaseService {
    * @returns {Promise<any[]>} 
    * @memberof TeamService
    */
-  static async getTeamsById(ids : ObjectID[]) : Promise<any[]> {
+  static async getTeams(ids? : ObjectID[]) : Promise<Team[]> {
     try {
+      const params : any = {};
+      
+      if (ids) {
+        params.id = ids.map(id => id.toString());
+      }
       const { data } = await this.axiosInstance.get('teams', {
-        params: {
-          ids: ids.map(id => id.toString()),
-        },
+        params,
       });
       return data;
+
     } catch (error) {
       return [];
     }
