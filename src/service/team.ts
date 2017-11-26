@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
-import { Team } from 'ba-common';
+import { Team, Game } from 'ba-common';
 
 /**
  * Contains all interaction to Teamservice
@@ -12,11 +12,11 @@ import { Team } from 'ba-common';
  */
 class TeamService extends BaseService {
   /**
-   * Get teams by Id
+   * Get teams
    * 
    * @static
-   * @param {ObjectID[]} ids 
-   * @returns {Promise<any[]>} 
+   * @param {ObjectID[]} [ids] 
+   * @returns {Promise<Team[]>} 
    * @memberof TeamService
    */
   static async getTeams(ids? : ObjectID[]) : Promise<Team[]> {
@@ -35,21 +35,29 @@ class TeamService extends BaseService {
     }
   }
 
-  // static async getGame(id : ObjectID[]) : Promise<Game[]> {
-  //   try {
-  //     const params : any = {};
+  /**
+   * Get games
+   * 
+   * @static
+   * @param {ObjectID[]} [ids] 
+   * @returns {Promise<Game[]>} 
+   * @memberof TeamService
+   */
+  static async getGames(ids? : ObjectID[]) : Promise<Game[]> {
+    try {
+      const params : any = {};
 
-  //     if (ids) {
-  //       params.id = ids.map(id => id.toString());
-  //     }
-  //     const { data } = await this.axiosInstance.get('matches', {
-  //       params,
-  //     });
-  //     return data;
-  //   } catch (error) {
-  //     return [];
-  //   }
-  // }
+      if (ids) {
+        params.id = ids.map(id => id.toString());
+      }
+      const { data } = await this.axiosInstance.get('games', {
+        params,
+      });
+      return data;
+    } catch (error) {
+      return [];
+    }
+  }
 }
 
 export default TeamService;

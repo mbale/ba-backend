@@ -22,10 +22,30 @@ class MatchController {
 
       const matches = await MatchService.getMatches();
 
+      let mainBuffer : any[] = [];
+
       for (const match of matches) {
+        const buffer = [];
+
+        // order is important
+        buffer.push(
+          TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
+          TeamService.getGames([match.gameId]),
+          MatchService.getLeagues([match.leagueId]),
+          match._id,
+          match.date,
+          match.odds,
+          match.updates,
+        );
+
+        mainBuffer.push(buffer);
       }
 
-      return reply(matches);
+      mainBuffer = await Promise.all(mainBuffer.map((match => Promise.all(match))));
+
+      console.log(mainBuffer)
+
+      return reply(mainBuffer);
     } catch (error) {
       return reply(badImplementation(error));
     }

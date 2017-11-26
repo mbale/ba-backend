@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
-import { Match } from 'ba-common';
+import { Match, League } from 'ba-common';
 
 /**
  * Contains all interaction to MatchService
@@ -12,14 +12,40 @@ import { Match } from 'ba-common';
  */
 class MatchService extends BaseService {
   /**
-   * Get matches (or by id - optional)
+   * Get matches
    * 
    * @static
-   * @param {ObjectID[]} ids 
-   * @returns {Promise<any[]>} 
+   * @param {ObjectID[]} [ids] 
+   * @returns {Promise<Match[]>} 
    * @memberof MatchService
    */
   static async getMatches(ids? : ObjectID[]) : Promise<Match[]> {
+    try {
+      const params : any = {};
+
+      if (ids) {
+        params.id = ids.map(id => id.toString());
+      }
+
+      const { data } = await this.axiosInstance.get('matches', {
+        params,
+      });
+  
+      return data;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Get leagues
+   * 
+   * @static
+   * @param {ObjectID[]} [ids] 
+   * @returns {Promise<League[]>} 
+   * @memberof MatchService
+   */
+  static async getLeagues(ids? : ObjectID[]) : Promise<League[]> {
     try {
       const params : any = {};
 
