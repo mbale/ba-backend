@@ -82,36 +82,56 @@ class MatchController {
           MatchUpdate[]
         ] = buffer; //
 
-        const state = {
-          scores : {
-            homeTeam: null,
-            awayTeam: null,
+        /*
+          Default prop
+        */
+        const matchResponse : MatchResponse = {
+          id,
+          homeTeam: '',
+          awayTeam: '',
+          league: '',
+          game: '',
+          gameSlug: '',
+          isLive: new Date(date).getTime() === new Date().getTime(),
+          state: {
+            type : MatchStatusType.Unknown,
+            scores: {
+              homeTeam: null,
+              awayTeam: null,
+            },
           },
-          type : null,
         };
+
+        /*
+          Maps to success case
+        */
+
+        if (teams.length !== 0) {
+          matchResponse.homeTeam = teams[0].name;
+          matchResponse.awayTeam = teams[1].name;
+        }
+
+        if (games.length !== 0) {
+          matchResponse.game = games[0].name;
+        }
+
+        if (leagues.length !== 0) {
+          matchResponse.league = leagues[0].name;
+        }
 
         if (updates.length !== 0) {
           const orderedUpdates = updates
             .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
 
-          state.type = orderedUpdates[0].statusType;
+          matchResponse.state.type = orderedUpdates[0].statusType;
 
           if (orderedUpdates[0].statusType === MatchStatusType.Settled) {
-            state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
-            state.scores.awayTeam = orderedUpdates[1].awayTeamScore;
+            matchResponse.state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
+            matchResponse.state.scores.awayTeam = orderedUpdates[1].awayTeamScore;
           }
         }
 
-        matchesResponse.push({
-          id,
-          homeTeam: teams[0].name,
-          awayTeam: teams[1].name,
-          league: leagues[0].name,
-          game: games[0].name,
-          gameSlug: games[0].slug,
-          isLive: new Date(date).getTime() === new Date().getTime(),
-          state,
-        });
+        matchesResponse.push(matchResponse);
       }
 
       interface MatchResponse {
