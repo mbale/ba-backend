@@ -66,7 +66,7 @@ class MatchService extends BaseService {
         params.id = ids.map(id => id.toString());
       }
 
-      const { data } = await this.axiosInstance.get('matches', {
+      const { data } = await this.axiosInstance.get('leagues', {
         params,
       });
   
