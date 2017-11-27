@@ -384,8 +384,9 @@ b64@3.x.x:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/b64/-/b64-3.0.2.tgz#7a9d60466adf7b8de114cbdf651a5fdfcc90894d"
 
-ba-common@../ba-common:
+"ba-common@git+ssh://git@github.com:MainBase/ba-common.git":
   version "1.0.0"
+  resolved "git+ssh://git@github.com:MainBase/ba-common.git#f515a52a09b0bd08b898f14428f8325dc3596764"
   dependencies:
     axios "^0.17.1"
     immutable "^3.8.2"
