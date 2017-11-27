@@ -18,9 +18,18 @@ class MatchController {
    */
   static async getMatches(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
-      const page = request.query.page;
+      const {
+        page,
+        limit,
+      } : {
+        page : number;
+        limit : number;
+      } = request.query;
 
-      const matches = await MatchService.getMatches();
+      console.log(page)
+      console.log(limit)
+
+      const matches = await MatchService.getMatches(null, limit, page);
 
       let mainBuffer : any[] = [];
 
@@ -42,8 +51,6 @@ class MatchController {
       }
 
       mainBuffer = await Promise.all(mainBuffer.map((match => Promise.all(match))));
-
-      console.log(mainBuffer)
 
       return reply(mainBuffer);
     } catch (error) {

@@ -16,15 +16,28 @@ class MatchService extends BaseService {
    * 
    * @static
    * @param {ObjectID[]} [ids] 
+   * @param {number} [limit] 
+   * @param {number} [page] 
    * @returns {Promise<Match[]>} 
    * @memberof MatchService
    */
-  static async getMatches(ids? : ObjectID[]) : Promise<Match[]> {
+  static async getMatches(ids? : ObjectID[], limit? : number, page? : number) : Promise<Match[]> {
     try {
-      const params : any = {};
+      const params : {
+        id? : string[],
+        limit? : number;
+        page? : number;
+      } = {
+        id : [],
+      };
 
       if (ids) {
         params.id = ids.map(id => id.toString());
+      }
+
+      if (limit && page) {
+        params.limit = limit;
+        params.page = page;
       }
 
       const { data } = await this.axiosInstance.get('matches', {
