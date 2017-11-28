@@ -12,7 +12,7 @@ ARG habitus_port
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
 # Getting ssh key
-RUN wget -O $PRIVATE_KEY http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -v \
+RUN wget -d -O $PRIVATE_KEY http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -v \
 && chmod 0600 $PRIVATE_KEY
 
 # Starting packages installing
