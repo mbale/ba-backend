@@ -113,6 +113,7 @@ class MatchController {
 
         if (games.length !== 0) {
           matchResponse.game = games[0].name;
+          matchResponse.gameSlug = games[0].slug;
         }
 
         if (leagues.length !== 0) {
