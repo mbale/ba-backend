@@ -6,11 +6,13 @@ RUN apt-get update && apt-get install -y wget openssh-client
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 # Habitus pass host param in builder phase
-ARG host
+ARG habitus_host
+ARG habitus_port
+
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
 # Getting ssh key
-RUN wget -O $PRIVATE_KEY http://$host:8080/v1/secrets/env/ba_common_git -v \
+RUN wget -O $PRIVATE_KEY http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -v \
 && chmod 0600 $PRIVATE_KEY
 
 # Starting packages installing
