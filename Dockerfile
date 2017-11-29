@@ -5,20 +5,15 @@ RUN apt-get update && apt-get install -y curl openssh-client
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
-# Habitus pass host param in builder phase
-ARG habitus_host
-ARG habitus_port
-ARG habitus_password  
-ARG habitus_user
-ARG BACKEND_CLOUDINARY_API_KEY
-RUN echo $BACKEND_CLOUDINARY_API_KEY
+ARG GIT_COMMON_SSH_KEY
 
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
 
+RUN echo $GIT_COMMON_SSH_KEY >> $PRIVATE_KEY
+
 # Getting ssh key
-RUN curl http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -o $PRIVATE_KEY -v \
-&& chmod 0600 $PRIVATE_KEY
+RUN chmod 0600 $PRIVATE_KEY
 
 # Starting packages installing
 RUN npm install yarn -G
