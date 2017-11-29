@@ -7,6 +7,8 @@ RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 ARG GIT_COMMON_SSH_KEY
 
+RUN echo ${#GIT_COMMON_SSH_KEY}}
+
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
 
