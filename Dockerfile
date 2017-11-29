@@ -10,6 +10,8 @@ ARG habitus_host
 ARG habitus_port
 ARG habitus_password  
 ARG habitus_user
+ARG BACKEND_CLOUDINARY_API_KEY
+RUN echo $BACKEND_CLOUDINARY_API_KEY
 
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
