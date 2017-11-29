@@ -1,6 +1,6 @@
 FROM node:latest
 # Make sure we use use fresh packages
-RUN apt-get update && apt-get install -y wget openssh-client
+RUN apt-get update && apt-get install -y curl openssh-client
 
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
@@ -13,8 +13,9 @@ ARG habitus_user
 
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
+
 # Getting ssh key
-RUN wget -O $PRIVATE_KEY --http-user=$habitus_user --http-password=$habitus_password http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -v \
+RUN curl http://$habitus_host:$habitus_port/v1/secrets/env/ba_common_git -o $PRIVATE_KEY -v \
 && chmod 0600 $PRIVATE_KEY
 
 # Starting packages installing
