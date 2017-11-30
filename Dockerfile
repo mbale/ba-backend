@@ -11,7 +11,7 @@ ARG habitus_port
 ARG habitus_password  
 ARG habitus_user
 
-ARG $API_URI
+ARG API_URI
 
 RUN echo ${#API_URI}
 
