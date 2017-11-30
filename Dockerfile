@@ -15,7 +15,7 @@ COPY package.json /app
 COPY . /app
 # Due to (security) limitations of ssh agent, 
 # we need to maintain ssh agent until yarn is done with installing
-RUN eval "$(ssh-agent)" ssh-add $PRIVATE_KEY \ 
+RUN eval "$(ssh-agent)" ssh-add /root/.ssh/ba_common_git \ 
 && yarn install
 
 # We only want to compile files during image creation phase
