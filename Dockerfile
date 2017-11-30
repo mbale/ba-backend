@@ -11,9 +11,9 @@ ARG habitus_port
 ARG habitus_password  
 ARG habitus_user
 
-ARG API_URI
+ARG $API_URI
 
-RUN echo ${API_URI}
+RUN echo ${#API_URI}
 
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
