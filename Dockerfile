@@ -6,8 +6,7 @@ RUN apt-get update && apt-get install -y curl coreutils openssh-client
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 # Getting ssh key
-RUN touch /root/.ssh/ba_common_git
-RUN printenv GIT_COMMON_SSH_KEY | base64 --decode
+RUN printenv GIT_COMMON_SSH_KEY | base64 --decode > /root/.ssh/ba_common_git
 
 # Starting packages installing
 RUN npm install yarn -G
