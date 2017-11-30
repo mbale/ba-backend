@@ -5,12 +5,6 @@ RUN apt-get update && apt-get install -y curl openssh-client
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
-# Habitus pass host param in builder phase
-ARG habitus_host
-ARG habitus_port
-ARG habitus_password  
-ARG habitus_user
-
 ARG API_URI
 
 RUN echo ${#API_URI}
