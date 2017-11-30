@@ -7,7 +7,7 @@ RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 # Getting ssh key
 RUN touch /root/.ssh/ba_common_git
-RUN echo "$GIT_COMMON_SSH_KEY"
+RUN echo '$GIT_COMMON_SSH_KEY' >> /root/.ssh/ba_common_git
 
 # Starting packages installing
 RUN npm install yarn -G
