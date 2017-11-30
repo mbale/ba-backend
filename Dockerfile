@@ -7,6 +7,7 @@ RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 # Location of saved ssh key
 ENV PRIVATE_KEY /root/.ssh/ba_common_git
+ARG API_URI
 
 # Getting ssh key
 RUN curl http://${API_URI}/v1/secrets/env/ba_common_git -o $PRIVATE_KEY -v \
