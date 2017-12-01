@@ -11,7 +11,7 @@ const MatchRoutes : RouteConfiguration[] = [
       auth: false,
       validate: {
         query: Joi.object().keys({
-          page: Joi.number().optional().default(1),
+          page: Joi.number().optional().default(0),
           limit: Joi.number().optional().default(10),
         }),
       },

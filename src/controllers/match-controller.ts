@@ -35,7 +35,7 @@ class MatchController {
         limit : number;
       } = request.query;
 
-      const matches = await MatchService.getMatches(null, limit, page);
+      const matches = await MatchService.getMatches();
 
       type Buffer = [
         Promise<Team[]>|Promise<Game[]>|ObjectID|Date|MatchOdds[]|MatchUpdate[]

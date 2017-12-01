@@ -384,9 +384,19 @@ b64@3.x.x:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/b64/-/b64-3.0.2.tgz#7a9d60466adf7b8de114cbdf651a5fdfcc90894d"
 
+ba-common@../ba-common:
+  version "1.0.0"
+  dependencies:
+    axios "^0.17.1"
+    immutable "^3.8.2"
+    qs "^6.5.1"
+    talisman "^0.20.0"
+    typedi "^0.5.2"
+    typeorm "^0.1.6"
+
 "ba-common@git+ssh://git@github.com:MainBase/ba-common.git":
   version "1.0.0"
-  resolved "git+ssh://git@github.com:MainBase/ba-common.git#c2882417252d2daf68f3871112f470eae4436861"
+  resolved "git+ssh://git@github.com:MainBase/ba-common.git#e4f9545a15693cd7bd30494a05cb4c4349501ee4"
   dependencies:
     axios "^0.17.1"
     immutable "^3.8.2"
