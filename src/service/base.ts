@@ -7,6 +7,17 @@ dotenv.config();
 const TEAM_SERVICE_URL = process.env.TEAM_SERVICE_URL;
 
 /**
+ * Containing data of service pinging
+ * 
+ * @interface PingResult
+ */
+interface PingResult {
+  running: boolean;
+  baseURL: string;
+  data?: Error;
+}
+
+/**
  * Default base class for each service communicator
  * 
  * @abstract
@@ -49,13 +60,21 @@ abstract class BaseService {
    * @returns {Promise<boolean>} 
    * @memberof BaseService
    */
-  public static async ping() : Promise<boolean> {
+  public static async ping() : Promise<PingResult> {
     try {
       const request = await this.axiosInstance.get(`${this.serviceBaseURL}/ping`);
     } catch (e) {
-      return false;
+      return {
+        running: false,
+        baseURL: this.serviceBaseURL,
+        data: e,
+      };
     }
-    return true;
+    return {
+      running: true,
+      baseURL: this.serviceBaseURL,
+      data: null,
+    };
   }
 }
 

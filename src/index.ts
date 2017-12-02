@@ -110,6 +110,21 @@ server.ext('onPreStart', async (serverInstance, next) => {
     TeamService.initialize(TEAM_SERVICE_URL);
     MatchService.initialize(MATCH_SERVICE_URL);
 
+    const pingResults = await Promise.all([
+      TeamService.ping(), 
+      MatchService.ping(),
+    ]);
+
+    for (const pingResult of pingResults) {
+      serverInstance
+        .log(['info'],`Service on ${pingResult.baseURL} is accessible: ${pingResult.running}`);
+
+      if (!pingResult.running) {
+        serverInstance.log(['error'], JSON.stringify(pingResult.data));
+      }
+    }
+    
+
     serverInstance.log(['info'], `DB's connected to ${connection.options.type}`);
     return next();
   } catch (error) {
