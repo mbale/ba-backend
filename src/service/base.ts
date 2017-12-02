@@ -62,7 +62,7 @@ abstract class BaseService {
    */
   public static async ping() : Promise<PingResult> {
     try {
-      const request = await this.axiosInstance.get(`${this.serviceBaseURL}/ping`);
+      const request = await this.axiosInstance.get(`${this.serviceBaseURL}`);
     } catch (e) {
       return {
         running: false,

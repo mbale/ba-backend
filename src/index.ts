@@ -120,7 +120,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
         .log(['info'],`Service on ${pingResult.baseURL} is accessible: ${pingResult.running}`);
 
       if (!pingResult.running) {
-        serverInstance.log(['error'], JSON.stringify(pingResult.data));
+        serverInstance.log(['error'], pingResult.data);
       }
     }
     
