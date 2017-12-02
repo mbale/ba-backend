@@ -45,7 +45,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     _id, text, matchId, comments, selectedTeam, stake, oddsId,
   } of predictionsOfUser) {
 
-    const matches = await MatchService.getMatches();
+    const matches = await MatchService.getMatches({});
     const match = matches[0];
 
     let teams : Team[] = [];
@@ -63,10 +63,12 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     if (matches.length > 0) {
       const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
 
-      selectedOdds = odds.home;
-      
-      if (selectedTeam === SelectedTeam.Away) {
-        selectedOdds = odds.away;
+      if (odds) {
+        selectedOdds = odds.home;
+        
+        if (selectedTeam === SelectedTeam.Away) {
+          selectedOdds = odds.away;
+        }
       }
     }
 
