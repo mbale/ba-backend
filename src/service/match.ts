@@ -23,18 +23,13 @@ class MatchService extends BaseService {
    */
   static async getMatches(params: GetMatchesQueryParams) : Promise<Match[]> {
     try {
-      if (params.ids) {
-        if (params.ids instanceof Array) {
-          params.ids = params.ids.map(id => id.toString());
-        }
-      }
-
       const { data } = await this.axiosInstance.get('matches', {
         params,
       });
   
       return data;
     } catch (error) {
+      console.log(error)
       return [];
     }
   }

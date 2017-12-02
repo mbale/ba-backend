@@ -384,19 +384,9 @@ b64@3.x.x:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/b64/-/b64-3.0.2.tgz#7a9d60466adf7b8de114cbdf651a5fdfcc90894d"
 
-ba-common@../ba-common:
-  version "1.0.0"
-  dependencies:
-    axios "^0.17.1"
-    immutable "^3.8.2"
-    qs "^6.5.1"
-    talisman "^0.20.0"
-    typedi "^0.5.2"
-    typeorm "^0.1.6"
-
 "ba-common@git+ssh://git@github.com:MainBase/ba-common.git":
   version "1.0.0"
-  resolved "git+ssh://git@github.com:MainBase/ba-common.git#e4f9545a15693cd7bd30494a05cb4c4349501ee4"
+  resolved "git+ssh://git@github.com:MainBase/ba-common.git#1343538abf244252ad9231673f5d713c907b4778"
   dependencies:
     axios "^0.17.1"
     immutable "^3.8.2"
@@ -4776,8 +4766,8 @@ typeorm@^0.1.1:
     yargs "^9.0.1"
 
 typeorm@^0.1.6:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/typeorm/-/typeorm-0.1.6.tgz#77c385b4ef0a267a145da62989a369f741beb23d"
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/typeorm/-/typeorm-0.1.7.tgz#40fdb0ff1d5f69560a43a9b21297cb293152a8e2"
   dependencies:
     app-root-path "^2.0.1"
     chalk "^2.0.1"
