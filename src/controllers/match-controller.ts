@@ -96,6 +96,7 @@ class MatchController {
           league: '',
           game: '',
           gameSlug: '',
+          date,
           isLive: new Date(date).getTime() === new Date().getTime(),
           state: {
             type : MatchStatusType.Unknown,
@@ -146,6 +147,7 @@ class MatchController {
         league : string;
         game : string;
         gameSlug : string;
+        date : Date;
         isLive : boolean;
         state: {
           scores : {
