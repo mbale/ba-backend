@@ -2,6 +2,7 @@ import MatchController from '../controllers/match-controller';
 import { RouteConfiguration } from 'hapi';
 import * as Joi from 'joi';
 import { MatchStatusType } from 'ba-common';
+import { refactJoiError } from '../utils';
 
 const objectIdRegex = /^[a-f\d]{24}$/i;
 const allowedStatusTypes: string[] = [];
@@ -30,6 +31,43 @@ const MatchRoutes : RouteConfiguration[] = [
           awayTeamId: Joi.string().regex(objectIdRegex),
           statusType: Joi.string().valid(allowedStatusTypes),
         }),
+        failAction(request, reply, source, error) {
+          let joiError : any = refactJoiError(error);
+
+          let {
+            data: {
+              details,
+            },
+          } = error;
+
+          details = details[0];
+
+          const {
+            message,
+            type,
+            path,
+          } = details;
+
+          const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
+          console.log(type)
+
+          switch (type) {
+            case 'number.base':
+              joiError = joiError(`${pathCapitalized}Invalid`, message);
+              break;
+            case 'any.allowOnly':
+              joiError = joiError(
+                `${pathCapitalized}Invalid`, `"${pathCapitalized}" must be a valid status`);
+              break;
+            case 'string.regex.base':
+              joiError = joiError(
+                `${pathCapitalized}Invalid`, `"${path}" contains special character`);
+              break;
+            default:
+              joiError = joiError('UndefinedError', 'Undefined error', 400);
+          }
+          return reply(joiError).code(joiError.statusCode);
+        },
       },
     },
   },
