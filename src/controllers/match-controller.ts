@@ -1,6 +1,6 @@
 import MatchService from '../service/match';
 import TeamService from '../service/team';
-import { badImplementation } from 'boom';
+import { badImplementation, notFound } from 'boom';
 import {
   Game,
   League,
@@ -15,6 +15,96 @@ import { getConnection, ObjectID } from 'typeorm';
 import { ObjectId } from 'bson';
 import { ReplyNoContinue, Request, Response } from 'hapi';
 import { GetMatchesQueryParams } from 'ba-common/types/http-service/types';
+import { EntityNotFoundError } from '../errors';
+
+/**
+ * MatchResponse
+ * 
+ * @interface MatchResponse
+ */
+interface MatchResponse {
+  id : ObjectID;
+  homeTeam : string;
+  awayTeam : string;
+  league : string;
+  game : string;
+  gameSlug : string;
+  date : Date;
+  isLive : boolean;
+  state: {
+    scores : {
+      homeTeam : number;
+      awayTeam : number;
+    },
+    type : MatchStatusType,
+  };
+}
+
+/**
+ * Aggregate match response
+ * 
+ * @param {Team[]} teams 
+ * @param {Game[]} games 
+ * @param {League[]} leagues 
+ * @param {MatchUpdate[]} updates 
+ * @param {ObjectID} id 
+ * @param {Date} date 
+ * @returns 
+ */
+function aggregateMatchResponse(
+  teams: Team[], games: Game[], leagues: League[], 
+  updates: MatchUpdate[], id: ObjectID, date: Date,
+) {
+  const matchResponse : MatchResponse = {
+    id,
+    homeTeam: '',
+    awayTeam: '',
+    league: '',
+    game: '',
+    gameSlug: '',
+    date,
+    isLive: new Date(date).getTime() === new Date().getTime(),
+    state: {
+      type : MatchStatusType.Unknown,
+      scores: {
+        homeTeam: null,
+        awayTeam: null,
+      },
+    },
+  };
+
+  /*
+    Maps to success case
+  */
+
+  if (teams.length !== 0) {
+    matchResponse.homeTeam = teams[0].name;
+    matchResponse.awayTeam = teams[1].name;
+  }
+
+  if (games.length !== 0) {
+    matchResponse.game = games[0].name;
+    matchResponse.gameSlug = games[0].slug;
+  }
+
+  if (leagues.length !== 0) {
+    matchResponse.league = leagues[0].name;
+  }
+
+  if (updates.length !== 0) {
+    const orderedUpdates = updates
+      .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+
+    matchResponse.state.type = orderedUpdates[0].statusType;
+
+    if (orderedUpdates[0].statusType === MatchStatusType.Settled) {
+      matchResponse.state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
+      matchResponse.state.scores.awayTeam = orderedUpdates[1].awayTeamScore;
+    }
+  }
+
+  return matchResponse;
+}
 
 class MatchController {
   /**
@@ -117,47 +207,15 @@ class MatchController {
         /*
           Default prop
         */
-        const matchResponse : MatchResponse = {
-          id,
-          homeTeam: '',
-          awayTeam: '',
-          league: '',
-          game: '',
-          gameSlug: '',
-          date,
-          isLive: new Date(date).getTime() === new Date().getTime(),
-          state: {
-            type : MatchStatusType.Unknown,
-            scores: {
-              homeTeam: null,
-              awayTeam: null,
-            },
-          },
-        };
+        const matchResponse = aggregateMatchResponse(teams, games, leagues, updates, id, date);
+        matchesResponse.push(matchResponse);
+      }
 
-        /*
-          Maps to success case
-        */
-
-        if (teams.length !== 0) {
-          matchResponse.homeTeam = teams[0].name;
-          matchResponse.awayTeam = teams[1].name;
-        }
-
-        if (games.length !== 0) {
-          matchResponse.game = games[0].name;
-          matchResponse.gameSlug = games[0].slug;
-        }
-
-        if (leagues.length !== 0) {
-          matchResponse.league = leagues[0].name;
-        }
-
-        if (updates.length !== 0) {
-          const orderedUpdates = updates
-            .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
-
-          matchResponse.state.type = orderedUpdates[0].statusType;
+      return reply(matchesResponse);
+    } catch (error) {
+      return reply(badImplementation(error));
+    }
+  }
 
           if (orderedUpdates[0].statusType === MatchStatusType.Settled) {
             matchResponse.state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
