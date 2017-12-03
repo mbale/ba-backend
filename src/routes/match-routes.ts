@@ -1,6 +1,17 @@
 import MatchController from '../controllers/match-controller';
 import { RouteConfiguration } from 'hapi';
 import * as Joi from 'joi';
+import { MatchStatusType } from 'ba-common';
+
+const objectIdRegex = /^[a-f\d]{24}$/i;
+const allowedStatusTypes: string[] = [];
+
+// we loop through the enum and gather all allowed param
+for (const item in MatchStatusType) {
+  if (isNaN(Number(item))) {
+    allowedStatusTypes.push(item);
+  }
+}
 
 const MatchRoutes : RouteConfiguration[] = [
   {
@@ -13,6 +24,11 @@ const MatchRoutes : RouteConfiguration[] = [
         query: Joi.object().keys({
           page: Joi.number().optional().default(0),
           limit: Joi.number().optional().default(10),
+          gameId: Joi.string().regex(objectIdRegex),
+          leagueId: Joi.string().regex(objectIdRegex),
+          homeTeamId: Joi.string().regex(objectIdRegex),
+          awayTeamId: Joi.string().regex(objectIdRegex),
+          statusType: Joi.string().valid(allowedStatusTypes),
         }),
       },
     },

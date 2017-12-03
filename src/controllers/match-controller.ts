@@ -14,6 +14,7 @@ import {
 import { getConnection, ObjectID } from 'typeorm';
 import { ObjectId } from 'bson';
 import { ReplyNoContinue, Request, Response } from 'hapi';
+import { GetMatchesQueryParams } from 'ba-common/types/http-service/types';
 
 class MatchController {
   /**
@@ -30,20 +31,47 @@ class MatchController {
       const {
         page,
         limit,
+        gameId,
+        leagueId,
+        homeTeamId,
+        awayTeamId,
+        statusType,
       } : {
-        page : number;
-        limit : number;
+        page : number; // default
+        limit : number; // default
+        gameId: string;
+        leagueId: string;
+        homeTeamId: string;
+        awayTeamId: string;
+        statusType: MatchStatusType;
       } = request.query;
-      
 
-      const matches = await MatchService.getMatches({
+      const query : GetMatchesQueryParams = {
         page: page.toString(),
         limit: limit.toString(),
-      });
+      };
 
-      type Buffer = [
-        Promise<Team[]>|Promise<Game[]>|ObjectID|Date|MatchOdds[]|MatchUpdate[]
-      ];
+      if (gameId) {
+        query.gameId = gameId;
+      }
+
+      if (leagueId) {
+        query.leagueId = leagueId;
+      }
+
+      if (homeTeamId) {
+        query.homeTeamId = homeTeamId;
+      }
+
+      if (awayTeamId) {
+        query.awayTeamId = awayTeamId;
+      }
+
+      if (statusType) {
+        query.statusType = statusType;
+      }
+
+      const matches = await MatchService.getMatches(query);
 
       let mainBuffer : any[] = [];
 
