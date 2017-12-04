@@ -59,6 +59,9 @@ const MatchRoutes : RouteConfiguration[] = [
               joiError = joiError(
                 `${pathCapitalized}Invalid`, `"${pathCapitalized}" must be a valid status`);
               break;
+            case 'any.empty':
+              joiError = joiError(`${pathCapitalized}Empty`, message);
+              break;
             case 'string.regex.base':
               joiError = joiError(
                 `${pathCapitalized}Invalid`, `"${path}" contains special character`);
