@@ -99,7 +99,7 @@ function aggregateMatchResponse(
 
     if (orderedUpdates[0].statusType === MatchStatusType.Settled) {
       matchResponse.state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
-      matchResponse.state.scores.awayTeam = orderedUpdates[1].awayTeamScore;
+      matchResponse.state.scores.awayTeam = orderedUpdates[0].awayTeamScore;
     }
   }
 
