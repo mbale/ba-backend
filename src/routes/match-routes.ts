@@ -10,9 +10,11 @@ const allowedStatusTypes: string[] = [];
 // we loop through the enum and gather all allowed param
 for (const item in MatchStatusType) {
   if (isNaN(Number(item))) {
-    allowedStatusTypes.push(item);
+    allowedStatusTypes.push(item.toLowerCase());
   }
 }
+
+
 
 const MatchRoutes : RouteConfiguration[] = [
   {
@@ -29,7 +31,7 @@ const MatchRoutes : RouteConfiguration[] = [
           leagueId: Joi.string().regex(objectIdRegex),
           homeTeamId: Joi.string().regex(objectIdRegex),
           awayTeamId: Joi.string().regex(objectIdRegex),
-          statusType: Joi.string().valid(allowedStatusTypes),
+          statusType: Joi.string().valid(allowedStatusTypes).lowercase(),
         }),
         failAction(request, reply, source, error) {
           let joiError : any = refactJoiError(error);
