@@ -71,6 +71,19 @@ const MatchRoutes : RouteConfiguration[] = [
       },
     },
   },
+  {
+    path: '/v1/matches/{matchId}',
+    method: 'GET',
+    handler: MatchController.getMatch,
+    config: {
+      auth: false,
+      validate: {
+        params: {
+          matchId: Joi.string().regex(objectIdRegex),
+        },
+      },
+    },
+  },
 ];
 
 export default MatchRoutes;

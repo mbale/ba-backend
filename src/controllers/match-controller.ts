@@ -217,35 +217,58 @@ class MatchController {
     }
   }
 
-          if (orderedUpdates[0].statusType === MatchStatusType.Settled) {
-            matchResponse.state.scores.homeTeam = orderedUpdates[0].homeTeamScore;
-            matchResponse.state.scores.awayTeam = orderedUpdates[1].awayTeamScore;
-          }
-        }
+  /**
+   * Get match by id
+   * 
+   * @static
+   * @param {Request} request 
+   * @param {ReplyNoContinue} reply 
+   * @returns {Promise<Response>} 
+   * @memberof MatchController
+   */
+  static async getMatch(request: Request, reply: ReplyNoContinue): Promise<Response> {
+    try {
+      const matchId = request.params.matchId;
 
-        matchesResponse.push(matchResponse);
+      const matches = await MatchService.getMatches({
+        ids: matchId,
+      });
+
+      if (matches.length === 0) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
       }
 
-      interface MatchResponse {
-        id : ObjectID;
-        homeTeam : string;
-        awayTeam : string;
-        league : string;
-        game : string;
-        gameSlug : string;
-        date : Date;
-        isLive : boolean;
-        state: {
-          scores : {
-            homeTeam : number;
-            awayTeam : number;
-          },
-          type : MatchStatusType,
-        };
-      }
+      const match = matches[0];
 
-      return reply(matchesResponse);
+      const [
+        teams,
+        games,
+        leagues,
+      ] = await Promise.all([
+        TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
+        TeamService.getGames([match.gameId]),
+        MatchService.getLeagues([match.leagueId]),
+      ]);
+
+      const buffer = [
+        // order
+        await TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
+        await TeamService.getGames([match.gameId]),
+        await MatchService.getLeagues([match.leagueId]),
+        match._id,
+        match.date,
+        match.odds,
+        match.updates,
+      ];
+
+      // const matchResponse = aggregateMatchResponse(teams, games, leagues, match.updates, match._id, match.date);
+
+      return reply(buffer);
+
     } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply(notFound(error.message));
+      }
       return reply(badImplementation(error));
     }
   }
