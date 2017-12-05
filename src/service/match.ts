@@ -3,6 +3,8 @@ import axios from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
 import { Match, League, HTTPService, GetMatchesQueryParams } from 'ba-common';
+import { MicroserviceError } from '../errors';
+import { AxiosError } from 'ba-common/node_modules/axios';
 
 /**
  * Contains all interaction to MatchService
@@ -29,8 +31,8 @@ class MatchService extends BaseService {
   
       return data;
     } catch (error) {
-      console.log(error)
-      return [];
+      const e : AxiosError = error;
+      throw new MicroserviceError(this.name, e.config.baseURL);
     }
   }
 
@@ -56,7 +58,8 @@ class MatchService extends BaseService {
   
       return data;
     } catch (error) {
-      return [];
+      const e : AxiosError = error;
+      throw new MicroserviceError(this.name, e.config.baseURL);
     }
   }
 }

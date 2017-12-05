@@ -84,7 +84,7 @@ export class EntityTakenError extends ExtendoError {
  * @extends {ExtendoError}
  */
 export class PasswordMismatchError extends ExtendoError {
-  public username : string  = null;
+  public username : string = null;
   public password : string = null;
 
   /**
@@ -98,5 +98,30 @@ export class PasswordMismatchError extends ExtendoError {
 
     this.username = username;
     this.password = password;
+  }
+}
+
+/**
+ * If connection to microservice is not available
+ * 
+ * @export
+ * @class MicroserviceError
+ * @extends {ExtendoError}
+ */
+export class MicroserviceError extends ExtendoError {
+  public serviceName: string = null;
+  public serviceURL: string = null;
+
+  /**
+   * Creates an instance of MicroserviceError.
+   * @param {string} serviceName 
+   * @param {string} serviceURL 
+   * @memberof MicroserviceError
+   */
+  constructor(serviceName: string, serviceURL: string) {
+    super(`${serviceName} is not available at ${serviceURL}`);
+
+    this.serviceName = serviceName;
+    this.serviceURL = serviceURL;
   }
 }

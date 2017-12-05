@@ -1,8 +1,9 @@
 import * as dotenv from 'dotenv';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
 import { Team, Game } from 'ba-common';
+import { MicroserviceError } from '../errors';
 
 /**
  * Contains all interaction to Teamservice
@@ -31,7 +32,8 @@ class TeamService extends BaseService {
       });
       return data;
     } catch (error) {
-      return [];
+      const e: AxiosError = error;
+      throw new MicroserviceError(this.name, e.config.baseURL);
     }
   }
 
@@ -55,7 +57,8 @@ class TeamService extends BaseService {
       });
       return data;
     } catch (error) {
-      return [];
+      const e: AxiosError = error;
+      throw new MicroserviceError(this.name, e.config.baseURL);
     }
   }
 }
