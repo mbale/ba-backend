@@ -51,10 +51,7 @@ interface MatchResponse {
  * @param {Date} date 
  * @returns 
  */
-function aggregateMatchResponse(
-  teams: Team[], games: Game[], leagues: League[], 
-  updates: MatchUpdate[], id: ObjectID, date: Date,
-) {
+function aggregateMatchResponse( teams: Team[], games: Game[], leagues: League[], updates: MatchUpdate[], id: ObjectID, date: Date) {
   const matchResponse : MatchResponse = {
     id,
     homeTeam: '',
@@ -240,30 +237,14 @@ class MatchController {
 
       const match = matches[0];
 
-      const [
-        teams,
-        games,
-        leagues,
-      ] = await Promise.all([
-        TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
-        TeamService.getGames({ ids: match.gameId.toString() }),
-        MatchService.getLeagues([match.leagueId]),
-      ]);
+      const teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
+      const games = await TeamService.getGames({ ids: match.gameId.toString() });
+      const leagues = await MatchService.getLeagues([match.leagueId]);
+  
+      const matchResponse = aggregateMatchResponse(
+        teams, games, leagues, match.updates, match._id, match.date);
 
-      const buffer = [
-        // order
-        await TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
-        await TeamService.getGames({ ids: match.gameId.toString() }),
-        await MatchService.getLeagues([match.leagueId]),
-        match._id,
-        match.date,
-        match.odds,
-        match.updates,
-      ];
-
-      // const matchResponse = aggregateMatchResponse(teams, games, leagues, match.updates, match._id, match.date);
-
-      return reply(buffer);
+      return reply(matchResponse);
 
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
