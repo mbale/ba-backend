@@ -169,7 +169,7 @@ class MatchController {
         const buffer = [
           // order
           TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
-          TeamService.getGames([match.gameId]),
+          TeamService.getGames({ ids: match.gameId.toString() }),
           MatchService.getLeagues([match.leagueId]),
           match._id,
           match.date,
@@ -246,14 +246,14 @@ class MatchController {
         leagues,
       ] = await Promise.all([
         TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
-        TeamService.getGames([match.gameId]),
+        TeamService.getGames({ ids: match.gameId.toString() }),
         MatchService.getLeagues([match.leagueId]),
       ]);
 
       const buffer = [
         // order
         await TeamService.getTeams([match.homeTeamId, match.awayTeamId]),
-        await TeamService.getGames([match.gameId]),
+        await TeamService.getGames({ ids: match.gameId.toString() }),
         await MatchService.getLeagues([match.leagueId]),
         match._id,
         match.date,

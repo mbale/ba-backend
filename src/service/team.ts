@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import axios, { AxiosError } from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
-import { Team, Game } from 'ba-common';
+import { Team, Game, GetGamesQueryParams } from 'ba-common';
 import { MicroserviceError } from '../errors';
 
 /**
@@ -45,19 +45,15 @@ class TeamService extends BaseService {
    * @returns {Promise<Game[]>} 
    * @memberof TeamService
    */
-  static async getGames(ids? : ObjectID[]) : Promise<Game[]> {
+  static async getGames(params: GetGamesQueryParams) : Promise<Game[]> {
     try {
-      const params : any = {};
-
-      if (ids) {
-        params.id = ids.map(id => id.toString());
-      }
       const { data } = await this.axiosInstance.get('games', {
         params,
       });
+  
       return data;
     } catch (error) {
-      const e: AxiosError = error;
+      const e : AxiosError = error;
       throw new MicroserviceError(this.name, e.config.baseURL);
     }
   }
