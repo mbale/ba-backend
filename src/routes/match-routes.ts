@@ -51,7 +51,6 @@ const MatchRoutes : RouteConfiguration[] = [
           } = details;
 
           const pathCapitalized = path.charAt(0).toUpperCase() + path.slice(1);
-          console.log(type)
 
           switch (type) {
             case 'number.base':

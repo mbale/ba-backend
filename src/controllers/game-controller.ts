@@ -3,6 +3,8 @@ import { badImplementation, notFound } from 'boom';
 import { getContentfulClient } from '../utils';
 import { Entry } from 'contentful';
 import { EntityNotFoundError } from '../errors';
+import { ObjectID } from 'typeorm';
+import TeamService from '../service/team';
 
 /**
  * Interface for game in contentful
@@ -11,6 +13,7 @@ import { EntityNotFoundError } from '../errors';
  */
 interface GameResponse {
   name : string;
+  id: ObjectID;
   slug : string;
   logo : string;
   color : string;
@@ -23,9 +26,22 @@ interface GameResponse {
  * @param {Entry<any>} contentfulItem 
  * @returns {GameResponse[]} 
  */
-function serializeGameResponse(contentfulItem : Entry<any>) : GameResponse {
+async function serializeGameResponse(contentfulItem : Entry<any>) : Promise<GameResponse> {
+  // get id from our db
+  const games = await TeamService.getGames({
+    slug: contentfulItem.fields.slug,
+  });
+
+  let gameId: ObjectID = null;
+
+  // there can be a case at start that we don't have that match
+  if (games.length !== 0) {
+    gameId = games[0]._id;
+  }
+
   return {
     name: contentfulItem.fields.name,
+    id: gameId,
     slug: contentfulItem.fields.slug,
     logo : contentfulItem.fields.logo.fields.file.url,
     color : contentfulItem.fields.color,
@@ -55,7 +71,7 @@ class GameController {
       
       for (const item of items) {
         const game = serializeGameResponse(item);
-        response.push(game);
+        response.push(await game);
       }
 
       return reply(response);
