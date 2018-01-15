@@ -10,16 +10,16 @@ import {
   MatchStatusType,
   MatchUpdate,
   Team,
+  GetMatchesQueryParams,
 } from 'ba-common';
 import { getConnection, ObjectID } from 'typeorm';
 import { ObjectId } from 'bson';
 import { ReplyNoContinue, Request, Response } from 'hapi';
-import { GetMatchesQueryParams } from 'ba-common/types/http-service/types';
 import { EntityNotFoundError } from '../errors';
 
 /**
  * MatchResponse
- * 
+ *
  * @interface MatchResponse
  */
 interface MatchResponse {
@@ -42,14 +42,14 @@ interface MatchResponse {
 
 /**
  * Aggregate match response
- * 
- * @param {Team[]} teams 
- * @param {Game[]} games 
- * @param {League[]} leagues 
- * @param {MatchUpdate[]} updates 
- * @param {ObjectID} id 
- * @param {Date} date 
- * @returns 
+ *
+ * @param {Team[]} teams
+ * @param {Game[]} games
+ * @param {League[]} leagues
+ * @param {MatchUpdate[]} updates
+ * @param {ObjectID} id
+ * @param {Date} date
+ * @returns
  */
 function aggregateMatchResponse( teams: Team[], games: Game[], leagues: League[], updates: MatchUpdate[], id: ObjectID, date: Date) {
   const matchResponse : MatchResponse = {
@@ -106,11 +106,11 @@ function aggregateMatchResponse( teams: Team[], games: Game[], leagues: League[]
 class MatchController {
   /**
    * Get matches
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof MatchController
    */
   static async getMatches(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -158,7 +158,7 @@ class MatchController {
         query.statusType = statusType;
       }
 
-      const matches = await MatchService.getMatches(query);
+      const { data: matches, headers } = await MatchService.getMatches(query);
 
       let mainBuffer : any[] = [];
 
@@ -208,7 +208,7 @@ class MatchController {
         matchesResponse.push(matchResponse);
       }
 
-      return reply(matchesResponse);
+      return reply(matchesResponse).header('Count', headers.count);
     } catch (error) {
       return reply(badImplementation(error));
     }
@@ -216,18 +216,18 @@ class MatchController {
 
   /**
    * Get match by id
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof MatchController
    */
   static async getMatch(request: Request, reply: ReplyNoContinue): Promise<Response> {
     try {
       const matchId = request.params.matchId;
 
-      const matches = await MatchService.getMatches({
+      const { data: matches } = await MatchService.getMatches({
         ids: matchId,
       });
 
@@ -240,7 +240,7 @@ class MatchController {
       const teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
       const games = await TeamService.getGames({ ids: match.gameId.toString() });
       const leagues = await MatchService.getLeagues([match.leagueId]);
-  
+
       const matchResponse = aggregateMatchResponse(
         teams, games, leagues, match.updates, match._id, match.date);
 

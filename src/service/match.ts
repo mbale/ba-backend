@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { ObjectID } from 'typeorm';
 import BaseService from './base';
 import { Match, League, HTTPService, GetMatchesQueryParams } from 'ba-common';
@@ -8,28 +8,28 @@ import { AxiosError } from 'ba-common/node_modules/axios';
 
 /**
  * Contains all interaction to MatchService
- * 
+ *
  * @class MatchService
  * @extends {BaseService}
  */
 class MatchService extends BaseService {
   /**
    * Get matches
-   * 
+   *
    * @static
-   * @param {number} [limit] 
-   * @param {number} [page] 
-   * @param {ObjectID[]} [ids] 
-   * @returns {Promise<Match[]>} 
+   * @param {number} [limit]
+   * @param {number} [page]
+   * @param {ObjectID[]} [ids]
+   * @returns {Promise<Match[]>}
    * @memberof MatchService
    */
-  static async getMatches(params: GetMatchesQueryParams) : Promise<Match[]> {
+  static async getMatches(params: GetMatchesQueryParams) : Promise<AxiosResponse> {
     try {
-      const { data } = await this.axiosInstance.get('matches', {
+      const response = await this.axiosInstance.get('matches', {
         params,
       });
-  
-      return data;
+
+      return response;
     } catch (error) {
       const e : AxiosError = error;
       throw new MicroserviceError(this.name, e.config.baseURL);
@@ -38,10 +38,10 @@ class MatchService extends BaseService {
 
   /**
    * Get leagues
-   * 
+   *
    * @static
-   * @param {ObjectID[]} [ids] 
-   * @returns {Promise<League[]>} 
+   * @param {ObjectID[]} [ids]
+   * @returns {Promise<League[]>}
    * @memberof MatchService
    */
   static async getLeagues(ids? : ObjectID[]) : Promise<League[]> {
@@ -55,7 +55,7 @@ class MatchService extends BaseService {
       const { data } = await this.axiosInstance.get('leagues', {
         params,
       });
-  
+
       return data;
     } catch (error) {
       const e : AxiosError = error;

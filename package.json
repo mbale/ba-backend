@@ -36,6 +36,7 @@
     "@types/reflect-metadata": "^0.0.5",
     "awesome-typescript-loader": "^3.2.3",
     "backpack-core": "^0.4.1",
+    "ts-loader": "^3.2.0",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.3.0",
     "typescript": "^2.6.1"

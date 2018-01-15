@@ -15,7 +15,7 @@ import { Team } from 'ba-common';
 
 /**
  * PredictionResponse
- * 
+ *
  * @interface PredictionResponse
  */
 interface PredictionResponse {
@@ -33,11 +33,11 @@ interface PredictionResponse {
 
 /**
  * Aggregate predictions of user into an array
- *  
- * @param {Prediction[]} predictionsOfUser 
- * @returns {Promise<PredictionResponse[]>} 
+ *
+ * @param {Prediction[]} predictionsOfUser
+ * @returns {Promise<PredictionResponse[]>}
  */
-async function aggregatePredictions(predictionsOfUser : Prediction[]) 
+async function aggregatePredictions(predictionsOfUser : Prediction[])
   : Promise<PredictionResponse[]> {
   const predictions : PredictionResponse[] = [];
     // populate it
@@ -45,7 +45,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     _id, text, matchId, comments, selectedTeam, stake, oddsId,
   } of predictionsOfUser) {
 
-    const matches = await MatchService.getMatches({});
+    const { data: matches } = await MatchService.getMatches({});
     const match = matches[0];
 
     let teams : Team[] = [];
@@ -53,11 +53,11 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
     if (matches.length > 0) {
       teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
     }
-    
+
     /*
       Find out which odds he put on
     */
-  
+
     let selectedOdds = 0;
 
     if (matches.length > 0) {
@@ -65,7 +65,7 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
 
       if (odds) {
         selectedOdds = odds.home;
-        
+
         if (selectedTeam === SelectedTeam.Away) {
           selectedOdds = odds.away;
         }
@@ -104,11 +104,11 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
 class UsersController {
   /**
    * Get logged-in user profile
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
   static async getLoggedUserProfile(request : Request, reply : ReplyNoContinue)
@@ -136,20 +136,20 @@ class UsersController {
 
   /**
    * Endpoint to edit logged-in user profile
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
-  static async editLoggedUserProfile(request : Request, reply : ReplyNoContinue) 
+  static async editLoggedUserProfile(request : Request, reply : ReplyNoContinue)
   : Promise<Response> {
     try {
       const userRepository = getConnection().getMongoRepository<User>(User);
-  
+
       const user : User = request.auth.credentials.user;
-      const propsToEdit : Profile = request.payload;  
+      const propsToEdit : Profile = request.payload;
 
       interface EditProfileQueryCheck {
         where : {
@@ -181,7 +181,7 @@ class UsersController {
           username: propsToEdit.username.toLowerCase(),
         });
       }
-      
+
       if (propsToEdit.email) {
         query.where.$or.push({
           email: propsToEdit.email,
@@ -211,11 +211,11 @@ class UsersController {
 
   /**
    * Upload user's avatar to cloudinary
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
   static async uploadAvatar(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -244,11 +244,11 @@ class UsersController {
 
   /**
    * Unset user's avatar
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
   static async deleteAvatar(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -259,7 +259,7 @@ class UsersController {
       user.avatar = '';
 
       await userRepository.save(user);
-  
+
       return reply();
     } catch (error) {
       return reply(badImplementation(error));
@@ -268,11 +268,11 @@ class UsersController {
 
   /**
    * Creating user
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
   static async createUser(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -310,7 +310,7 @@ class UsersController {
       user.username = username;
       user.password = password;
       user.email = email;
-  
+
       await user.hashPassword();
 
       const accessToken = user.authorizeAccess();
@@ -330,18 +330,18 @@ class UsersController {
 
   /**
    * Get user by username
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof UsersController
    */
   static async getUserByUsername(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const userRepository = getConnection().getMongoRepository<User>(User);
       const predictionRepository = getConnection().getMongoRepository<Prediction>(Prediction);
-  
+
       const username = request.params.username;
 
       const user = await userRepository.findOne({
