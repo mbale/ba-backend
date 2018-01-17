@@ -42,7 +42,9 @@ const server = new Hapi.Server();
 server.connection({
   port: HTTP_PORT || 3000,
   routes: {
-    cors: true,
+    cors: {
+      additionalExposedHeaders: ['count', 'Count']
+    },
   },
 });
 
