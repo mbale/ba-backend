@@ -205,6 +205,7 @@ class MatchController {
           Default prop
         */
         const matchResponse = aggregateMatchResponse(teams, games, leagues, updates, id, date);
+
         matchesResponse.push(matchResponse);
       }
 

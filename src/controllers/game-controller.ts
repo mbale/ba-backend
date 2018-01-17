@@ -8,7 +8,7 @@ import TeamService from '../service/team';
 
 /**
  * Interface for game in contentful
- * 
+ *
  * @interface GameResponse
  */
 interface GameResponse {
@@ -22,9 +22,9 @@ interface GameResponse {
 
 /**
  * Serialize JSON response for games to object
- * 
- * @param {Entry<any>} contentfulItem 
- * @returns {GameResponse[]} 
+ *
+ * @param {Entry<any>} contentfulItem
+ * @returns {GameResponse[]}
  */
 async function serializeGameResponse(contentfulItem : Entry<any>) : Promise<GameResponse> {
   // get id from our db
@@ -52,27 +52,29 @@ async function serializeGameResponse(contentfulItem : Entry<any>) : Promise<Game
 class GameController {
   /**
    * Get all games
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof GameController
    */
   static async getGames(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
       const client = await getContentfulClient();
-      
+
       const { items } = await client.getEntries({
         content_type: 'game',
       });
 
-      const response : GameResponse[] = [];
-      
+      let response : GameResponse[] = [];
+
       for (const item of items) {
         const game = serializeGameResponse(item);
         response.push(await game);
       }
+
+      response = response.filter(r => r.slug !== '');
 
       return reply(response);
     } catch (error) {
@@ -82,11 +84,11 @@ class GameController {
 
   /**
    * Get game by slug from contentful
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyNoContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns {Promise<Response>}
    * @memberof GameController
    */
   static async getGameBySlug(request : Request, reply : ReplyNoContinue) : Promise<Response> {
@@ -103,9 +105,9 @@ class GameController {
       if (games.length === 0) {
         throw new EntityNotFoundError('Game', 'slug', gameSlug);
       }
-      
+
       const game = serializeGameResponse(games[0]);
-        
+
       return reply(game);
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
