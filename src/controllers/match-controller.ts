@@ -38,6 +38,7 @@ interface MatchResponse {
     },
     type : MatchStatusType,
   };
+  odds: MatchOdds[];
 }
 
 /**
@@ -51,15 +52,18 @@ interface MatchResponse {
  * @param {Date} date
  * @returns
  */
-function aggregateMatchResponse( teams: Team[], games: Game[], leagues: League[], updates: MatchUpdate[], id: ObjectID, date: Date) {
+function aggregateMatchResponse(
+  teams: Team[], games: Game[], leagues: League[],
+  updates: MatchUpdate[], id: ObjectID, date: Date, odds: MatchOdds[]) {
   const matchResponse : MatchResponse = {
+    odds,
+    date,
     id,
     homeTeam: '',
     awayTeam: '',
     league: '',
     game: '',
     gameSlug: '',
-    date,
     isLive: new Date(date).getTime() === new Date().getTime(),
     state: {
       type : MatchStatusType.Unknown,
@@ -204,7 +208,8 @@ class MatchController {
         /*
           Default prop
         */
-        const matchResponse = aggregateMatchResponse(teams, games, leagues, updates, id, date);
+        const matchResponse = aggregateMatchResponse
+        (teams, games, leagues, updates, id, date, odds);
 
         matchesResponse.push(matchResponse);
       }
@@ -243,7 +248,7 @@ class MatchController {
       const leagues = await MatchService.getLeagues([match.leagueId]);
 
       const matchResponse = aggregateMatchResponse(
-        teams, games, leagues, match.updates, match._id, match.date);
+        teams, games, leagues, match.updates, match._id, match.date, match.odds);
 
       return reply(matchResponse);
 
