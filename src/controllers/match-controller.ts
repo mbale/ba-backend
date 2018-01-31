@@ -16,6 +16,9 @@ import { getConnection, ObjectID } from 'typeorm';
 import { ObjectId } from 'bson';
 import { ReplyNoContinue, Request, Response } from 'hapi';
 import { EntityNotFoundError } from '../errors';
+import Prediction, { SelectedTeam } from '../entity/prediction';
+import User, { Profile } from '../entity/user';
+
 
 /**
  * MatchResponse
@@ -39,6 +42,13 @@ interface MatchResponse {
     type : MatchStatusType,
   };
   odds: MatchOdds[];
+  predictions?: {
+    text: string;
+    id: ObjectId;
+    user: Profile;
+    odds: MatchOdds;
+    selectedTeam: SelectedTeam;
+  }[];
 }
 
 /**
@@ -243,6 +253,16 @@ class MatchController {
 
       const match = matches[0];
 
+      const predictionRepository = getConnection()
+        .getMongoRepository<Prediction>(Prediction);
+
+      const userRepository = getConnection()
+        .getMongoRepository<User>(User);
+
+      const predictions = await predictionRepository.find({
+        matchId: new ObjectId(match._id),
+      });
+
       const teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
       const games = await TeamService.getGames({ ids: match.gameId.toString() });
       const leagues = await MatchService.getLeagues([match.leagueId]);
@@ -250,8 +270,75 @@ class MatchController {
       const matchResponse = aggregateMatchResponse(
         teams, games, leagues, match.updates, match._id, match.date, match.odds);
 
+      matchResponse.predictions = [];
+
+      for (const p of predictions) {
+        const user = await userRepository.findOneById(p.userId);
+        const odds = matchResponse.odds.find(o => new ObjectId(o._id).equals(p.oddsId));
+
+        matchResponse.predictions.push({
+          text: p.text,
+          id: p._id,
+          odds,
+          user: user.getProfile(),
+          selectedTeam: p.selectedTeam,
+        });
+      }
+
       return reply(matchResponse);
 
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        return reply(notFound(error.message));
+      }
+      return reply(badImplementation(error));
+    }
+  }
+
+  static async addPrediction(request: Request, reply: ReplyNoContinue): Promise<Response> {
+    try {
+      const matchId = request.params.matchId;
+      const {
+        payload: {
+          stake,
+          text,
+          oddsId,
+          team,
+        },
+      } = request;
+
+      const user: User = request.auth.credentials.user;
+
+      const repository = getConnection()
+        .getMongoRepository<Prediction>(Prediction);
+
+      const { data: matches } = await MatchService.getMatches({
+        ids: matchId,
+      });
+
+      if (matches.length === 0) {
+        throw new EntityNotFoundError('match', 'id', matchId);
+      }
+
+      const match: Match = matches[0];
+
+      const oddsAvailable = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
+
+      if (!oddsAvailable) {
+        throw new EntityNotFoundError('odds', 'id', oddsId);
+      }
+
+      const prediction = new Prediction();
+
+      prediction.matchId = new ObjectId(match._id);
+      prediction.oddsId = new ObjectId(oddsId);
+      prediction.selectedTeam = team;
+      prediction.text = text;
+      prediction.userId = user._id;
+
+      await repository.save(prediction);
+
+      return reply();
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply(notFound(error.message));

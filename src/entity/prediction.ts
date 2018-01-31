@@ -5,6 +5,7 @@ export enum SelectedTeam {
 }
 
 interface PredictionComment {
+  _id: ObjectID;
   userId : ObjectID;
   text : string;
 }
@@ -28,12 +29,12 @@ class Prediction {
 
   @Column()
   text : string = '';
-  
+
   @Column()
   selectedTeam : SelectedTeam;
 
   @Column()
-  comments : PredictionComment[];
+  comments : PredictionComment[] = [];
 }
 
 export default Prediction;

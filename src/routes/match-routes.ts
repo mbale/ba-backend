@@ -88,6 +88,24 @@ const MatchRoutes : RouteConfiguration[] = [
       },
     },
   },
+  {
+    path: '/v1/matches/{matchId}/predictions',
+    method: 'POST',
+    handler: MatchController.addPrediction,
+    config: {
+      validate: {
+        params: {
+          matchId: Joi.string().regex(objectIdRegex),
+        },
+        payload: Joi.object().keys({
+          stake: Joi.number().allow([0, 1, 3]).required(),
+          text: Joi.string().max(3000).optional(),
+          oddsId: Joi.string().regex(objectIdRegex).required(),
+          team: Joi.string().allow(['home', 'away']).required(),
+        }),
+      },
+    },
+  },
 ];
 
 export default MatchRoutes;
