@@ -141,7 +141,7 @@ class MatchController {
       } : {
         page : number; // default
         limit : number; // default
-        gameIds: string[];
+        gameIds: string[] | string;
         gameSlugs: string[];
         leagueId: string;
         homeTeamId: string;
@@ -155,9 +155,12 @@ class MatchController {
       };
 
       if (gameIds) {
-        if (gameIds.length > 0) {
+        if (gameIds instanceof Array) {
           query.gameIds = gameIds;
+        } else {
+          query.gameIds = [gameIds];
         }
+        console.log(query)
       }
 
       if (leagueId) {
