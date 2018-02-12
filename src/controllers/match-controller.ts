@@ -132,15 +132,17 @@ class MatchController {
       const {
         page,
         limit,
-        gameId,
+        gameIds,
         leagueId,
         homeTeamId,
         awayTeamId,
+        gameSlugs,
         statusType,
       } : {
         page : number; // default
         limit : number; // default
-        gameId: string;
+        gameIds: string[];
+        gameSlugs: string[];
         leagueId: string;
         homeTeamId: string;
         awayTeamId: string;
@@ -152,8 +154,10 @@ class MatchController {
         limit: limit.toString(),
       };
 
-      if (gameId) {
-        query.gameId = gameId;
+      if (gameIds) {
+        if (gameIds.length > 0) {
+          query.gameIds = gameIds;
+        }
       }
 
       if (leagueId) {

@@ -27,7 +27,7 @@ const MatchRoutes : RouteConfiguration[] = [
         query: Joi.object().keys({
           page: Joi.number().optional().default(0),
           limit: Joi.number().optional().default(10),
-          gameId: Joi.string().regex(objectIdRegex),
+          gameIds: Joi.array().items(Joi.string().regex(objectIdRegex)),
           leagueId: Joi.string().regex(objectIdRegex),
           homeTeamId: Joi.string().regex(objectIdRegex),
           awayTeamId: Joi.string().regex(objectIdRegex),
