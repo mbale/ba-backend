@@ -49,6 +49,7 @@ interface MatchResponse {
     odds: MatchOdds;
     selectedTeam: SelectedTeam;
   }[];
+  predictionCount?: number;
 }
 
 /**
@@ -64,7 +65,7 @@ interface MatchResponse {
  */
 function aggregateMatchResponse(
   teams: Team[], games: Game[], leagues: League[],
-  updates: MatchUpdate[], id: ObjectID, date: Date, odds: MatchOdds[]) {
+  updates: MatchUpdate[], id: ObjectID, date: Date, odds: MatchOdds[], predictionCount?: number) {
   const matchResponse : MatchResponse = {
     odds,
     date,
@@ -83,6 +84,10 @@ function aggregateMatchResponse(
       },
     },
   };
+
+  if (predictionCount === 0) {
+    matchResponse.predictionCount = predictionCount;
+  }
 
   /*
     Maps to success case
@@ -180,6 +185,9 @@ class MatchController {
 
       const { data: matches, headers } = await MatchService.getMatches(query);
 
+      const predictionRepository = getConnection()
+        .getMongoRepository<Prediction>(Prediction);
+
       let mainBuffer : any[] = [];
 
       for (const match of matches) {
@@ -192,6 +200,9 @@ class MatchController {
           match.date,
           match.odds,
           match.updates,
+          predictionRepository.count({
+            matchId: new ObjectId(match._id),
+          }),
         ];
 
         mainBuffer.push(buffer);
@@ -211,6 +222,7 @@ class MatchController {
           date,
           odds,
           updates,
+          count,
         ] : [
           Team[],
           Game[],
@@ -218,14 +230,15 @@ class MatchController {
           ObjectID,
           Date,
           MatchOdds[],
-          MatchUpdate[]
+          MatchUpdate[],
+          number
         ] = buffer; //
 
         /*
           Default prop
         */
         const matchResponse = aggregateMatchResponse
-        (teams, games, leagues, updates, id, date, odds);
+        (teams, games, leagues, updates, id, date, odds, count);
 
         matchesResponse.push(matchResponse);
       }
