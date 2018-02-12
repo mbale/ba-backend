@@ -132,7 +132,7 @@ class MatchController {
       const {
         page,
         limit,
-        gameIds,
+        'gameIds[]': gameIds,
         leagueId,
         homeTeamId,
         awayTeamId,
@@ -141,7 +141,7 @@ class MatchController {
       } : {
         page : number; // default
         limit : number; // default
-        gameIds: string[] | string;
+        'gameIds[]': string[] | string;
         gameSlugs: string[];
         leagueId: string;
         homeTeamId: string;
@@ -160,7 +160,6 @@ class MatchController {
         } else {
           query.gameIds = [gameIds];
         }
-        console.log(query)
       }
 
       if (leagueId) {
