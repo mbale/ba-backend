@@ -125,7 +125,7 @@ class UsersController {
       // construct base response object
       const response = {
         profile: user.getProfile(true),
-        predictions: await aggregatePredictions(predictionsOfUser),
+        // predictions: await aggregatePredictions(predictionsOfUser),
       };
 
       return reply(response);

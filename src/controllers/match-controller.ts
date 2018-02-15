@@ -65,7 +65,8 @@ interface MatchResponse {
  */
 function aggregateMatchResponse(
   teams: Team[], games: Game[], leagues: League[],
-  updates: MatchUpdate[], id: ObjectID, date: Date, odds: MatchOdds[], predictionCount?: number) {
+  updates: MatchUpdate[],
+  id: ObjectID, date: Date, odds: MatchOdds[], predictionCount: number = 0) {
   const matchResponse : MatchResponse = {
     odds,
     date,
@@ -85,9 +86,7 @@ function aggregateMatchResponse(
     },
   };
 
-  if (predictionCount === 0) {
-    matchResponse.predictionCount = predictionCount;
-  }
+  matchResponse.predictionCount = predictionCount;
 
   /*
     Maps to success case
