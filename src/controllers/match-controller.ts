@@ -285,8 +285,10 @@ class MatchController {
       const games = await TeamService.getGames({ ids: match.gameId.toString() });
       const leagues = await MatchService.getLeagues([match.leagueId]);
 
+      const predictionCount = predictions.length;
+
       const matchResponse = aggregateMatchResponse(
-        teams, games, leagues, match.updates, match._id, match.date, match.odds);
+        teams, games, leagues, match.updates, match._id, match.date, match.odds, predictionCount);
 
       matchResponse.predictions = [];
 
