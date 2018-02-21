@@ -99,7 +99,7 @@ const MatchRoutes : RouteConfiguration[] = [
           matchId: Joi.string().regex(objectIdRegex),
         },
         payload: Joi.object().keys({
-          stake: Joi.number().only([0, 1, 3]).required(),
+          stake: Joi.number().only([0, 1, 2, 3]).required(),
           text: Joi.string().max(3000).optional(),
           oddsId: Joi.string().regex(objectIdRegex).required(),
           team: Joi.string().only(['home', 'away']).required(),
