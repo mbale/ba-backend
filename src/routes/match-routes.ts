@@ -102,7 +102,7 @@ const MatchRoutes : RouteConfiguration[] = [
           stake: Joi.number().allow([0, 1, 3]).required(),
           text: Joi.string().max(3000).optional(),
           oddsId: Joi.string().regex(objectIdRegex).required(),
-          team: Joi.string().allow(['home', 'away']).required(),
+          team: Joi.string().only(['home', 'away']).required(),
         }),
       },
     },
