@@ -48,6 +48,7 @@ interface MatchResponse {
     user: Profile;
     odds: MatchOdds;
     selectedTeam: SelectedTeam;
+    stake: Number;
   }[];
   predictionCount?: number;
 }
@@ -302,6 +303,7 @@ class MatchController {
           odds,
           user: user.getProfile(),
           selectedTeam: p.selectedTeam,
+          stake: p.stake
         });
       }
 
