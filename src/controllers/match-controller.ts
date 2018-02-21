@@ -355,6 +355,7 @@ class MatchController {
       prediction.selectedTeam = team;
       prediction.text = text;
       prediction.userId = user._id;
+      prediction.stake = stake;
 
       await repository.save(prediction);
 
