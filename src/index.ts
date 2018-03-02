@@ -1,3 +1,5 @@
+require('ts-node').register();
+
 import MatchService from './service/match';
 import TeamService from './service/team';
 import Prediction from './entity/prediction';
@@ -18,16 +20,20 @@ import User from './entity/user';
 import BookmakerReview from './entity/bookmaker-reviews';
 import { EntityNotFoundError } from './errors';
 import * as cloudinary from 'cloudinary';
+import * as rabbot from 'rabbot'
+import { rabbitMQConfig } from 'ba-common';
+
 // import {
 //   version,
 // } from '../package.json';
 
-// const applicationVersion = version;s
+// const applicationVersion = version;
 
 dotenv.config();
 
 const TEAM_SERVICE_URL = process.env.TEAM_SERVICE_URL;
 const MATCH_SERVICE_URL = process.env.MATCH_SERVICE_URL;
+const RABBITMQ_URI = process.env.RABBITMQ_URI;
 const HTTP_PORT = process.env.BACKEND_HTTP_PORT;
 const SENTRY_DNS = process.env.BACKEND_SENTRY_DNS;
 const MONGODB_URL = process.env.BACKEND_MONGODB_URL;
@@ -90,6 +96,45 @@ const goodReporterOptions = {
 
 server.ext('onPreStart', async (serverInstance, next) => {
   try {
+
+    const exchanges = [
+      {
+        name: 'match-service',
+        type: 'topic',
+        persistent: true
+      },
+      {
+        name: 'team-service',
+        type: 'topic',
+        persistent: true
+      }
+    ];
+
+    const queues = [
+      {
+        name: 'match-service', autoDelete: true,
+      },
+      {
+        name: 'team-service', autoDelete: true,
+      }
+    ];
+
+    const bindings = [
+      {
+        exchange: 'match-service', target: 'match-service', keys: ['get-by-ids']
+      },
+      {
+        exchange: 'team-service', target: 'team-service', keys: ['get-by-ids']
+      }
+    ]
+    await rabbot.configure(rabbitMQConfig(RABBITMQ_URI, exchanges, queues, bindings))
+
+    cloudinary.config({
+      cloud_name: CLOUDINARY_CLOUD_NAME,
+      api_key: CLOUDINARY_API_KEY,
+      api_secret: CLOUDINARY_API_SECRET,
+    });
+
     const dbOptions : ConnectionOptions = {
       type: 'mongodb',
       url: MONGODB_URL,
@@ -97,11 +142,6 @@ server.ext('onPreStart', async (serverInstance, next) => {
       entities: [User, Prediction, BookmakerReview],
     };
 
-    cloudinary.config({
-      cloud_name: CLOUDINARY_CLOUD_NAME,
-      api_key: CLOUDINARY_API_KEY,
-      api_secret: CLOUDINARY_API_SECRET,
-    });
 
     const connection = await createConnection(dbOptions);
 
@@ -113,7 +153,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
     MatchService.initialize(MATCH_SERVICE_URL);
 
     const pingResults = await Promise.all([
-      TeamService.ping(), 
+      TeamService.ping(),
       MatchService.ping(),
     ]);
 
@@ -125,7 +165,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
         serverInstance.log(['error'], pingResult.data);
       }
     }
-    
+
 
     serverInstance.log(['info'], `DB's connected to ${connection.options.type}`);
     return next();
@@ -139,11 +179,11 @@ server.ext('onPreStart', async (serverInstance, next) => {
   Plugin registration
  */
 
-server.register({ 
-  register: Henning, 
+server.register({
+  register: Henning,
   options: {
     whitelist: ['image/png', 'image/jpg', 'image/jpeg'],
-}}, (error) => { 
+}}, (error) => {
   if (error) {
     throw error;
   }

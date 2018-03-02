@@ -11,7 +11,8 @@ import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
 
 import MatchService from '../service/match';
-import { Team } from 'ba-common';
+import { Team, Match } from 'ba-common';
+import * as rabbot from 'rabbot';
 
 /**
  * PredictionResponse
@@ -19,73 +20,49 @@ import { Team } from 'ba-common';
  * @interface PredictionResponse
  */
 interface PredictionResponse {
-  id : ObjectID;
-  text : string;
-  match : {
-    _id : ObjectID;
-    homeTeam : string;
-    awayTeam : string;
+  id: ObjectID;
+  text: string;
+  match: {
+    _id: ObjectID;
+    homeTeam: string;
+    awayTeam: string;
   };
-  odds : number;
-  stake : number;
-  comments : number;
+  odds: number;
+  stake: number;
+  comments: number;
 }
 
 /**
  * Aggregate predictions of user into an array
  *
  * @param {Prediction[]} predictionsOfUser
- * @returns {Promise<PredictionResponse[]>}
+ * @param {Match[]} matches
+ * @param {Team[]} teams
+ * @returns
  */
-async function aggregatePredictions(predictionsOfUser : Prediction[])
-  : Promise<PredictionResponse[]> {
+function aggregatePredictions(predictionsOfUser : Prediction[], matches: Match[], teams: Team[]) {
   const predictions : PredictionResponse[] = [];
-    // populate it
-  for (const {
-    _id, text, matchId, comments, selectedTeam, stake, oddsId,
-  } of predictionsOfUser) {
+  // populate it
+  for (const { _id: id, text, stake, matchId, oddsId, comments, selectedTeam} of predictionsOfUser) {
+    const match = matches.find((m) => new ObjectId(m._id).equals(matchId))
 
-    const { data: matches } = await MatchService.getMatches({});
-    const match = matches[0];
+    const {
+      awayTeamId,
+      homeTeamId,
+    } = match;
 
-    let teams : Team[] = [];
+    const homeTeam = teams.find(t => new ObjectId(t._id).equals(homeTeamId)).name
+    const awayTeam = teams.find(t => new ObjectId(t._id).equals(awayTeamId)).name
 
-    if (matches.length > 0) {
-      teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
+    const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId))
+    let selectedOdds = odds.home
+
+    if (selectedTeam === SelectedTeam.Away) {
+      selectedOdds = odds.away
     }
 
-    /*
-      Find out which odds he put on
-    */
-
-    let selectedOdds = 0;
-
-    if (matches.length > 0) {
-      const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
-
-      if (odds) {
-        selectedOdds = odds.home;
-
-        if (selectedTeam === SelectedTeam.Away) {
-          selectedOdds = odds.away;
-        }
-      }
-    }
-
-    /*
-      Getting team names
-    */
-
-    let homeTeam = '';
-    let awayTeam = '';
-
-    if (teams.length > 0) {
-      homeTeam = teams[0].name;
-      awayTeam = teams[1].name;
-    }
-
-    const prediction : PredictionResponse = {
-      id: _id,
+    const p: PredictionResponse = {
+      id,
       text,
       stake,
       match: {
@@ -96,8 +73,10 @@ async function aggregatePredictions(predictionsOfUser : Prediction[])
       odds: selectedOdds,
       comments: comments.length,
     };
-    predictions.push(prediction);
+
+    predictions.push(p)
   }
+
   return predictions;
 }
 
@@ -114,7 +93,9 @@ class UsersController {
   static async getLoggedUserProfile(request : Request, reply : ReplyNoContinue)
   : Promise<Response> {
     try {
-      const user : User = request.auth.credentials.user;
+      const user: User = request.auth.credentials.user;
+      const profile = user.getProfile()
+
       const connection = getConnection();
       const predictionRepository = connection.getMongoRepository<Prediction>(Prediction);
 
@@ -122,11 +103,36 @@ class UsersController {
         userId : user._id,
       });
 
-      // construct base response object
-      const response = {
-        profile: user.getProfile(true),
-        // predictions: await aggregatePredictions(predictionsOfUser),
-      };
+      const { body: matchSRequest } = await rabbot.request('match-service', {
+        type: 'get-by-ids',
+        body: predictionsOfUser.map((p) => p.matchId)
+      })
+
+      const matches: Match[] = matchSRequest.matches || [];
+
+      const teamIds = [];
+
+      matches.forEach(match => {
+        teamIds.push(match.homeTeamId)
+        teamIds.push(match.awayTeamId)
+      })
+
+      const { body: teamSRequest } = await rabbot.request('team-service', {
+        type: 'get-by-ids',
+        body: teamIds
+      })
+
+      const teams: Team[] = teamSRequest.teams || []
+
+      const predictions = aggregatePredictions(predictionsOfUser, matches, teams);
+
+      const response: {
+        profile: Profile;
+        predictions: PredictionResponse[]
+      } = {
+        profile,
+        predictions,
+      }
 
       return reply(response);
     } catch (error) {
@@ -358,7 +364,7 @@ class UsersController {
 
       const response = {
         profile : user.getProfile(),
-        predictions: await aggregatePredictions(predictionsOfUser),
+        //predictions: await aggregatePredictions(predictionsOfUser)[], teams: Team[],
       };
 
       return reply(response);

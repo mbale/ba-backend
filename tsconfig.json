@@ -11,6 +11,8 @@
      "moduleResolution": "node",
      "sourceMap": true,
      "noImplicitAny": false,
+     "outDir": "build",
+     "allowSyntheticDefaultImports": true,
      "suppressImplicitAnyIndexErrors": true,
      "emitDecoratorMetadata": true,
      "experimentalDecorators": true

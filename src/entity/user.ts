@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import * as nanoid from 'nanoid';
+import nanoid = require('nanoid')
 import Prediction from './prediction';
 import {
   Entity,

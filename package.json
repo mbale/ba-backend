@@ -32,11 +32,13 @@
     "@types/jsonwebtoken": "^7.2.3",
     "@types/lab": "^11.1.0",
     "@types/mongodb": "^2.2.15",
+    "@types/nanoid": "^1.0.0",
     "@types/qs": "^6.5.1",
     "@types/reflect-metadata": "^0.0.5",
     "awesome-typescript-loader": "^3.2.3",
     "backpack-core": "^0.4.1",
     "ts-loader": "^3.2.0",
+    "ts-node": "^5.0.0",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.3.0",
     "typescript": "^2.6.1"
@@ -44,7 +46,7 @@
   "dependencies": {
     "@wegolook/joi-objectid": "^2.1.0",
     "axios": "^0.16.2",
-    "ba-common": "git+ssh://git@github.com:MainBase/ba-common.git",
+    "ba-common": "../ba-common/",
     "bcrypt": "^1.0.2",
     "blipp": "^2.3.0",
     "chance": "^1.0.9",
@@ -65,8 +67,9 @@
     "jsonwebtoken": "^7.4.1",
     "mailgun-js": "^0.12.0",
     "mongodb": "^2.2.33",
-    "nanoid": "^1.0.1",
+    "nanoid": "^1.0.2",
     "qs": "^6.5.1",
+    "rabbot": "^2.1.0",
     "reflect-metadata": "^0.1.10",
     "typeorm": "^0.1.1"
   },
