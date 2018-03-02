@@ -451,7 +451,7 @@ b64@3.x.x:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/b64/-/b64-3.0.2.tgz#7a9d60466adf7b8de114cbdf651a5fdfcc90894d"
 
-ba-common@../ba-common:
+ba-common@../ba-common/:
   version "1.0.0"
   dependencies:
     "@types/express" "^4.0.39"
@@ -467,8 +467,9 @@ ba-common@../ba-common:
     winston "^2.4.0"
     winston-mongodb "^3.0.2"
 
-ba-common@../ba-common/:
+"ba-common@git+ssh://git@github.com:MainBase/ba-common.git":
   version "1.0.0"
+  resolved "git+ssh://git@github.com:MainBase/ba-common.git#717427a750ad6686a05ab320577c2c6089972c58"
   dependencies:
     "@types/express" "^4.0.39"
     axios "^0.17.1"
