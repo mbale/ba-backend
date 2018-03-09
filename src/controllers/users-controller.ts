@@ -104,7 +104,7 @@ class UsersController {
       });
 
       const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
-        type: 'get-by-ids',
+        type: 'get-matches-by-ids',
         body: predictionsOfUser.map(p => p.matchId),
       });
 
@@ -120,7 +120,7 @@ class UsersController {
       });
 
       const { ack: teamSRequestAck, body: teamSRequest } = await rabbot.request('team-service', {
-        type: 'get-by-ids',
+        type: 'get-teams-by-ids',
         body: teamIds,
       });
 

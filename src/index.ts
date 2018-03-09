@@ -20,7 +20,7 @@ import User from './entity/user';
 import BookmakerReview from './entity/bookmaker-reviews';
 import { EntityNotFoundError } from './errors';
 import * as cloudinary from 'cloudinary';
-import * as rabbot from 'rabbot'
+import * as rabbot from 'rabbot';
 import { rabbitMQConfig } from 'ba-common';
 
 // import {
@@ -49,7 +49,7 @@ server.connection({
   port: HTTP_PORT || 3000,
   routes: {
     cors: {
-      additionalExposedHeaders: ['count', 'Count']
+      additionalExposedHeaders: ['count', 'Count'],
     },
   },
 });
@@ -101,13 +101,13 @@ server.ext('onPreStart', async (serverInstance, next) => {
       {
         name: 'match-service',
         type: 'topic',
-        persistent: true
+        persistent: true,
       },
       {
         name: 'team-service',
         type: 'topic',
-        persistent: true
-      }
+        persistent: true,
+      },
     ];
 
     const queues = [
@@ -116,18 +116,19 @@ server.ext('onPreStart', async (serverInstance, next) => {
       },
       {
         name: 'team-service', autoDelete: true,
-      }
+      },
     ];
 
     const bindings = [
       {
-        exchange: 'match-service', target: 'match-service', keys: ['get-by-ids']
+        exchange: 'match-service', target: 'match-service', keys: ['get-matches-by-ids'],
       },
       {
-        exchange: 'team-service', target: 'team-service', keys: ['get-by-ids']
-      }
-    ]
-    await rabbot.configure(rabbitMQConfig(RABBITMQ_URI, exchanges, queues, bindings))
+        exchange: 'team-service', target: 'team-service', keys: ['get-teams-by-ids'],
+      },
+    ];
+
+    await rabbot.configure(rabbitMQConfig(RABBITMQ_URI, exchanges, queues, bindings));
 
     cloudinary.config({
       cloud_name: CLOUDINARY_CLOUD_NAME,
@@ -183,10 +184,8 @@ server.register({
   register: Henning,
   options: {
     whitelist: ['image/png', 'image/jpg', 'image/jpeg'],
-}}, (error) => {
-  if (error) {
-    throw error;
-  }
+  }},           (error) => {
+  if (error) { throw error; }
 });
 
 // logger
