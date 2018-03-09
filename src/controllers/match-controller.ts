@@ -1,6 +1,6 @@
 import MatchService from '../service/match';
 import TeamService from '../service/team';
-import { badImplementation, notFound } from 'boom';
+import { badImplementation, notFound, badRequest } from 'boom';
 import {
   Game,
   League,
@@ -15,9 +15,10 @@ import {
 import { getConnection, ObjectID } from 'typeorm';
 import { ObjectId } from 'bson';
 import { ReplyNoContinue, Request, Response } from 'hapi';
-import { EntityNotFoundError } from '../errors';
+import { EntityNotFoundError, EntityInvalidError } from '../errors';
 import Prediction, { SelectedTeam } from '../entity/prediction';
 import User, { Profile } from '../entity/user';
+import * as rabbot from 'rabbot';
 
 
 /**
@@ -320,6 +321,7 @@ class MatchController {
   static async addPrediction(request: Request, reply: ReplyNoContinue): Promise<Response> {
     try {
       const matchId = request.params.matchId;
+
       const {
         payload: {
           stake,
@@ -334,26 +336,64 @@ class MatchController {
       const repository = getConnection()
         .getMongoRepository<Prediction>(Prediction);
 
-      const { data: matches } = await MatchService.getMatches({
-        ids: matchId,
+      const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
+        type: 'get-by-ids',
+        body: [matchId],
       });
 
-      if (matches.length === 0) {
-        throw new EntityNotFoundError('match', 'id', matchId);
+      matchSRequestAck();
+
+      const [match]: [Match] = matchSRequest.matches;
+
+      if (!match) {
+        throw new EntityNotFoundError('Match', 'id', matchId);
       }
 
-      const match: Match = matches[0];
+      const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
 
-      const oddsAvailable = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
+      if (!odds) {
+        throw new EntityNotFoundError('Odds', 'id', oddsId);
+      }
 
-      if (!oddsAvailable) {
-        throw new EntityNotFoundError('odds', 'id', oddsId);
+      // check if it's the latest
+      const sortedOddsByDate = match.odds
+        .sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime());
+
+      // check if it's the latest one
+      if (!new ObjectId(sortedOddsByDate[0]._id).equals(oddsId)) {
+        throw new EntityInvalidError('Odds', 'id', `It's obsolete`);
+      }
+
+      // check whether stake is valid or out of range
+      let teamOdds = odds.away;
+
+      if (team === SelectedTeam.Home) {
+        teamOdds = odds.home;
+      }
+
+      let allowedMaxStake = 0.5;
+
+      // interval check
+      if (teamOdds < 2.5) {
+        allowedMaxStake = 3;
+      }
+
+      if (teamOdds >= 2.5 && teamOdds < 5) {
+        allowedMaxStake = 2;
+      }
+
+      if (teamOdds >= 5 && teamOdds < 7.5) {
+        allowedMaxStake = 1;
+      }
+
+      if (stake > allowedMaxStake) {
+        throw new EntityInvalidError('Odds', 'stake', `Stake is out of allowed range`);
       }
 
       const prediction = new Prediction();
 
       prediction.matchId = new ObjectId(match._id);
-      prediction.oddsId = new ObjectId(oddsId);
+      prediction.oddsId = oddsId;
       prediction.selectedTeam = team;
       prediction.text = text;
       prediction.userId = user._id;
@@ -365,6 +405,9 @@ class MatchController {
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply(notFound(error.message));
+      }
+      if (error instanceof EntityInvalidError) {
+        return reply(badRequest(error.message));
       }
       return reply(badImplementation(error));
     }
