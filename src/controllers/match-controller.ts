@@ -88,6 +88,11 @@ function aggregateMatchResponse(
     },
   };
 
+  const latestOdds = odds
+    .sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime())[0];
+
+  matchResponse.odds = [latestOdds];
+
   matchResponse.predictionCount = predictionCount;
 
   /*
@@ -263,15 +268,18 @@ class MatchController {
     try {
       const matchId = request.params.matchId;
 
-      const { data: matches } = await MatchService.getMatches({
-        ids: matchId,
+      const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
+        type: 'get-matches-by-ids',
+        body: [matchId],
       });
 
-      if (matches.length === 0) {
+      matchSRequestAck();
+
+      const [match]: [Match] = matchSRequest.matches;
+
+      if (!match) {
         throw new EntityNotFoundError('Match', 'id', matchId);
       }
-
-      const match = matches[0];
 
       const predictionRepository = getConnection()
         .getMongoRepository<Prediction>(Prediction);
@@ -283,14 +291,35 @@ class MatchController {
         matchId: new ObjectId(match._id),
       });
 
-      const teams = await TeamService.getTeams([match.homeTeamId, match.awayTeamId]);
-      const games = await TeamService.getGames({ ids: match.gameId.toString() });
-      const leagues = await MatchService.getLeagues([match.leagueId]);
+      const [teamsRequest, gameRequest, leagueRequest] = await Promise.all([
+        rabbot.request('team-service', {
+          type: 'get-teams-by-ids',
+          body: [match.homeTeamId, match.awayTeamId],
+        }),
+        rabbot.request('team-service', {
+          type: 'get-games-by-ids',
+          body: [match.gameId],
+        }),
+        rabbot.request('match-service', {
+          type: 'get-leagues-by-ids',
+          body: [match.leagueId],
+        }),
+      ]);
+
+      // ack
+      teamsRequest.ack();
+      gameRequest.ack();
+      leagueRequest.ack();
+
+      const [homeTeam, awayTeam]: Team[] = teamsRequest.body.teams;
+      const [game]: Game[] = gameRequest.body.games;
+      const [league]: League[] = leagueRequest.body.leagues;
 
       const predictionCount = predictions.length;
 
       const matchResponse = aggregateMatchResponse(
-        teams, games, leagues, match.updates, match._id, match.date, match.odds, predictionCount);
+        [homeTeam, awayTeam], [game],
+        [league], match.updates, match._id, match.date, match.odds, predictionCount);
 
       matchResponse.predictions = [];
 
@@ -299,17 +328,16 @@ class MatchController {
         const odds = matchResponse.odds.find(o => new ObjectId(o._id).equals(p.oddsId));
 
         matchResponse.predictions.push({
+          odds,
           text: p.text,
           id: p._id,
-          odds,
           user: user.getProfile(),
           selectedTeam: p.selectedTeam,
-          stake: p.stake
+          stake: p.stake,
         });
       }
 
       return reply(matchResponse);
-
     } catch (error) {
       if (error instanceof EntityNotFoundError) {
         return reply(notFound(error.message));
@@ -337,7 +365,7 @@ class MatchController {
         .getMongoRepository<Prediction>(Prediction);
 
       const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
-        type: 'get-by-ids',
+        type: 'get-matches-by-ids',
         body: [matchId],
       });
 

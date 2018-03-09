@@ -121,10 +121,18 @@ server.ext('onPreStart', async (serverInstance, next) => {
 
     const bindings = [
       {
-        exchange: 'match-service', target: 'match-service', keys: ['get-matches-by-ids'],
+        exchange: 'match-service', target: 'match-service',
+        keys: [
+          'get-matches-by-ids',
+          'get-leagues-by-ids',
+        ],
       },
       {
-        exchange: 'team-service', target: 'team-service', keys: ['get-teams-by-ids'],
+        exchange: 'team-service', target: 'team-service',
+        keys: [
+          'get-teams-by-ids',
+          'get-games-by-ids',
+        ],
       },
     ];
 
