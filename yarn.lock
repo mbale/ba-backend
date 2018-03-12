@@ -453,7 +453,7 @@ b64@3.x.x:
 
 "ba-common@git+ssh://git@github.com:MainBase/ba-common.git":
   version "1.0.0"
-  resolved "git+ssh://git@github.com:MainBase/ba-common.git#717427a750ad6686a05ab320577c2c6089972c58"
+  resolved "git+ssh://git@github.com:MainBase/ba-common.git#5e3f027527db9f29ae7fd81483207aa3ea34eeca"
   dependencies:
     "@types/express" "^4.0.39"
     axios "^0.17.1"

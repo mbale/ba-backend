@@ -91,7 +91,11 @@ function aggregateMatchResponse(
   const latestOdds = odds
     .sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime())[0];
 
-  matchResponse.odds = [latestOdds];
+  matchResponse.odds = [];
+
+  if (latestOdds) {
+    matchResponse.odds.push(latestOdds);
+  }
 
   matchResponse.predictionCount = predictionCount;
 
