@@ -92,7 +92,9 @@ async function aggregateBookmakers(
 
     for (const review of reviewsOfBookmaker) {
       const user = await userRepository.findOneById(review.userId);
+      const date = review._id.getTimestamp();
       reviewResponse.items.push({
+        date,
         rate: review.rate,
         text: review.text,
         user: user.getProfile(),
