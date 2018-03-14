@@ -273,13 +273,13 @@ class MatchController {
       const matchId = request.params.matchId;
 
       const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
-        type: 'get-matches-by-ids',
-        body: [matchId],
+        type: 'get-match-by-url-id',
+        body: matchId,
       });
 
       matchSRequestAck();
 
-      const [match]: [Match] = matchSRequest.matches;
+      const [match]: [Match] = matchSRequest.match;
 
       if (!match) {
         throw new EntityNotFoundError('Match', 'id', matchId);

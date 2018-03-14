@@ -125,6 +125,7 @@ server.ext('onPreStart', async (serverInstance, next) => {
         keys: [
           'get-matches-by-ids',
           'get-leagues-by-ids',
+          'get-match-by-url-id',
         ],
       },
       {

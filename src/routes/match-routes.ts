@@ -84,7 +84,7 @@ const MatchRoutes : RouteConfiguration[] = [
       auth: false,
       validate: {
         params: {
-          matchId: Joi.string().regex(objectIdRegex),
+          matchId: Joi.string(),
         },
       },
     },
