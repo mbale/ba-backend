@@ -28,6 +28,7 @@ import * as rabbot from 'rabbot';
  */
 interface MatchResponse {
   id : ObjectID;
+  urlId: string;
   homeTeam : string;
   awayTeam : string;
   league : string;
@@ -68,11 +69,12 @@ interface MatchResponse {
 function aggregateMatchResponse(
   teams: Team[], games: Game[], leagues: League[],
   updates: MatchUpdate[],
-  id: ObjectID, date: Date, odds: MatchOdds[], predictionCount: number = 0) {
+  id: ObjectID, date: Date, odds: MatchOdds[], predictionCount: number = 0, urlId: string) {
   const matchResponse : MatchResponse = {
     odds,
     date,
     id,
+    urlId,
     homeTeam: '',
     awayTeam: '',
     league: '',
@@ -210,6 +212,7 @@ class MatchController {
           match.date,
           match.odds,
           match.updates,
+          match.urlId,
           predictionRepository.count({
             matchId: new ObjectId(match._id),
           }),
@@ -232,6 +235,7 @@ class MatchController {
           date,
           odds,
           updates,
+          urlId,
           count,
         ] : [
           Team[],
@@ -241,6 +245,7 @@ class MatchController {
           Date,
           MatchOdds[],
           MatchUpdate[],
+          string,
           number
         ] = buffer; //
 
@@ -248,7 +253,7 @@ class MatchController {
           Default prop
         */
         const matchResponse = aggregateMatchResponse
-        (teams, games, leagues, updates, id, date, odds, count);
+        (teams, games, leagues, updates, id, date, odds, count, urlId);
 
         matchesResponse.push(matchResponse);
       }
@@ -323,7 +328,7 @@ class MatchController {
 
       const matchResponse = aggregateMatchResponse(
         [homeTeam, awayTeam], [game],
-        [league], match.updates, match._id, match.date, match.odds, predictionCount);
+        [league], match.updates, match._id, match.date, match.odds, predictionCount, match.urlId);
 
       matchResponse.predictions = [];
 
