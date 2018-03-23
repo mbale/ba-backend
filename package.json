@@ -53,6 +53,7 @@
     "cloudinary": "^1.9.0",
     "contentful": "^4.5.0",
     "country-list": "https://github.com/mbale/country-list",
+    "date-fns": "^1.29.0",
     "dotenv": "^4.0.0",
     "extendo-error": "^1.0.1",
     "good": "^7.2.0",

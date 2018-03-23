@@ -5,6 +5,7 @@ import MatchRoutes from '../routes/match-routes';
 import UsersRoutes from './users-routes';
 import GameRoutes from './game-routes';
 import GuideRoutes from './guide-routes';
+import RankingRoutes from './ranking-routes';
 
 export default {
   AuthRoutes,
@@ -13,5 +14,6 @@ export default {
   GuideRoutes,
   GameRoutes,
   MatchRoutes,
+  RankingRoutes,
   // TeamRoutes,
 };
