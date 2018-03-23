@@ -201,8 +201,10 @@ class UsersController {
       const match = await userRepository.findOne(query);
 
       if (match) {
-        if (propsToEdit.username.toLowerCase() === match.username) {
-          throw new EntityTakenError('User', 'username', propsToEdit.username);
+        if (propsToEdit.username) {
+          if (propsToEdit.username.toLowerCase() === match.username) {
+            throw new EntityTakenError('User', 'username', propsToEdit.username);
+          }
         }
         throw new EntityTakenError('User', 'email', propsToEdit.email);
       }
