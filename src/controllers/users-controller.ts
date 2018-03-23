@@ -158,8 +158,13 @@ class UsersController {
     try {
       const userRepository = getConnection().getMongoRepository<User>(User);
 
-      const user : User = request.auth.credentials.user;
-      const propsToEdit : Profile = request.payload;
+      const user: User = request.auth.credentials.user;
+      const propsToEdit: {
+        username?: string;
+        password?: string;
+        countryCode?: string;
+        email?: string;
+      } = request.payload;
 
       interface EditProfileQueryCheck {
         where : {
@@ -174,7 +179,7 @@ class UsersController {
         Check if other user already has the same username or email
       */
 
-      const query : EditProfileQueryCheck = {
+      const query: EditProfileQueryCheck = {
         where: {
           _id: {
             $ne: user._id,
@@ -186,6 +191,7 @@ class UsersController {
       /*
         Unique values
       */
+
       if (propsToEdit.username) {
         query.where.$or.push({
           username: propsToEdit.username.toLowerCase(),
@@ -194,19 +200,22 @@ class UsersController {
 
       if (propsToEdit.email) {
         query.where.$or.push({
-          email: propsToEdit.email,
+          email: propsToEdit.email.toLowerCase(),
         });
       }
 
-      const match = await userRepository.findOne(query);
+      // check if we need to query
+      if (query.where.$or.length > 0) {
+        const match = await userRepository.findOne(query);
 
-      if (match) {
-        if (propsToEdit.username) {
-          if (propsToEdit.username.toLowerCase() === match.username) {
-            throw new EntityTakenError('User', 'username', propsToEdit.username);
+        if (match) {
+          if (propsToEdit.username) {
+            if (propsToEdit.username.toLowerCase() === match.username) {
+              throw new EntityTakenError('User', 'username', propsToEdit.username);
+            }
           }
+          throw new EntityTakenError('User', 'email', propsToEdit.email);
         }
-        throw new EntityTakenError('User', 'email', propsToEdit.email);
       }
 
       await user.editProfileDetails(propsToEdit);

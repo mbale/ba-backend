@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import nanoid = require('nanoid')
+import nanoid = require('nanoid');
 import Prediction from './prediction';
 import {
   Entity,
@@ -123,7 +123,7 @@ class User {
   @BeforeInsert()
   updateCreationDate() {
     this._createdAt = new Date();
-  }  
+  }
 
   @BeforeUpdate()
   updateModificationDate() {
@@ -132,9 +132,9 @@ class User {
 
   /**
    * Compare user's password with another credential.
-   * 
-   * @param {string} passwordToCheck 
-   * @returns {Promise<boolean>} 
+   *
+   * @param {string} passwordToCheck
+   * @returns {Promise<boolean>}
    * @memberof User
    */
   async comparePassword(passwordToCheck : string) : Promise<boolean> {
@@ -155,8 +155,8 @@ class User {
 
   /**
    * Hash the current password
-   * 
-   * @returns {Promise<void>} 
+   *
+   * @returns {Promise<void>}
    * @memberof User
    */
   async hashPassword() : Promise<void> {
@@ -168,8 +168,8 @@ class User {
   /**
    * Handles JWT token generation and setup on user.
    * Returns the token
-   * 
-   * @returns {string} 
+   *
+   * @returns {string}
    * @memberof User
    */
   authorizeAccess() : string {
@@ -183,7 +183,7 @@ class User {
 
   /**
    * Ungrant accesstoken for user
-   * 
+   *
    * @memberof User
    */
   revokeTokenAccess() : void {
@@ -192,7 +192,7 @@ class User {
 
   /**
    * Similar as @revokeTokenAccess but removes password as well
-   * 
+   *
    * @memberof User
    */
   revokeCompleteAccess() : void {
@@ -202,8 +202,8 @@ class User {
 
   /**
    * Set up account recovery process
-   * 
-   * @returns {Promise<void>} 
+   *
+   * @returns {Promise<void>}
    * @memberof User
    */
   async resetPassword() : Promise<void> {
@@ -237,8 +237,8 @@ class User {
 
   /**
    * Set up new password and clean things from forget process
-   * 
-   * @param {string} newPassword 
+   *
+   * @param {string} newPassword
    * @memberof User
    */
   recoverAccount(newPassword : string) : void {
@@ -253,9 +253,9 @@ class User {
 
   /**
    * Get profile of the user
-   * 
-   * @param {boolean} [privateProfile=false] 
-   * @returns {Profile} 
+   *
+   * @param {boolean} [privateProfile=false]
+   * @returns {Profile}
    * @memberof User
    */
   getProfile(privateProfile : boolean = false) : Profile {
@@ -282,12 +282,12 @@ class User {
 
   /**
    * Edit profile of user
-   * 
-   * @param {Profile} profile 
+   *
+   * @param {Profile} profile
    * @memberof User
    */
-  async editProfileDetails(profile : Profile) : Promise<void> {
-    for (const [key, value] of Object.entries(profile)) {
+  async editProfileDetails(props: object) : Promise<void> {
+    for (const [key, value] of Object.entries(props)) {
       if (key === 'username') {
         // we store it as original (casing)
         this.displayname = value;
