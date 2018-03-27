@@ -393,9 +393,53 @@ class UsersController {
         userId: user._id,
       });
 
-      const response = {
-        profile : user.getProfile(),
-        // predictions: await aggregatePredictions(predictionsOfUser)[], teams: Team[],
+      const profile = user.getProfile();
+
+      const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
+        type: 'get-matches-by-ids',
+        body: predictionsOfUser.map(p => p.matchId),
+      });
+
+      matchSRequestAck();
+
+      const matches: Match[] = matchSRequest.matches || [];
+
+      const teamIds = [];
+      const gameIds = [];
+
+      matches.forEach((match) => {
+        teamIds.push(match.homeTeamId);
+        teamIds.push(match.awayTeamId);
+        gameIds.push(match.gameId);
+      });
+
+      const { ack: teamSRequestAck, body: teamSRequest } = await rabbot.request('team-service', {
+        type: 'get-teams-by-ids',
+        body: teamIds,
+      });
+
+      const {
+        ack: teamSGameRequestAck,
+        body: teamSGameRequest,
+      } = await rabbot.request('team-service', {
+        type: 'get-games-by-ids',
+        body: gameIds,
+      });
+
+      teamSRequestAck();
+      teamSGameRequestAck();
+
+      const teams: Team[] = teamSRequest.teams || [];
+      const games: Game[] = teamSGameRequest.games || [];
+
+      const predictions = aggregatePredictions(predictionsOfUser, matches, teams, games);
+
+      const response: {
+        profile: Profile;
+        predictions: PredictionResponse[]
+      } = {
+        profile,
+        predictions,
       };
 
       return reply(response);
