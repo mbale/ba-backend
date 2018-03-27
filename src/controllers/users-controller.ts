@@ -98,7 +98,7 @@ class UsersController {
   : Promise<Response> {
     try {
       const user: User = request.auth.credentials.user;
-      const profile = user.getProfile();
+      const profile = user.getProfile(true);
 
       const connection = getConnection();
       const predictionRepository = connection.getMongoRepository<Prediction>(Prediction);
