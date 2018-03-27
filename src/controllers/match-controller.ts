@@ -1,6 +1,7 @@
+import { EntityTakenError } from './../errors';
 import MatchService from '../service/match';
 import TeamService from '../service/team';
-import { badImplementation, notFound, badRequest } from 'boom';
+import { badImplementation, notFound, badRequest, conflict } from 'boom';
 import {
   Game,
   League,
@@ -373,6 +374,15 @@ class MatchController {
       const repository = getConnection()
         .getMongoRepository<Prediction>(Prediction);
 
+      // check if user haven't made bet yet
+      const alreadyPredicted = await repository.findOne({
+        matchId: new ObjectId(matchId),
+      });
+
+      if (alreadyPredicted) {
+        throw new EntityTakenError('Bet', 'matchId', matchId);
+      }
+
       const { ack: matchSRequestAck, body: matchSRequest } = await rabbot.request('match-service', {
         type: 'get-matches-by-ids',
         body: [matchId],
@@ -446,6 +456,10 @@ class MatchController {
       if (error instanceof EntityInvalidError) {
         return reply(badRequest(error.message));
       }
+      if (error instanceof EntityTakenError) {
+        return reply(conflict(error.message));
+      }
+      
       return reply(badImplementation(error));
     }
   }
