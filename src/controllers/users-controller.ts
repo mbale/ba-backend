@@ -10,7 +10,7 @@ import { ObjectId } from 'bson';
 import { Stream } from 'stream';
 import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
 import MatchService from '../service/match';
-import { Team, Match } from 'ba-common';
+import { Team, Match, Game } from 'ba-common';
 import * as rabbot from 'rabbot';
 
 /**
@@ -26,6 +26,7 @@ interface PredictionResponse {
     homeTeam: string;
     awayTeam: string;
   };
+  gameSlug: string;
   odds: number;
   stake: number;
   comments: number;
@@ -39,12 +40,14 @@ interface PredictionResponse {
  * @param {Team[]} teams
  * @returns
  */
-function aggregatePredictions(predictionsOfUser : Prediction[], matches: Match[], teams: Team[]) {
+function aggregatePredictions(
+  predictionsOfUser : Prediction[], matches: Match[], teams: Team[], games: Game[]) {
   const predictions : PredictionResponse[] = [];
   // populate it
   for (
     const { _id: id, text, stake, matchId, oddsId, comments, selectedTeam } of predictionsOfUser) {
     const match = matches.find(m => new ObjectId(m._id).equals(matchId));
+    const game = games.find(g => new ObjectId(g._id).equals(match.gameId));
 
     const {
       awayTeamId,
@@ -70,6 +73,7 @@ function aggregatePredictions(predictionsOfUser : Prediction[], matches: Match[]
         awayTeam,
         _id: matchId,
       },
+      gameSlug: game.slug,
       odds: selectedOdds,
       comments: comments.length,
     };
@@ -113,10 +117,12 @@ class UsersController {
       const matches: Match[] = matchSRequest.matches || [];
 
       const teamIds = [];
+      const gameIds = [];
 
       matches.forEach((match) => {
         teamIds.push(match.homeTeamId);
         teamIds.push(match.awayTeamId);
+        gameIds.push(match.gameId);
       });
 
       const { ack: teamSRequestAck, body: teamSRequest } = await rabbot.request('team-service', {
@@ -124,11 +130,21 @@ class UsersController {
         body: teamIds,
       });
 
+      const {
+        ack: teamSGameRequestAck,
+        body: teamSGameRequest,
+      } = await rabbot.request('team-service', {
+        type: 'get-games-by-ids',
+        body: gameIds,
+      });
+
       teamSRequestAck();
+      teamSGameRequestAck();
 
       const teams: Team[] = teamSRequest.teams || [];
+      const games: Game[] = teamSGameRequest.games || [];
 
-      const predictions = aggregatePredictions(predictionsOfUser, matches, teams);
+      const predictions = aggregatePredictions(predictionsOfUser, matches, teams, games);
 
       const response: {
         profile: Profile;
