@@ -12,6 +12,7 @@ import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
 import MatchService from '../service/match';
 import { Team, Match, Game } from 'ba-common';
 import * as rabbot from 'rabbot';
+import { createReadStream } from 'fs';
 
 /**
  * PredictionResponse
@@ -257,13 +258,11 @@ class UsersController {
    */
   static async uploadAvatar(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
-      const user : User = request.auth.credentials.user;
+      const user: User = request.auth.credentials.user;
       const userRepository = getConnection().getMongoRepository<User>(User);
-      const avatarStream : Stream = request.payload.avatar;
+      const avatarStream: Buffer = request.payload.avatar;
 
-      const {
-        public_id,
-      } = await streamToCloudinary(avatarStream, {
+      const { public_id } = await streamToCloudinary(avatarStream, {
         folder: 'avatars',
       });
 
@@ -272,9 +271,10 @@ class UsersController {
       await userRepository.save(user);
 
       return reply({
-        avatarURL : getCloudinaryPublicURL(public_id),
+        avatarURL: getCloudinaryPublicURL(public_id),
       });
     } catch (error) {
+      console.log(error.message)
       return reply(badImplementation(error));
     }
   }

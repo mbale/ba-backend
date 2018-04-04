@@ -89,9 +89,8 @@ const UsersRoutes : RouteConfiguration[] = [
     handler: UsersController.uploadAvatar,
     config: {
       validate: {},
-      
       payload: {
-        output: 'stream',
+        output: 'data',
         parse: true,
         allow: 'multipart/form-data',
       },

@@ -19,7 +19,7 @@ const CONTENTFUL_DELIVERY_ACCESS_TOKEN = process.env.BACKEND_CONTENTFUL_DELIVERY
 
 /**
  * Email declaration
- * 
+ *
  * @interface Email
  */
 interface Email {
@@ -56,11 +56,11 @@ interface CloudinaryResponse {
 
 /**
  * Generates a JWT encoded token
- * 
+ *
  * @export
- * @param {object} [data={}] 
- * @param {SignOptions} [options={}] 
- * @returns {string} 
+ * @param {object} [data={}]
+ * @param {SignOptions} [options={}]
+ * @returns {string}
  */
 export function encodeJWTToken(data : object = {}, options : SignOptions = {}) : string {
   options.expiresIn = JWT_DURATION;
@@ -71,10 +71,10 @@ export function encodeJWTToken(data : object = {}, options : SignOptions = {}) :
 
 /**
  * Get public URL for cloudinary content by ID
- * 
+ *
  * @export
- * @param {string} publicId 
- * @returns {string} 
+ * @param {string} publicId
+ * @returns {string}
  */
 export function getCloudinaryURL(publicId : string) : string {
   return cloudinary.utils.url(publicId);
@@ -82,10 +82,10 @@ export function getCloudinaryURL(publicId : string) : string {
 
 /**
  * Mailgun Wrapper to send email
- * 
+ *
  * @export
- * @param {Email} email 
- * @returns {Promise<JSON>} 
+ * @param {Email} email
+ * @returns {Promise<JSON>}
  */
 export async function sendMail(email : Email) : Promise<JSON> {
   const client = mailgun({
@@ -98,11 +98,11 @@ export async function sendMail(email : Email) : Promise<JSON> {
 
 /**
  * Query steam API to get users data
- * 
+ *
  * @export
- * @param {string} steamId 
- * @param {string} steamApiKey 
- * @returns {Promise<SteamProvider>} 
+ * @param {string} steamId
+ * @param {string} steamApiKey
+ * @returns {Promise<SteamProvider>}
  */
 export async function tryQuerySteamData(steamId : string, steamApiKey : string)
   : Promise<SteamProvider> {
@@ -147,23 +147,23 @@ export async function tryQuerySteamData(steamId : string, steamApiKey : string)
 
 /**
  * Upload image to Cloudinary from url or file
- * 
+ *
  * @export
- * @param {string} file 
- * @param {object} options 
- * @returns {Promise<CloudinaryResponse>} 
+ * @param {string} file
+ * @param {object} options
+ * @returns {Promise<CloudinaryResponse>}
  */
-export async function uploadToCloudinary(file : string, options : object) 
+export async function uploadToCloudinary(file : string, options : object)
 : Promise<CloudinaryResponse> {
   return await cloudinary.v2.uploader.upload(file, options);
 }
 
 /**
  * Get public URL for public id
- * 
+ *
  * @export
- * @param {string} publicId 
- * @returns {string} 
+ * @param {string} publicId
+ * @returns {string}
  */
 export function getCloudinaryPublicURL(publicId : string) : string {
   return cloudinary.utils.url(publicId);
@@ -171,27 +171,26 @@ export function getCloudinaryPublicURL(publicId : string) : string {
 
 /**
  * Stream to cloudinary
- * 
+ *
  * @export
- * @param {Stream} fromStream 
- * @param {Object} options 
- * @returns {Promise<CloudinaryResponse>} 
+ * @param {Stream} fromStream
+ * @param {Object} options
+ * @returns {Promise<CloudinaryResponse>}
  */
-export async function streamToCloudinary(fromStream : Stream, options : Object) 
-: Promise<CloudinaryResponse> {
-  return new Promise<CloudinaryResponse>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(resource => resolve(resource), options);
-    fromStream.pipe(stream);
-    fromStream.on('error', error => reject(error));
+export function streamToCloudinary(buffer: Buffer, options: Object): any {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(result => resolve(result))
+      .end(buffer);
   });
 }
 
 /**
  * Reconstruct joi distributed error object
- * 
+ *
  * @export
- * @param {*} parserError 
- * @returns 
+ * @param {*} parserError
+ * @returns
  */
 export function refactJoiError(parserError : any) {
   const {
@@ -213,9 +212,9 @@ export function refactJoiError(parserError : any) {
 
 /**
  * Returns connected contentful client
- * 
+ *
  * @export
- * @returns {Promise<ContentfulClientApi>} 
+ * @returns {Promise<ContentfulClientApi>}
  */
 export async function getContentfulClient() : Promise<ContentfulClientApi> {
   return await createClient({
