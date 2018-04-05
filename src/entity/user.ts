@@ -300,6 +300,7 @@ class User {
         this[key] = value;
       }
     }
+    console.log(this)
   }
 }
 

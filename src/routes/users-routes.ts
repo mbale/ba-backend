@@ -15,6 +15,20 @@ const UsersRoutes : RouteConfiguration[] = [
     method: 'PUT',
     handler: UsersController.editLoggedUserProfile,
     config: {
+      tags: ['api'],
+      plugins: {
+        'hapi-swagger': {
+          responses: {
+            200: {
+              description: 'Success',
+              schema: Joi.object({
+                equals: Joi.number(),
+              }).label('Result')},
+            400: {
+              description: 'Bad Request'
+            },
+          }},
+      },
       validate: {
         payload: Joi.object().min(1).keys({
           username: Joi.string().optional()

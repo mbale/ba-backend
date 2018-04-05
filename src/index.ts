@@ -22,6 +22,10 @@ import { EntityNotFoundError } from './errors';
 import * as cloudinary from 'cloudinary';
 import * as rabbot from 'rabbot';
 import { rabbitMQConfig } from 'ba-common';
+import * as vision from 'vision';
+import * as inert from 'inert';
+import * as lout from 'lout';
+import * as hapiSwagger from 'hapi-swagger';
 
 // import {
 //   version,
@@ -188,6 +192,8 @@ server.ext('onPreStart', async (serverInstance, next) => {
 /*
   Plugin registration
  */
+
+server.register([vision, inert, lout, hapiSwagger]);
 
 server.register({
   register: Henning,

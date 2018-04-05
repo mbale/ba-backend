@@ -274,7 +274,6 @@ class UsersController {
         avatarURL: getCloudinaryPublicURL(public_id),
       });
     } catch (error) {
-      console.log(error.message)
       return reply(badImplementation(error));
     }
   }
@@ -290,13 +289,12 @@ class UsersController {
    */
   static async deleteAvatar(request : Request, reply : ReplyNoContinue) : Promise<Response> {
     try {
-      const user : User = request.auth.credentials.user;
+      const user: User = request.auth.credentials.user;
       const userRepository = getConnection().getMongoRepository<User>(User);
 
       user.avatar = '';
 
       await userRepository.save(user);
-
       return reply();
     } catch (error) {
       return reply(badImplementation(error));
