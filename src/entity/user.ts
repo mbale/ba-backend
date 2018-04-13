@@ -1,3 +1,4 @@
+import { SteamProvider } from './user';
 import * as dotenv from 'dotenv';
 import nanoid = require('nanoid');
 import Prediction from './prediction';
@@ -31,13 +32,14 @@ const STEAM_API_KEY = process.env.BACKEND_STEAM_API_KEY;
 
 export interface Profile {
   /* public */
-  id : ObjectID;
+  id: ObjectID;
   username: string;
-  countryCode : string;
-  registeredOn : Date;
-  avatar : string;
+  countryCode: string;
+  registeredOn: Date;
+  avatar: string;
   /* private */
-  email? : string;
+  email?: string;
+  steamProvider?: SteamProvider;
 }
 
 export interface SteamProvider {
@@ -75,37 +77,37 @@ class User {
   @Index({
     unique: true,
   })
-  username : string;
+  username: string;
 
   @Column()
-  displayname : string = this.username || '';
+  displayname: string = this.username || '';
 
   @Column()
-  password : string = '';
+  password: string = '';
 
   @Column()
-  accessToken : string = '';
+  accessToken: string = '';
 
   @Column()
-  recoveryToken : string = '';
+  recoveryToken: string = '';
 
   @Column()
-  avatar : string = '';
+  avatar: string = '';
 
   @Column()
-  email : string = '';
+  email: string = '';
 
   @Column()
-  steamProvider : object | SteamProvider = {};
+  steamProvider: object | SteamProvider = {};
 
   @Column()
-  countryCode : string = '';
+  countryCode: string = '';
 
   @Column()
-  _createdAt : Date = new Date();
+  _createdAt: Date = new Date();
 
   @Column()
-  _updatedAt : Date = new Date();
+  _updatedAt: Date = new Date();
 
   /*
     Hooks
@@ -280,6 +282,10 @@ class User {
     return profile;
   }
 
+  attachSteamProfile (providerData: SteamProvider) {
+    this.steamProvider = providerData;
+  }
+
   /**
    * Edit profile of user
    *
@@ -300,7 +306,6 @@ class User {
         this[key] = value;
       }
     }
-    console.log(this)
   }
 }
 

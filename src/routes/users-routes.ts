@@ -11,6 +11,18 @@ const UsersRoutes : RouteConfiguration[] = [
     handler: UsersController.getLoggedUserProfile,
   },
   {
+    path: '/v1/users/me/steam',
+    method: 'POST',
+    handler: UsersController.attachSteamProvider,
+    config: {
+      validate: {
+        payload: Joi.object().keys({
+          steamId: Joi.string().required().length(17),
+        }),
+      },
+    },
+  },
+  {
     path: '/v1/users/me',
     method: 'PUT',
     handler: UsersController.editLoggedUserProfile,

@@ -23,11 +23,11 @@ const STEAM_API_KEY = process.env.BACKEND_STEAM_API_KEY;
 class AuthController {
   /**
    * Removes access token grant from user
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyWithContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyWithContinue} reply
+   * @returns {Promise<Response>}
    * @memberof AuthController
    */
   static async revokeAccessToken(request : Request, reply : ReplyWithContinue) : Promise<Response> {
@@ -50,11 +50,11 @@ class AuthController {
 
   /**
    * Authenticates user with username and password combination
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyWithContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyWithContinue} reply
+   * @returns {Promise<Response>}
    * @memberof AuthController
    */
   static async basicAuth(request : Request, reply : ReplyWithContinue) : Promise<Response> {
@@ -105,11 +105,11 @@ class AuthController {
 
   /**
    * Endpoint to authenticate and register with openID compatible steamID
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyWithContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyWithContinue} reply
+   * @returns {Promise<Response>}
    * @memberof AuthController
    */
   static async steamAuth(request : Request, reply : ReplyWithContinue) : Promise<Response> {
@@ -137,7 +137,7 @@ class AuthController {
       /*
         Fetching steam data and get user based on steamId if any
       */
-      
+
       let userWithSteamId = await userRepository.findOne({
         where: {
           'steamProvider.steamId': steamId,
@@ -145,7 +145,7 @@ class AuthController {
       });
 
       let steamData : SteamProvider = null;
-      
+
       try {
         // get steam data anyway
         steamData = await tryQuerySteamData(steamId, STEAM_API_KEY);
@@ -171,7 +171,7 @@ class AuthController {
           generatedUsername = `${steamData.personaname}_${chance.natural({
             max: 99999,
           })}`;
-  
+
           const nameMatch = await userRepository.findOne({
             username: generatedUsername,
           });
@@ -199,13 +199,13 @@ class AuthController {
       /*
         Update user's steam data
       */
-      
+
       userWithSteamId.steamProvider = steamData;
 
       /*
         Issue access
       */
-      
+
       const accessToken = userWithSteamId.authorizeAccess();
 
       await userRepository.save(userWithSteamId);
@@ -218,17 +218,17 @@ class AuthController {
         return reply(badData(error.message));
       }
       return reply(badImplementation(error));
-      
+
     }
   }
 
   /**
    * Issue a recovery process on behalf of user
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyWithContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyWithContinue} reply
+   * @returns {Promise<Response>}
    * @memberof AuthController
    */
   static async forgotPassword(request : Request, reply : ReplyWithContinue) : Promise<Response> {
@@ -264,11 +264,11 @@ class AuthController {
 
   /**
    * Set up new password for user if he'd forgotten
-   * 
+   *
    * @static
-   * @param {Request} request 
-   * @param {ReplyWithContinue} reply 
-   * @returns {Promise<Response>} 
+   * @param {Request} request
+   * @param {ReplyWithContinue} reply
+   * @returns {Promise<Response>}
    * @memberof AuthController
    */
   static async resetPassword(request : Request, reply : ReplyWithContinue) : Promise<Response> {
@@ -298,7 +298,7 @@ class AuthController {
       await repository.save(user);
       return reply();
     } catch (error) {
-      
+
       if (error instanceof EntityNotFoundError) {
         return reply(notFound(error.message));
       }

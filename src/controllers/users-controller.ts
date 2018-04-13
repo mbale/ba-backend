@@ -1,18 +1,20 @@
-import { EntityTakenError, EntityNotFoundError } from '../errors';
+import { EntityTakenError, EntityNotFoundError, InvalidSteamIdError } from '../errors';
 import { Request, Response, ReplyNoContinue } from 'hapi';
 import User, { Profile, SteamProvider } from '../entity/user';
 import { getConnection, ObjectID, MongoRepository } from 'typeorm';
 import Prediction, { SelectedTeam } from '../entity/prediction';
-import { badImplementation, conflict, notFound } from 'boom';
+import { badImplementation, conflict, notFound, badData } from 'boom';
 import axios from 'axios';
 import TeamService from '../service/team';
 import { ObjectId } from 'bson';
 import { Stream } from 'stream';
-import { streamToCloudinary, getCloudinaryPublicURL } from '../utils';
+import { streamToCloudinary, getCloudinaryPublicURL, tryQuerySteamData } from '../utils';
 import MatchService from '../service/match';
 import { Team, Match, Game } from 'ba-common';
 import * as rabbot from 'rabbot';
 import { createReadStream } from 'fs';
+
+const STEAM_API_KEY = process.env.BACKEND_STEAM_API_KEY;
 
 /**
  * PredictionResponse
@@ -158,6 +160,54 @@ class UsersController {
       return reply(response);
     } catch (error) {
       return reply(badImplementation(error));
+    }
+  }
+
+  /**
+   * Attach steam account to logged user
+   *
+   * @static
+   * @param {Request} request
+   * @param {ReplyNoContinue} reply
+   * @returns
+   * @memberof UsersController
+   */
+  static async attachSteamProvider(request: Request, reply: ReplyNoContinue) {
+    try {
+      const { steamId } : { steamId: string } = request.payload;
+      const userRepository = getConnection().getMongoRepository<User>(User);
+      const user: User = request.auth.credentials.user;
+
+      const anotherUser = await userRepository.findOne({
+        where: {
+          'steamProvider.steamId': steamId,
+          _id: {
+            $ne: user._id,
+          },
+        },
+      });
+
+      if (anotherUser) {
+        throw new EntityTakenError('User', 'steamId', steamId);
+      }
+
+      try {
+        // get steam data anyway
+        const steamData = await tryQuerySteamData(steamId, STEAM_API_KEY);
+
+        // refresh it anyway
+        user.steamProvider = steamData;
+      } catch (e) {
+        throw new InvalidSteamIdError(steamId);
+      }
+
+    } catch (error) {
+      if (error instanceof EntityTakenError) {
+        return reply(conflict(error.message));
+      }
+      if (error instanceof InvalidSteamIdError) {
+        return reply(badData(error.message));
+      }
     }
   }
 
