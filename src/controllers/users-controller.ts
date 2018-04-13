@@ -25,7 +25,7 @@ interface PredictionResponse {
   id: ObjectID;
   text: string;
   match: {
-    _id: ObjectID;
+    urlId: string;
     homeTeam: string;
     awayTeam: string;
   };
@@ -74,7 +74,7 @@ function aggregatePredictions(
       match: {
         homeTeam,
         awayTeam,
-        _id: matchId,
+        urlId: match.urlId,
       },
       gameSlug: game.slug,
       odds: selectedOdds,
