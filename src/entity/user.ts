@@ -98,7 +98,7 @@ class User {
   email: string = '';
 
   @Column()
-  steamProvider: object | SteamProvider = {};
+  steamProvider: SteamProvider = null;
 
   @Column()
   countryCode: string = '';
@@ -260,7 +260,7 @@ class User {
    * @returns {Profile}
    * @memberof User
    */
-  getProfile(privateProfile : boolean = false) : Profile {
+  getProfile(privateProfile: boolean = false): Profile {
     let avatarURL = '';
 
     if (this.avatar.length !== 0) {
@@ -277,6 +277,7 @@ class User {
     // private profile
     if (privateProfile) {
       profile.email = this.email;
+      profile.steamProvider = this.steamProvider;
     }
 
     return profile;

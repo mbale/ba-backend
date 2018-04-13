@@ -197,10 +197,13 @@ class UsersController {
 
         // refresh it anyway
         user.steamProvider = steamData;
+
+        await userRepository.save(user);
       } catch (e) {
         throw new InvalidSteamIdError(steamId);
       }
 
+      return reply();
     } catch (error) {
       if (error instanceof EntityTakenError) {
         return reply(conflict(error.message));
