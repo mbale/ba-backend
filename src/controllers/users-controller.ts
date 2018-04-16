@@ -16,6 +16,10 @@ import { createReadStream } from 'fs';
 
 const STEAM_API_KEY = process.env.BACKEND_STEAM_API_KEY;
 
+enum PredictionStatus {
+  Win = 'win', Loss = 'loss', Undecided = 'undecided',
+}
+
 /**
  * PredictionResponse
  *
@@ -29,6 +33,8 @@ interface PredictionResponse {
     homeTeam: string;
     awayTeam: string;
   };
+  status: PredictionStatus;
+  profit: number;
   gameSlug: string;
   odds: number;
   stake: number;
@@ -44,8 +50,8 @@ interface PredictionResponse {
  * @returns
  */
 function aggregatePredictions(
-  predictionsOfUser : Prediction[], matches: Match[], teams: Team[], games: Game[]) {
-  const predictions : PredictionResponse[] = [];
+  predictionsOfUser: Prediction[], matches: Match[], teams: Team[], games: Game[]) {
+  const predictions: PredictionResponse[] = [];
   // populate it
   for (
     const { _id: id, text, stake, matchId, oddsId, comments, selectedTeam } of predictionsOfUser) {
@@ -61,10 +67,37 @@ function aggregatePredictions(
     const awayTeam = teams.find(t => new ObjectId(t._id).equals(awayTeamId)).name;
 
     const odds = match.odds.find(o => new ObjectId(o._id).equals(oddsId));
+
     let selectedOdds = odds.home;
 
     if (selectedTeam === SelectedTeam.Away) {
       selectedOdds = odds.away;
+    }
+
+    // calculate result
+    const getWinnerOfMatch = (match: Match) => {
+      const settle = match.updates[0];
+      if (!settle) {
+        return false;
+      }
+      if (settle.homeTeamScore > settle.awayTeamScore) {
+        return 'home';
+      }
+      return 'away';
+    };
+
+    const winner = getWinnerOfMatch(match);
+    let profit = null;
+    let status = PredictionStatus.Undecided;
+
+    if (winner) {
+      profit = selectedOdds * stake;
+      status = PredictionStatus.Win;
+
+      if (selectedTeam !== winner) {
+        profit = profit * -1;
+        status = PredictionStatus.Loss;
+      }
     }
 
     const p: PredictionResponse = {
@@ -76,6 +109,8 @@ function aggregatePredictions(
         awayTeam,
         urlId: match.urlId,
       },
+      profit,
+      status,
       gameSlug: game.slug,
       odds: selectedOdds,
       comments: comments.length,
