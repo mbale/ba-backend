@@ -70,8 +70,9 @@ interface MatchResponse {
 function aggregateMatchResponse(
   teams: Team[], games: Game[], leagues: League[],
   updates: MatchUpdate[],
-  id: ObjectID, date: Date, odds: MatchOdds[], predictionCount: number = 0, urlId: string) {
-  const matchResponse : MatchResponse = {
+  id: ObjectID, date: Date, odds: MatchOdds[],
+  predictionCount: number = 0, urlId: string) {
+  const matchResponse: MatchResponse = {
     odds,
     date,
     id,
@@ -91,14 +92,10 @@ function aggregateMatchResponse(
     },
   };
 
-  const latestOdds = odds
-    .sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime())[0];
+  const orderedOdds = odds
+    .sort((a, b) => new Date(b.fetchedAt).getTime() - new Date(a.fetchedAt).getTime());
 
-  matchResponse.odds = [];
-
-  if (latestOdds) {
-    matchResponse.odds.push(latestOdds);
-  }
+  matchResponse.odds = orderedOdds;
 
   matchResponse.predictionCount = predictionCount;
 
@@ -329,7 +326,8 @@ class MatchController {
 
       const matchResponse = aggregateMatchResponse(
         [homeTeam, awayTeam], [game],
-        [league], match.updates, match._id, match.date, match.odds, predictionCount, match.urlId);
+        [league], match.updates, match._id,
+        match.date, match.odds, predictionCount, match.urlId);
 
       matchResponse.predictions = [];
 
@@ -346,6 +344,8 @@ class MatchController {
           stake: p.stake,
         });
       }
+
+      matchResponse.odds = [matchResponse.odds[0]];
 
       return reply(matchResponse);
     } catch (error) {
@@ -442,7 +442,7 @@ class MatchController {
       prediction.matchId = new ObjectId(match._id);
       prediction.oddsId = oddsId;
       prediction.selectedTeam = team;
-      prediction.text = text;
+      prediction.text = text || '';
       prediction.userId = user._id;
       prediction.stake = stake;
 
@@ -459,7 +459,7 @@ class MatchController {
       if (error instanceof EntityTakenError) {
         return reply(conflict(error.message));
       }
-      
+
       return reply(badImplementation(error));
     }
   }
