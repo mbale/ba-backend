@@ -1,6 +1,8 @@
 pipeline:
   gcr:
     image: plugins/gcr
+    environment:
+      - git_common_ssh_key=324234
+    repo: betacle/master
+    tags: latest
     secrets: [gcr_json_key, git_common_ssh_key]
-    commands:
-      - echo -n $GIT_COMMON_SSH_KEY
