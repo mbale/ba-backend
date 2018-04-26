@@ -4,8 +4,8 @@ FROM node:latest
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
 # Getting ssh key
-RUN echo $${GIT_COMMON_SSH_KEY} | base64 --decode > /root/.ssh/ba_common_git
 RUN echo $${GIT_COMMON_SSH_KEY}
+RUN echo $${GIT_COMMON_SSH_KEY} | base64 --decode > /root/.ssh/ba_common_git
 RUN chmod 0600 /root/.ssh/ba_common_git
 
 # Starting packages installing
