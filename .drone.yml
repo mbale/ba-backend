@@ -4,3 +4,5 @@ pipeline:
     repo: betacle/master
     tags: latest
     secrets: [gcr_json_key, git_common_ssh_key]
+    environment:
+      - GIT_COMMON_SSH_KEY=1
