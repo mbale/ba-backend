@@ -1,7 +1,7 @@
 pipeline:
   gcr:
     image: plugins/gcr
-    repo: ${gcr_repo_master}
+    repo: betacle-202016/master
     tags: latest
     secrets: [gcr_json_key, git_common_ssh_key]
     build_args_from_env: [git_common_ssh_key]
