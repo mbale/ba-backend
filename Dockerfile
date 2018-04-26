@@ -1,6 +1,4 @@
 FROM node:latest
-# Make sure we use use fresh packages
-RUN apt-get update && apt-get install -y curl coreutils openssh-client
 
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
@@ -12,7 +10,6 @@ RUN cat /root/.ssh/ba_common_git
 RUN chmod 0600 /root/.ssh/ba_common_git
 
 # Starting packages installing
-RUN npm install yarn -G
 WORKDIR /app
 COPY package.json /app
 COPY . /app

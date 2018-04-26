@@ -3,4 +3,4 @@ pipeline:
     image: plugins/gcr
     repo: betacle/master
     tags: latest
-    secrets: [gcr_json_key]
+    secrets: [gcr_json_key, git_common_ssh_key]
