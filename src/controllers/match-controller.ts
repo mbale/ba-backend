@@ -52,6 +52,7 @@ interface MatchResponse {
     odds: MatchOdds;
     selectedTeam: SelectedTeam;
     stake: Number;
+    date: Date;
   }[];
   predictionCount?: number;
 }
@@ -334,6 +335,7 @@ class MatchController {
       for (const p of predictions) {
         const user = await userRepository.findOneById(p.userId);
         const odds = matchResponse.odds.find(o => new ObjectId(o._id).equals(p.oddsId));
+        const date = p._id.getTimestamp();
 
         matchResponse.predictions.push({
           odds,
@@ -342,6 +344,7 @@ class MatchController {
           user: user.getProfile(),
           selectedTeam: p.selectedTeam,
           stake: p.stake,
+          date
         });
       }
 
