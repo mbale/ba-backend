@@ -1,5 +1,7 @@
 FROM node:9-alpine
 
+RUN apk update && apk add openssh
+
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
