@@ -8,7 +8,7 @@ RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 ARG GIT_COMMON_SSH_KEY
 
 # Getting ssh key
-RUN echo $GIT_COMMON_SSH_KEY | base64 --decode > /root/.ssh/ba_common_git
+RUN echo $GIT_COMMON_SSH_KEY | base64 -d > /root/.ssh/ba_common_git
 RUN chmod 0600 /root/.ssh/ba_common_git
 
 # Starting packages installing
