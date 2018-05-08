@@ -5,3 +5,21 @@ pipeline:
     tags: latest
     secrets: [gcr_json_key, git_common_ssh_key]
     build_args_from_env: [git_common_ssh_key]
+    tags:
+      - ${DRONE_COMMIT}
+      - latest
+    when:
+      branch: [master]
+  deploy:
+    image: quay.io/honestbee/drone-kubernetes
+    kubernetes_server: ${KUBERNETES_SERVER}
+    kubernetes_token: ${KUBERNETES_TOKEN}
+    kubernetes_cert: ${KUBERNETES_CERT}
+    deployment: backend-deployment
+    repo: gcr.io/betacle-202016/master/backend
+    container: backend-container
+    namespace: default
+    tag: ${DRONE_COMMIT}
+    secrets: [kubernetes_server, kubernetes_token, kubernetes_cert]
+    when:
+      branch: [master]
