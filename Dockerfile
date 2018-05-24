@@ -1,6 +1,6 @@
 FROM node:8-alpine
 
-RUN apk update && apk add openssh && apk add git & apk --no-cache add --virtual builds-deps build-base python
+RUN apk update && apk add openssh && apk add git
 
 # add the authorized host key for github (avoids "Host key verification failed")
 RUN mkdir ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
@@ -19,7 +19,6 @@ COPY . /app
 # we need to maintain ssh agent until yarn is done with installing
 RUN eval "$(ssh-agent)" ssh-add /root/.ssh/ba_common_git \
 && yarn install
-RUN npm rebuild bcrypt --build-from-source
 
 # We only want to compile files during image creation phase
 RUN yarn build

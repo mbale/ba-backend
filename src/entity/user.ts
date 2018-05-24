@@ -11,7 +11,7 @@ import {
   BeforeInsert,
   Index,
 } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { encodeJWTToken, sendMail, getCloudinaryURL, tryQuerySteamData } from '../utils';
 import { resetPasswordTemplate } from '../templates';
 
